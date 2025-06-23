@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:smartspace/auth/auth_service.dart';
+import 'package:smartspace/auth/login_screen.dart';
 
 class SellerHomeScreen extends StatelessWidget {
-  const SellerHomeScreen({super.key});
+  SellerHomeScreen({super.key});
+
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -11,14 +15,15 @@ class SellerHomeScreen extends StatelessWidget {
       drawer: Drawer(
         child: Column(
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/logo.png"),
-                  fit: BoxFit.cover,
-                ),
+            UserAccountsDrawerHeader(
+              accountName: Text("Seller Name"),
+              accountEmail: Text("seller@example.com"),
+              currentAccountPicture: CircleAvatar(
+                backgroundImage: AssetImage("assets/logo.png"),
               ),
-              child: Text("Hello seller"),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 167, 184, 198),
+              ),
             ),
 
             ListTile(leading: Icon(Icons.dashboard), title: Text("Dashboard")),
@@ -29,6 +34,55 @@ class SellerHomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/mylistings_screen');
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.show_chart),
+              title: Text("AI Valuation"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/ai_valuation');
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.analytics),
+              title: Text("View Analytics"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/analytics_screen');
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.notification_important),
+              title: Text("Notifications"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/notifications_screen');
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.person_3),
+              title: Text("Profile"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/profile_screen');
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.logout_outlined),
+              title: Text("Logout"),
+              onTap: () {
+                _authService.signOut();
+                print("Logout successfull");
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
               },
             ),
           ],
