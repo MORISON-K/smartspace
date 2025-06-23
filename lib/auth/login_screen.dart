@@ -38,24 +38,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result == 'Admin') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
+        MaterialPageRoute(builder: (_) => AdminHomeScreen()),
       );
     }
-    if (result == 'Seller'){
-        Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SellerHomeScreen()),
-      );
-    }
-     else if (result == 'User') {
+    if (result == 'Seller') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const BuyerHomeScreen()),
+        MaterialPageRoute(builder: (_) => SellerHomeScreen()),
+      );
+    } else if (result == 'User') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => BuyerHomeScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login Failed: $result')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login Failed: $result')));
     }
   }
 
@@ -75,26 +74,28 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-             
               Image.asset('assets/logo.png'),
-              
+
               // Email Input
               _buildTextField("Email", _emailController),
               const SizedBox(height: 20),
 
               // Password Input
-              _buildTextField("Password", _passwordController,
-                  obscure: isPasswordHidden,
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        isPasswordHidden = !isPasswordHidden;
-                      });
-                    },
-                    icon: Icon(isPasswordHidden
-                        ? Icons.visibility_off
-                        : Icons.visibility),
-                  )),
+              _buildTextField(
+                "Password",
+                _passwordController,
+                obscure: isPasswordHidden,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      isPasswordHidden = !isPasswordHidden;
+                    });
+                  },
+                  icon: Icon(
+                    isPasswordHidden ? Icons.visibility_off : Icons.visibility,
+                  ),
+                ),
+              ),
               const SizedBox(height: 25),
 
               // Forgot Password
@@ -103,7 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordScreen()),
+                      builder: (context) => const ForgotPasswordScreen(),
+                    ),
                   );
                 },
                 child: const Padding(
@@ -114,8 +116,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         "Reset password",
                         style: TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -128,25 +131,24 @@ class _LoginScreenState extends State<LoginScreen> {
               _isLoading
                   ? const CircularProgressIndicator()
                   : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                      child: GestureDetector(
-                        onTap: _login,
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 181, 183, 74),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "Sign In",
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 19),
-                            ),
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: GestureDetector(
+                      onTap: _login,
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 181, 183, 74),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Sign In",
+                            style: TextStyle(color: Colors.white, fontSize: 19),
                           ),
                         ),
                       ),
                     ),
+                  ),
 
               const SizedBox(height: 25),
 
@@ -163,7 +165,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const RegisterScreen()), 
+                          builder: (_) => const RegisterScreen(),
+                        ),
                       );
                     },
                     child: const Text(
@@ -184,8 +187,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // Reusable Input Field
-  Widget _buildTextField(String hint, TextEditingController controller,
-      {bool obscure = false, Widget? suffixIcon}) {
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller, {
+    bool obscure = false,
+    Widget? suffixIcon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0),
       child: Container(
