@@ -139,7 +139,19 @@ class _AddListingScreenState extends State<AddListingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add New Property"),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: const Color.fromARGB(255, 164, 192, 221),),
+          onPressed: () => Navigator.of(context).pop(),),
+        title: const Text(
+  "Add New Property",
+  style: TextStyle(
+    color: Color.fromARGB(255, 0, 153, 255), 
+    fontWeight: FontWeight.bold,
+    fontSize: 22,
+    letterSpacing: 1.2,
+    fontFamily: 'Roboto', 
+  ),
+),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
