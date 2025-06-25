@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:smartspace/auth/login_screen.dart';
+import 'package:smartspace/seller/add_listing_screen.dart';
 import 'package:smartspace/seller/ai_valuation.dart';
 import 'package:smartspace/seller/analytics_screen.dart';
 import 'package:smartspace/seller/noticications_screen.dart';
@@ -26,6 +27,7 @@ class SmartSpace extends StatelessWidget {
         '/analytics_screen': (context) => AnalyticsScreen(),
         '/ai_valuation': (context) => AiValuationScreen(),
         '/notifications_screen': (context) => NoticicationsScreen(),
+        '/add_listing_screen': (context) => AddListingScreen(),
       },
     );
   }
