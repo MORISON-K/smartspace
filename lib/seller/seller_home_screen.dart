@@ -56,6 +56,15 @@ class SellerHomeScreen extends StatelessWidget {
             ),
 
             ListTile(
+              leading: Icon(Icons.addchart),
+              title: Text("Add New Listing"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, "/add_listing_screen");
+              },
+            ),
+
+            ListTile(
               leading: Icon(Icons.notification_important),
               title: Text("Notifications"),
               onTap: () {
