@@ -36,6 +36,13 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     });
   }
 
+  String _getInitials(String? name) {
+    if (name == null || name.isEmpty) return "?";
+    final parts = name.trim().split(" ");
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +55,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               accountName: Text(_userName ?? "Seller Name"),
               accountEmail: Text(_userEmail ?? "seller@example.com"),
               currentAccountPicture: CircleAvatar(
-                backgroundImage: AssetImage("assets/logo.png"),
+                backgroundColor: const Color.fromARGB(255, 247, 240, 240),
+                child: Text(
+                  _getInitials(_userName),
+                  style: TextStyle(fontSize: 24, color: Colors.black),
+                ),
               ),
               decoration: BoxDecoration(
                 color: const Color.fromARGB(255, 167, 184, 198),
