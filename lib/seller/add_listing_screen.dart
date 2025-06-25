@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddListingScreen extends StatefulWidget {
   const AddListingScreen({Key? key}) : super(key: key);
@@ -169,23 +172,55 @@ class _AddListingScreenState extends State<AddListingScreen> {
       ),
     );
   }
+void _handleSubmit() async {
+  if (_formKey.currentState!.validate()) {
+    if (_images.isEmpty) {
+      _showSnack("Please upload at least one image.");
+      return;
+    }
+    if (_pdfFile == null) {
+      _showSnack("Please attach a land title PDF.");
+      return;
+    }
 
-  void _handleSubmit() {
-    if (_formKey.currentState!.validate()) {
-      if (_images.isEmpty) {
-        _showSnack("Please upload at least one image.");
-        return;
+    _showSnack("Uploading...");
+
+    try {
+      // Upload images to Firebase Storage
+      List<String> imageUrls = [];
+      for (var img in _images) {
+        final file = File(img.path);
+        final fileName = 'images/${DateTime.now().millisecondsSinceEpoch}_${img.name}';
+        final ref = FirebaseStorage.instance.ref().child(fileName);
+        await ref.putFile(file);
+        final url = await ref.getDownloadURL();
+        imageUrls.add(url);
       }
-      if (_pdfFile == null) {
-        _showSnack("Please attach a land title PDF.");
-        return;
-      }
 
-      _showSnack("Submitting...");
+      // Upload PDF to Firebase Storage
+      final pdfName = 'pdfs/${DateTime.now().millisecondsSinceEpoch}_${_pdfFile!.path.split('/').last}';
+      final pdfRef = FirebaseStorage.instance.ref().child(pdfName);
+      await pdfRef.putFile(_pdfFile!);
+      final pdfUrl = await pdfRef.getDownloadURL();
 
-      // Submit logic here
+      // Save all data to Firestore
+      await FirebaseFirestore.instance.collection('listings').add({
+        'price': _priceController.text.trim(),
+        'location': _locationController.text.trim(),
+        'category': _selectedCategory,
+        'description': _descriptionController.text.trim(),
+        'images': imageUrls,
+        'pdf': pdfUrl,
+        'createdAt': Timestamp.now(),
+      });
+
+      _showSnack("Listing submitted successfully!");
+      Navigator.of(context).pop(); // Optional: go back to previous screen
+    } catch (e) {
+      _showSnack("Upload failed: $e");
     }
   }
+}
 
   Future<void> _pickImages() async {
     final picked = await _picker.pickMultiImage(imageQuality: 75);
