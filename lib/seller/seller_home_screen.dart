@@ -5,7 +5,7 @@ import 'package:smartspace/auth/auth_service.dart';
 import 'package:smartspace/auth/login_screen.dart';
 
 class SellerHomeScreen extends StatefulWidget {
-  SellerHomeScreen({super.key});
+  const SellerHomeScreen({super.key});
 
   @override
   State<SellerHomeScreen> createState() => _SellerHomeScreenState();
