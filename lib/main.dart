@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:smartspace/auth/login_screen.dart';
-import 'package:smartspace/seller/mylistings_screen.dart';
+import 'package:smartspace/seller/my_listings_screen.dart';
+
+
+
+
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +24,7 @@ class SmartSpace extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: LoginScreen(),
       routes: {
-        '/mylistings_screen': (context) => MylistingsScreen(),
+        '/mylistings_screen': (context) => const MyListingsScreen(),
       },
     );
   }
