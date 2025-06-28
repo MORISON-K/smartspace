@@ -19,7 +19,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   File? _image;
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -30,9 +32,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   void _addListing() {
     if (_formKey.currentState!.validate()) {
       if (_image == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select an image')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please select an image')));
         return;
       }
 
@@ -50,62 +52,74 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
       Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Listing added')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Listing added')));
     }
   }
 
   void _showAddDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Add Listing'),
-        content: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Location'),
-                  validator: (value) => value!.isEmpty ? 'Enter location' : null,
-                  onSaved: (value) => _location = value!,
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Add Listing'),
+            content: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'Location'),
+                      validator:
+                          (value) => value!.isEmpty ? 'Enter location' : null,
+                      onSaved: (value) => _location = value!,
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'Price'),
+                      keyboardType: TextInputType.number,
+                      validator:
+                          (value) => value!.isEmpty ? 'Enter price' : null,
+                      onSaved: (value) => _price = value!,
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'Size'),
+                      validator:
+                          (value) => value!.isEmpty ? 'Enter size' : null,
+                      onSaved: (value) => _size = value!,
+                    ),
+                    const SizedBox(height: 10),
+                    _image != null
+                        ? Container(
+                          height: 100,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(_image!, fit: BoxFit.cover),
+                          ),
+                        )
+                        : const Text('No image selected'),
+                    TextButton.icon(
+                      icon: const Icon(Icons.image),
+                      label: const Text('Pick Image'),
+                      onPressed: _pickImage,
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Price'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Enter price' : null,
-                  onSaved: (value) => _price = value!,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Size'),
-                  validator: (value) => value!.isEmpty ? 'Enter size' : null,
-                  onSaved: (value) => _size = value!,
-                ),
-                const SizedBox(height: 10),
-                _image != null
-                    ? Image.file(_image!, height: 10)
-                    : const Text('No image selected'),
-                TextButton.icon(
-                  icon: const Icon(Icons.image),
-                  label: const Text('Pick Image'),
-                  onPressed: _pickImage,
-                ),
-              ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(onPressed: _addListing, child: const Text('Add')),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: _addListing,
-            child: const Text('Add'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -115,31 +129,63 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       appBar: AppBar(
         title: const Text('My Listings'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showAddDialog,
-          ),
+          IconButton(icon: const Icon(Icons.add), onPressed: _showAddDialog),
         ],
       ),
-      body: _listings.isEmpty
-          ? const Center(child: Text('No listings yet. Tap "ADD+" to add.'))
-          : ListView.builder(
-              itemCount: _listings.length,
-              itemBuilder: (ctx, index) {
-                final item = _listings[index];
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: ListTile(
-                    leading: item['image'] != null
-                        ? Image.file(item['image'], width: double.infinity, height: 220, fit: BoxFit.cover)
-
-                        : null,
-                    title: Text(item['location']),
-                    subtitle: Text('Price: ${item['price']}, Size: ${item['size']}'),
-                  ),
-                );
-              },
-            ),
+      body:
+          _listings.isEmpty
+              ? const Center(child: Text('No listings yet. Tap "ADD+" to add.'))
+              : ListView.builder(
+                itemCount: _listings.length,
+                itemBuilder: (ctx, index) {
+                  final item = _listings[index];
+                  return Card(
+                    margin: const EdgeInsets.all(8),
+                    child: ListTile(
+                      leading:
+                          item['image'] != null
+                              ? Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    item['image'],
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              )
+                              : Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.home,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                      title: Text(item['location']),
+                      subtitle: Text(
+                        'Price: \$${item['price']}, Size: ${item['size']}',
+                      ),
+                    ),
+                  );
+                },
+              ),
     );
   }
 }
