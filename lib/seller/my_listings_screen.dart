@@ -39,38 +39,85 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
-              final imageUrl = data['image_url'] ?? '';
-              final description = data['description'] ?? 'No description'; //
-              // final title = data['title'] ?? 'No title';
+              final images = data['images'] as List<dynamic>? ?? [];
+              final imageUrl = images.isNotEmpty ? images[0] as String : '';
+              final description = data['description'] ?? 'No description';
+              final title =
+                  data['title'] ?? 'Property Listing'; // Better fallback title
               final price = data['price'] ?? 'N/A';
               final location = data['location'] ?? 'No location';
+
+              // Debug print to check image URL and data
+              print('Listing $index has ${images.length} images');
+              print('First image URL for listing $index: "$imageUrl"');
+              print('Image URL isEmpty: ${imageUrl.isEmpty}');
 
               return Card(
                 margin: EdgeInsets.all(8.0),
                 child: ListTile(
-                  leading:
-                      imageUrl.isNotEmpty
-                          ? Image.network(
-                            imageUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.error);
-                            },
-                          )
-                          : Icon(Icons.home),
-                  // title: Text(title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(description),
-                      Text(
-                        '📍 $location',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
+                  leading: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child:
+                          imageUrl.isNotEmpty
+                              ? Image.network(
+                                imageUrl,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (
+                                  context,
+                                  child,
+                                  loadingProgress,
+                                ) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  print('Error loading image: $error');
+                                  return Container(
+                                    color: Colors.grey.shade200,
+                                    child: Icon(
+                                      Icons.error,
+                                      color: Colors.red,
+                                      size: 30,
+                                    ),
+                                  );
+                                },
+                              )
+                              : Container(
+                                color: Colors.grey.shade200,
+                                child: Icon(
+                                  Icons.home,
+                                  color: Colors.grey,
+                                  size: 30,
+                                ),
+                              ),
+                    ),
                   ),
+                  title: Text(title),
+                  subtitle: Text(
+                    '$description\n📍 $location',
+                    style: TextStyle(height: 1.3),
+                  ),
+                  isThreeLine: true,
                   trailing: Text('\$$price'),
                 ),
               );
