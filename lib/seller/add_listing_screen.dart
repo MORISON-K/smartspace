@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Screen that allows sellers to add new property listings
 /// Users can input property details, upload images, attach documents, and submit for approval
@@ -90,6 +91,13 @@ class _AddListingScreenState extends State<AddListingScreen> {
       _showSnack("Uploading...");
 
       try {
+        // Get the current logged-in user
+        final user = FirebaseAuth.instance.currentUser;
+
+        if  (user == null ){
+          _showSnack("You must be logged in to submit a listing");
+          return;
+        }
         // Convert location string to latitude and longitude coordinates
         final placemarks = await locationFromAddress(
           _locationController.text.trim(),
@@ -126,6 +134,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
           'images': imageUrls,
           'pdf': pdfUrl,
           'createdAt': Timestamp.now(),
+          'user_id': user.uid,
         });
 
         _showSnack("Listing submitted successfully!");
