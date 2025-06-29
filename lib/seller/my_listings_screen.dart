@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -9,6 +10,8 @@ class MyListingsScreen extends StatefulWidget {
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
+
+  final user = FirebaseAuth.instance.currentUser;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,8 +19,12 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         title: Text("My Listings"),
         backgroundColor: Color.fromARGB(255, 164, 192, 221),
       ),
+      
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('listings').snapshots(),
+        stream: FirebaseFirestore.instance
+        .collection('listings')
+        .where('user_id', isEqualTo: user?.uid)
+        .snapshots(),
         builder: (context, snapshot) {
           // Show loading indicator while data is being fetched
           if (snapshot.connectionState == ConnectionState.waiting) {
