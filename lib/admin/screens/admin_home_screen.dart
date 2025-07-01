@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/admin_sidebar.dart';
 import 'dashboard_screen.dart';
+import 'property_listings_screen.dart';
+
 // Import other screen widgets here
 // import 'manage_users_screen.dart';
 import 'manage_admins_screen.dart';
@@ -26,11 +28,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       case 0:
         return const DashboardScreen();
       case 1:
-        return const Text("Manage Users Screen"); // Replace with ManageUsersScreen()
+        return const Text(
+          "Manage Users Screen",
+        ); // Replace with ManageUsersScreen()
       case 2:
         return const ManageAdminsScreen(); // Replace with ManageAdminsScreen()
       case 3:
-        return const Text("Property Listings Screen");
+        return const PropertyListingsScreen();
       case 4:
         return const Text("Reports Screen");
       case 5:
@@ -78,5 +82,3 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 }
-
-
