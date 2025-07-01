@@ -82,21 +82,34 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
         ),
         ElevatedButton(
           onPressed: () {
-            final name = nameController.text.trim();
-            final email = emailController.text.trim();
+  final name = nameController.text.trim();
+  final email = emailController.text.trim();
 
-            if (name.isNotEmpty && isValidEmail(email))  {
-              setState(() {
-                admins.add(AdminUser(
-                  name: name,
-                  email: email,
-                  role: role,
-                  status: status,
-                ));
-              });
-              Navigator.pop(context);
-            }
-          },
+  if (name.isEmpty || email.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill in all fields')),
+    );
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please enter a valid email address')),
+    );
+    return;
+  }
+
+  setState(() {
+    admins.add(AdminUser(
+      name: name,
+      email: email,
+      role: role,
+      status: status,
+    ));
+  });
+  Navigator.pop(context);
+},
+
           child: const Text('Add'),
         ),
       ],
@@ -174,7 +187,20 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
             final name = nameController.text.trim();
             final email = emailController.text.trim();
 
-            if (name.isNotEmpty && email.isNotEmpty) {
+            if (name.isEmpty || email.isEmpty) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Please fill in all fields')),
+  );
+  return;
+}
+
+if (!isValidEmail(email)) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Please enter a valid email address')),
+  );
+  return;
+}
+
               setState(() {
                 final index = admins.indexOf(admin);
                 admins[index] = AdminUser(
@@ -185,7 +211,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                 );
               });
               Navigator.pop(context);
-            }
+            
           },
           child: const Text('Save'),
         ),
