@@ -1,145 +1,137 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
 
   @override
-  _MyListingsScreenState createState() => _MyListingsScreenState();
+  State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
-  final List<Map<String, dynamic>> _listings = [];
-  final _formKey = GlobalKey<FormState>();
 
-  String _location = '';
-  String _price = '';
-  String _size = '';
-  File? _image;
-
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
-  void _addListing() {
-    if (_formKey.currentState!.validate()) {
-      if (_image == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select an image')),
-        );
-        return;
-      }
-
-      _formKey.currentState!.save();
-
-      setState(() {
-        _listings.add({
-          'location': _location,
-          'price': _price,
-          'size': _size,
-          'image': _image,
-        });
-        _image = null; // reset image
-      });
-
-      Navigator.of(context).pop();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Listing added')),
-      );
-    }
-  }
-
-  void _showAddDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Add Listing'),
-        content: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Location'),
-                  validator: (value) => value!.isEmpty ? 'Enter location' : null,
-                  onSaved: (value) => _location = value!,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Price'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Enter price' : null,
-                  onSaved: (value) => _price = value!,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Size'),
-                  validator: (value) => value!.isEmpty ? 'Enter size' : null,
-                  onSaved: (value) => _size = value!,
-                ),
-                const SizedBox(height: 10),
-                _image != null
-                    ? Image.file(_image!, height: 10)
-                    : const Text('No image selected'),
-                TextButton.icon(
-                  icon: const Icon(Icons.image),
-                  label: const Text('Pick Image'),
-                  onPressed: _pickImage,
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: _addListing,
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-
+  final user = FirebaseAuth.instance.currentUser;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Listings'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showAddDialog,
-          ),
-        ],
+        title: Text("My Listings"),
+        backgroundColor: Color.fromARGB(255, 164, 192, 221),
       ),
-      body: _listings.isEmpty
-          ? const Center(child: Text('No listings yet. Tap "ADD+" to add.'))
-          : ListView.builder(
-              itemCount: _listings.length,
-              itemBuilder: (ctx, index) {
-                final item = _listings[index];
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: ListTile(
-                    leading: item['image'] != null
-                        ? Image.file(item['image'], width: double.infinity, height: 220, fit: BoxFit.cover)
+      
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+        .collection('listings')
+        .where('user_id', isEqualTo: user?.uid)
+        .snapshots(),
+        builder: (context, snapshot) {
+          // Show loading indicator while data is being fetched
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-                        : null,
-                    title: Text(item['location']),
-                    subtitle: Text('Price: ${item['price']}, Size: ${item['size']}'),
+          // Handle errors
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          // Handle case when no data is available
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('No listings found'));
+          }
+
+          final docs = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              final images = data['images'] as List<dynamic>? ?? [];
+              final imageUrl = images.isNotEmpty ? images[0] as String : '';
+              final description = data['description'] ?? 'No description';
+              final title =
+                  data['title'] ?? 'Property Listing'; // Better fallback title
+              final price = data['price'] ?? 'N/A';
+              final location = data['location'] ?? 'No location';
+
+              // Debug print to check image URL and data
+              print('Listing $index has ${images.length} images');
+              print('First image URL for listing $index: "$imageUrl"');
+              print('Image URL isEmpty: ${imageUrl.isEmpty}');
+
+              return Card(
+                margin: EdgeInsets.all(8.0),
+                child: ListTile(
+                  leading: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child:
+                          imageUrl.isNotEmpty
+                              ? Image.network(
+                                imageUrl,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (
+                                  context,
+                                  child,
+                                  loadingProgress,
+                                ) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  print('Error loading image: $error');
+                                  return Container(
+                                    color: Colors.grey.shade200,
+                                    child: Icon(
+                                      Icons.error,
+                                      color: Colors.red,
+                                      size: 30,
+                                    ),
+                                  );
+                                },
+                              )
+                              : Container(
+                                color: Colors.grey.shade200,
+                                child: Icon(
+                                  Icons.home,
+                                  color: Colors.grey,
+                                  size: 30,
+                                ),
+                              ),
+                    ),
                   ),
-                );
-              },
-            ),
+                  title: Text(title),
+                  subtitle: Text(
+                    '$description\n📍 $location',
+                    style: TextStyle(height: 1.3),
+                  ),
+                  isThreeLine: true,
+                  trailing: Text('\$$price'),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
