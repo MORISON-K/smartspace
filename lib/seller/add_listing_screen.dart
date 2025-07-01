@@ -27,6 +27,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _priceController = TextEditingController();
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   // Selected category for the property (Freehold, Leasehold, etc.)
   String? _selectedCategory;
@@ -94,7 +95,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         // Get the current logged-in user
         final user = FirebaseAuth.instance.currentUser;
 
-        if  (user == null ){
+        if (user == null) {
           _showSnack("You must be logged in to submit a listing");
           return;
         }
@@ -129,12 +130,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
           'location': _locationController.text.trim(),
           'latitude': lat,
           'longitude': lng,
+          'mobile_number': '+256 ${_phoneController.text.trim()}',
           'category': _selectedCategory,
           'description': _descriptionController.text.trim(),
           'images': imageUrls,
           'pdf': pdfUrl,
           'createdAt': Timestamp.now(),
           'user_id': user.uid,
+          "status": "pending",
         });
 
         _showSnack("Listing submitted successfully!");
@@ -230,6 +233,34 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Location is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: _inputDecoration('Mobile Number').copyWith(
+                  prefixText: '+256 ',
+                  prefixStyle: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  hintText: '700123456',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Mobile Number is required';
+                  }
+                  // Remove any spaces and check if it's a valid phone number
+                  String cleanedValue = value.replaceAll(' ', '');
+                  if (cleanedValue.length < 9 || cleanedValue.length > 10) {
+                    return 'Enter a valid mobile number (9-10 digits)';
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(cleanedValue)) {
+                    return 'Enter only numbers';
                   }
                   return null;
                 },
