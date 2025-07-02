@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {
   final String name;
@@ -26,21 +27,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegex.hasMatch(email);
   }
-
-  List<User> users = [
-    User(
-      name: 'Alice Johnson',
-      email: 'alice@example.com',
-      role: 'User',
-      status: 'Active',
-    ),
-    User(
-      name: 'Bob Smith',
-      email: 'bob@example.com',
-      role: 'Moderator',
-      status: 'Disabled',
-    ),
-  ];
 
   void _showAddUserDialog() {
     final nameController = TextEditingController();
@@ -100,24 +86,20 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final name = nameController.text.trim();
                   final email = emailController.text.trim();
 
                   if (name.isNotEmpty && isValidEmail(email)) {
-                    setState(() {
-                      users.add(
-                        User(
-                          name: name,
-                          email: email,
-                          role: role,
-                          status: status,
-                        ),
-                      );
+                    await FirebaseFirestore.instance.collection('users').add({
+                      'name': name,
+                      'email': email,
+                      'role': role,
+                      'status': status,
                     });
+
                     Navigator.pop(context);
                   } else {
-                    // Optionally show an error message if validation fails
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Please enter a valid name and email'),
@@ -132,7 +114,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     );
   }
 
-  void _showEditUserDialog(User user) {
+  void _showEditUserDialog(String docId, User user) {
     final nameController = TextEditingController(text: user.name);
     final emailController = TextEditingController(text: user.email);
     String role = user.role;
@@ -190,20 +172,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final name = nameController.text.trim();
                   final email = emailController.text.trim();
 
                   if (name.isNotEmpty && isValidEmail(email)) {
-                    setState(() {
-                      final index = users.indexOf(user);
-                      users[index] = User(
-                        name: name,
-                        email: email,
-                        role: role,
-                        status: status,
-                      );
-                    });
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(docId)
+                        .update({
+                          'name': name,
+                          'email': email,
+                          'role': role,
+                          'status': status,
+                        });
+
                     Navigator.pop(context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -220,50 +203,72 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     );
   }
 
-  void _deleteUser(User user) {
-    setState(() {
-      users.remove(user);
-    });
+  void _deleteUser(String docId) {
+    FirebaseFirestore.instance.collection('users').doc(docId).delete();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Users')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: users.length,
-        separatorBuilder: (_, __) => const Divider(),
-        itemBuilder: (context, index) {
-          final user = users[index];
-          return ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.person)),
-            title: Text(user.name),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(user.email),
-                Text(
-                  'Role: ${user.role}  •  Status: ${user.status}',
-                  style: TextStyle(
-                    color: user.status == 'Active' ? Colors.green : Colors.red,
-                  ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("No users found."));
+          }
+
+          final docs = snapshot.data!.docs;
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: docs.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (context, index) {
+              final doc = docs[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final user = User(
+                name: data['name'] ?? '',
+                email: data['email'] ?? '',
+                role: data['role'] ?? '',
+                status: data['status'] ?? '',
+              );
+
+              return ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.person)),
+                title: Text(user.name),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user.email),
+                    Text(
+                      'Role: ${user.role}  •  Status: ${user.status}',
+                      style: TextStyle(
+                        color:
+                            user.status == 'Active' ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _showEditUserDialog(user),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showEditUserDialog(doc.id, user),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteUser(doc.id),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _deleteUser(user),
-                ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
