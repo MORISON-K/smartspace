@@ -6,12 +6,13 @@ class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
 
   @override
-  _MyListingsScreenState createState() => _MyListingsScreenState();
+  State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
   final List<Map<String, dynamic>> _listings = [];
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
 
   String _location = '';
   String _price = '';
@@ -19,76 +20,95 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   File? _image;
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+    try {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
+      );
     }
   }
 
   void _addListing() {
-    if (_formKey.currentState!.validate()) {
-      if (_image == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select an image')),
-        );
-        return;
-      }
-
-      _formKey.currentState!.save();
-
-      setState(() {
-        _listings.add({
-          'location': _location,
-          'price': _price,
-          'size': _size,
-          'image': _image,
-        });
-        _image = null; // reset image
-      });
-
-      Navigator.of(context).pop();
-
+    if (!_formKey.currentState!.validate()) return;
+    if (_image == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Listing added')),
+        const SnackBar(content: Text('Please select an image')),
       );
+      return;
     }
+
+    _formKey.currentState!.save();
+
+    setState(() {
+      _listings.add({
+        'location': _location,
+        'price': _price,
+        'size': _size,
+        'image': _image,
+      });
+      // Reset form
+      _image = null;
+      _location = '';
+      _price = '';
+      _size = '';
+    });
+
+    Navigator.of(context).pop();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Listing added successfully')),
+    );
   }
 
   void _showAddDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Add Listing'),
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Listing'),
         content: SingleChildScrollView(
           child: Form(
             key: _formKey,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Location'),
-                  validator: (value) => value!.isEmpty ? 'Enter location' : null,
-                  onSaved: (value) => _location = value!,
+                  decoration: const InputDecoration(
+                    labelText: 'Location',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                  onSaved: (value) => _location = value!.trim(),
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Price'),
+                  decoration: const InputDecoration(
+                    labelText: 'Price',
+                    border: OutlineInputBorder(),
+                  ),
                   keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Enter price' : null,
-                  onSaved: (value) => _price = value!,
+                  validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                  onSaved: (value) => _price = value!.trim(),
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Size'),
-                  validator: (value) => value!.isEmpty ? 'Enter size' : null,
-                  onSaved: (value) => _size = value!,
+                  decoration: const InputDecoration(
+                    labelText: 'Size',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                  onSaved: (value) => _size = value!.trim(),
                 ),
-                const SizedBox(height: 10),
-                _image != null
-                    ? Image.file(_image!, height: 10)
-                    : const Text('No image selected'),
-                TextButton.icon(
+                const SizedBox(height: 16),
+                _buildImagePreview(),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
                   icon: const Icon(Icons.image),
-                  label: const Text('Pick Image'),
+                  label: const Text('Select Image'),
                   onPressed: _pickImage,
                 ),
               ],
@@ -102,9 +122,91 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
           ElevatedButton(
             onPressed: _addListing,
-            child: const Text('Add'),
+            child: const Text('Save'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    return Container(
+      height: 150,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: _image != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(_image!, fit: BoxFit.cover),
+            )
+          : const Center(child: Text('No image selected')),
+    );
+  }
+
+  Widget _buildListingItem(Map<String, dynamic> item) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {}, // Add onTap functionality if needed
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Image
+              if (item['image'] != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    item['image'] as File,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.error),
+                  ),
+                )
+              else
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.home, size: 40),
+                ),
+              const SizedBox(width: 16),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['location']?.toString() ?? 'No location',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Price: ${item['price']?.toString() ?? 'N/A'}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Size: ${item['size']?.toString() ?? 'N/A'}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -117,29 +219,47 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
+            tooltip: 'Add Listing',
             onPressed: _showAddDialog,
           ),
         ],
       ),
       body: _listings.isEmpty
-          ? const Center(child: Text('No listings yet. Tap "ADD+" to add.'))
-          : ListView.builder(
-              itemCount: _listings.length,
-              itemBuilder: (ctx, index) {
-                final item = _listings[index];
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: ListTile(
-                    leading: item['image'] != null
-                        ? Image.file(item['image'], width: double.infinity, height: 220, fit: BoxFit.cover)
-
-                        : null,
-                    title: Text(item['location']),
-                    subtitle: Text('Price: ${item['price']}, Size: ${item['size']}'),
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.list, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No listings yet',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                );
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap the + button to add a new listing',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: () async {
+                // Implement refresh logic if needed
+                setState(() {});
               },
+              child: ListView.builder(
+                padding: const EdgeInsets.only(top: 8, bottom: 24),
+                itemCount: _listings.length,
+                itemBuilder: (context, index) => _buildListingItem(_listings[index]),
+              ),
             ),
+      floatingActionButton: _listings.isEmpty
+          ? FloatingActionButton(
+              onPressed: _showAddDialog,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }
