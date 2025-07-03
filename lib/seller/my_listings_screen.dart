@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -211,6 +213,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
+
+  final user = FirebaseAuth.instance.currentUser;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,8 +228,20 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
         ],
       ),
-      body: _listings.isEmpty
-          ? Center(
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('listings')
+            .where('user_id', isEqualTo: user?.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -238,28 +254,100 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Tap the + button to add a new listing',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.grey),
                   ),
                 ],
               ),
-            )
-          : RefreshIndicator(
-              onRefresh: () async {
-                // Implement refresh logic if needed
-                setState(() {});
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.only(top: 8, bottom: 24),
-                itemCount: _listings.length,
-                itemBuilder: (context, index) => _buildListingItem(_listings[index]),
-              ),
-            ),
-      floatingActionButton: _listings.isEmpty
-          ? FloatingActionButton(
-              onPressed: _showAddDialog,
-              child: const Icon(Icons.add),
-            )
-          : null,
+            );
+          }
+          final docs = snapshot.data!.docs;
+          return ListView.builder(
+            padding: const EdgeInsets.only(top: 8, bottom: 24),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              final images = data['images'] as List<dynamic>? ?? [];
+              final imageUrl = images.isNotEmpty ? images[0] as String : '';
+              final description = data['description'] ?? 'No description';
+              final title = data['title'] ?? 'Property Listing';
+              final price = data['price'] ?? 'N/A';
+              final location = data['location'] ?? 'No location';
+
+              return Card(
+                margin: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  leading: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(
+                                    Icons.error,
+                                    color: Colors.red,
+                                    size: 30,
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                              color: Colors.grey.shade200,
+                              child: const Icon(
+                                Icons.home,
+                                color: Colors.grey,
+                                size: 30,
+                              ),
+                            ),
+                    ),
+                  ),
+                  title: Text(title),
+                  subtitle: Text(
+                    '$description\n📍 $location',
+                    style: const TextStyle(height: 1.3),
+                  ),
+                  isThreeLine: true,
+                  trailing: Text('\$$price'),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddDialog,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
