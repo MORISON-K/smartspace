@@ -27,7 +27,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     final user = FirebaseAuth.instance.currentUser;
     String? name;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
       name = doc.data()?['name'] ?? user.displayName;
     }
     setState(() {
@@ -43,11 +47,178 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCard(
+    String title,
+    String time,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  time,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.white),
-      body: Center(child: Text("seller home screen")),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text(
+          "Dashboard",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Section
+            Text(
+              "Welcome back, ${_userName ?? 'Seller'}!",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              "Here's what's happening with your properties",
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 20),
+
+            // Quick Actions
+            Text(
+              "Quick Actions",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    "Add Listing",
+                    Icons.add_home,
+                    Colors.blue,
+                    () => Navigator.pushNamed(context, "/add_listing_screen"),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    "View Analytics",
+                    Icons.analytics,
+                    Colors.green,
+                    () => Navigator.pushNamed(context, '/analytics_screen'),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 30),
+
+            // Recent Activity
+            Text(
+              "Recent Activity",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            _buildActivityCard(
+              "New inquiry for Busabaala Property",
+              "2 hours ago",
+              Icons.message,
+              Colors.blue,
+            ),
+            _buildActivityCard(
+              "Property viewed 5 times today",
+              "4 hours ago",
+              Icons.visibility,
+              Colors.green,
+            ),
+            _buildActivityCard(
+              "Price update completed",
+              "1 day ago",
+              Icons.update,
+              Colors.orange,
+            ),
+            SizedBox(height: 30),
+          ],
+        ),
+      ),
       drawer: Drawer(
         child: Column(
           children: [
@@ -69,11 +240,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ListTile(
               leading: Icon(Icons.dashboard),
               title: Text("Dashboard"),
-               onTap: () {
+              onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/seller_home_screen');
+               
               },
-              ),
+            ),
 
             ListTile(
               leading: Icon(Icons.apartment),
