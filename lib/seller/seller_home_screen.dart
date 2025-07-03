@@ -66,7 +66,14 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               ),
             ),
 
-            ListTile(leading: Icon(Icons.dashboard), title: Text("Dashboard")),
+            ListTile(
+              leading: Icon(Icons.dashboard),
+              title: Text("Dashboard"),
+               onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/seller_home_screen');
+              },
+              ),
 
             ListTile(
               leading: Icon(Icons.apartment),
