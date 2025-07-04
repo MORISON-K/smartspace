@@ -8,13 +8,14 @@ import 'package:smartspace/seller/ai-valuation/ai_valuation.dart';
 import 'package:smartspace/seller/analytics_screen.dart';
 import 'package:smartspace/seller/noticications_screen.dart';
 import 'package:smartspace/seller/seller_home_screen.dart';
-//import 'package:smartspace/seller/mylistings_screen.dart';
 
+// Global navigator key for navigation from anywhere in the app
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-  );
+  await Firebase.initializeApp();
+  await FirebaseApi().initNofications();
   runApp(const SmartSpace());
 }
 
@@ -23,11 +24,11 @@ class SmartSpace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
+    return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       home: LoginScreen(),
       routes: {
-
         '/mylistings_screen': (context) => const MyListingsScreen(),
         '/analytics_screen': (context) => AnalyticsScreen(),
         '/ai_valuation': (context) => AiValuationScreen(),
