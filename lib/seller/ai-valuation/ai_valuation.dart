@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:smartspace/seller/ai-valuation/land_valuation_service.dart';
 import 'package:smartspace/seller/ai-valuation/property_input.dart';
 
@@ -23,9 +22,8 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
   bool _waterAvailable = false;
   String _landUse = 'Residential';
   String _terrain = 'Flat';
-  String _shape = 'Regular';
   double _distanceToTownKm = 1.0;
-  LatLng? _coordinates;
+  
 
   double? _estimatedPrice;
   String? _explanation;
@@ -33,10 +31,7 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
   final _valuationService = LandValuationService();
 
   void _calculateEstimate() {
-    if (_coordinates == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please select a location on map.")));
-      return;
-    }
+   
 
     final input = PropertyInput(
       sizeInAcres: _sizeInAcres,
@@ -47,9 +42,7 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
       waterAvailable: _waterAvailable,
       landUse: _landUse,
       terrain: _terrain,
-      shape: _shape,
       distanceToTownKm: _distanceToTownKm,
-      coordinates: _coordinates!,
     );
 
     setState(() {
@@ -58,15 +51,12 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
     });
   }
 
-  void _selectLocation(LatLng position) {
-    setState(() => _coordinates = position);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Estimate Land Value')),
-      body: SingleChildScrollView(
+      appBar: AppBar(title: const Text('Estimate Land Value'),
+      backgroundColor:  const Color.fromARGB(255, 167, 184, 198),),
+      body: SingleChildScrollView( 
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -123,7 +113,7 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
                 decoration: const InputDecoration(labelText: 'Land Use'),
               ),
 
-              // Terrain
+              //Terrain
               DropdownButtonFormField(
                 value: _terrain,
                 items: ['Flat', 'Rocky', 'Swampy']
@@ -133,41 +123,12 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
                 decoration: const InputDecoration(labelText: 'Terrain'),
               ),
 
-              // Shape
-              DropdownButtonFormField(
-                value: _shape,
-                items: ['Regular', 'Irregular']
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (val) => setState(() => _shape = val!),
-                decoration: const InputDecoration(labelText: 'Land Shape'),
-              ),
-
               // Distance to town
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Distance to Town (km)'),
                 keyboardType: TextInputType.number,
                 initialValue: _distanceToTownKm.toString(),
                 onChanged: (val) => _distanceToTownKm = double.tryParse(val) ?? 1.0,
-              ),
-
-              const SizedBox(height: 20),
-
-              // Google Map Pin
-              SizedBox(
-                height: 200,
-                child: GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(0.3476, 32.5825), // Kampala default
-                    zoom: 10,
-                  ),
-                  onTap: _selectLocation,
-                  markers: _coordinates != null
-                      ? {
-                          Marker(markerId: const MarkerId('picked'), position: _coordinates!)
-                        }
-                      : {},
-                ),
               ),
 
               const SizedBox(height: 20),
