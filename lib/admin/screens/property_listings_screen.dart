@@ -1,24 +1,7 @@
 import 'package:flutter/material.dart';
-
-class Property {
-  final String title;
-  final String location;
-  final double price;
-  final String status; // e.g. 'Pending', 'Approved', 'Rejected'
-
-  Property({
-    required this.title,
-    required this.location,
-    required this.price,
-    required this.status,
-  });
-}
-
-
-
-
-
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'property_details_screen.dart';
+import 'package:smartspace/admin/models/properties.dart';
 
 class PropertyListingsScreen extends StatefulWidget {
   const PropertyListingsScreen({super.key});
@@ -28,84 +11,129 @@ class PropertyListingsScreen extends StatefulWidget {
 }
 
 class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
-  List<Property> properties = [
-    Property(
-      title: '2 Bedroom Apartment',
-      location: 'Kampala, Uganda',
-      price: 50000,
-      status: 'Pending',
-    ),
-    Property(
-      title: 'Luxury Villa',
-      location: 'Entebbe',
-      price: 150000,
-      status: 'Approved',
-    ),
-  ];
+  List<Property> properties = [];
+  bool _isLoading = true;
 
-  void _updateStatus(Property property, String newStatus) {
-    setState(() {
-      final index = properties.indexOf(property);
-      properties[index] = Property(
-        title: property.title,
-        location: property.location,
-        price: property.price,
-        status: newStatus,
-      );
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchProperties();
+  }
+
+  Future<void> _fetchProperties() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('listings').get();
+      final list = snapshot.docs
+          .map((doc) => Property.fromFirestore(doc.data(), doc.id))
+          .toList();
+
+      setState(() {
+        properties = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching properties: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _updateStatus(Property property, String newStatus) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('listings')
+          .doc(property.id) // ✅ Use document ID
+          .update({'status': newStatus.toLowerCase()});
+
+      setState(() {
+        final index = properties.indexOf(property);
+        properties[index] = Property(
+          id: property.id,
+          title: property.title,
+          description: property.description,
+          location: property.location,
+          category: property.category,
+          price: property.price,
+          images: property.images,
+          pdfUrl: property.pdfUrl,
+          status: newStatus.toLowerCase(),
+        );
+      });
+    } catch (e) {
+      print('Error updating status: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Property Listings')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: properties.length,
-        separatorBuilder: (_, __) => const Divider(),
-        itemBuilder: (context, index) {
-          final property = properties[index];
-          return Card(
-            child: ListTile(
-              title: Text(property.title),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Location: ${property.location}'),
-                  Text('Price: UGX ${property.price.toStringAsFixed(0)}'),
-                  Text(
-                    'Status: ${property.status}',
-                    style: TextStyle(
-                      color: property.status == 'Approved'
-                          ? Colors.green
-                          : (property.status == 'Rejected'
-                              ? Colors.red
-                              : Colors.orange),
-                    ),
-                  ),
-                ],
-              ),
-              trailing: property.status == 'Pending'
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.check, color: Colors.green),
-                          onPressed: () =>
-                              _updateStatus(property, 'Approved'),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : properties.isEmpty
+              ? const Center(child: Text('No listings found.'))
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: properties.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final property = properties[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(property.title),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Location: ${property.location}'),
+                            Text('Price: UGX ${property.price}'),
+                            Text(
+                              'Status: ${property.status}',
+                              style: TextStyle(
+                                color: property.status == 'approved'
+                                    ? Colors.green
+                                    : (property.status == 'rejected'
+                                        ? Colors.red
+                                        : Colors.orange),
+                              ),
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.red),
-                          onPressed: () =>
-                              _updateStatus(property, 'Rejected'),
-                        ),
-                      ],
-                    )
-                  : null,
-            ),
-          );
-        },
-      ),
+                        onTap: () async {
+                          final updated = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  PropertyDetailsScreen(property: property),
+                            ),
+                          );
+
+                          if (updated == true) {
+                            _fetchProperties(); // refresh the list
+                          }
+                        },
+                        trailing: property.status == 'pending'
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.check,
+                                        color: Colors.green),
+                                    onPressed: () =>
+                                        _updateStatus(property, 'approved'),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close,
+                                        color: Colors.red),
+                                    onPressed: () =>
+                                        _updateStatus(property, 'rejected'),
+                                  ),
+                                ],
+                              )
+                            : null,
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }
