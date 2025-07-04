@@ -40,7 +40,7 @@ class AdminSidebar extends StatelessWidget {
               title: Text(item['label'], style: const TextStyle(color: Colors.white)),
               onTap: () => onSectionSelected(index),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:smartspace/admin/screens/manage_users_screen.dart';
 import '../widgets/admin_sidebar.dart';
 import 'dashboard_screen.dart';
+import 'property_listings_screen.dart';
+
 // Import other screen widgets here
 // import 'manage_users_screen.dart';
 import 'manage_admins_screen.dart';
@@ -31,7 +33,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       case 2:
         return const ManageAdminsScreen(); // Replace with ManageAdminsScreen()
       case 3:
-        return const Text("Property Listings Screen");
+        return const PropertyListingsScreen();
       case 4:
         return const Text("Reports Screen");
       case 5:
