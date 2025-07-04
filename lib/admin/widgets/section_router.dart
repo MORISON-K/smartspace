@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/manage_admins_screen.dart';
 import '../screens/dashboard_screen.dart';
+import '../screens/manage_users_screen.dart';
 
 //
 
@@ -14,9 +15,10 @@ class SectionRouter extends StatelessWidget {
       case 0:
         return const DashboardScreen();
       case 1:
-        return const Center(child: Text("Manage Users"));
+        return const ManageUsersScreen();
+
       case 2:
-        return const  ManageAdminsScreen();
+        return const ManageAdminsScreen();
       case 3:
         return const Center(child: Text("Property Listings"));
       case 4:
