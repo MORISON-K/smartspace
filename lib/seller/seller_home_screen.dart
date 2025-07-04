@@ -181,10 +181,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 SizedBox(width: 12),
                 Expanded(
                   child: _buildActionButton(
-                    "View Analytics",
-                    Icons.analytics,
+                    "Manage Listings ",
+                    Icons.manage_history,
                     Colors.green,
-                    () => Navigator.pushNamed(context, '/analytics_screen'),
+                    () => Navigator.pushNamed(context, '/mylistings_screen'),
                   ),
                 ),
               ],
