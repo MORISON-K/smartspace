@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smartspace/admin/admin_home_screen.dart';
+ import 'package:smartspace/admin/screens/admin_home_screen.dart';
+
 import 'package:smartspace/auth/auth_service.dart';
 import 'package:smartspace/auth/forgot_password_screen.dart';
 import 'package:smartspace/auth/register_screen.dart';
@@ -38,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result == 'Admin') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => AdminHomeScreen()),
+        MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
       );
     }
     if (result == 'Seller') {
