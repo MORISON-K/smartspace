@@ -7,6 +7,7 @@ import 'package:smartspace/seller/add_listing_screen.dart';
 import 'package:smartspace/seller/ai-valuation/ai_valuation.dart';
 import 'package:smartspace/seller/analytics_screen.dart';
 import 'package:smartspace/seller/noticications_screen.dart';
+import 'package:smartspace/seller/profile_screen.dart';
 import 'package:smartspace/seller/seller_home_screen.dart';
 
 // Global navigator key for navigation from anywhere in the app
@@ -35,6 +36,7 @@ class SmartSpace extends StatelessWidget {
         '/notifications_screen': (context) => NoticicationsScreen(),
         '/add_listing_screen': (context) => AddListingScreen(),
         '/seller_home_screen': (context) => SellerHomeScreen(),
+        '/profile_screen': (context) => ProfileScreen(),
 
       },
     );
