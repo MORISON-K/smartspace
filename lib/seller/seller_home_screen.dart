@@ -137,8 +137,9 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 234, 236, 240),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:  const Color.fromARGB(255, 167, 184, 198),
         title: Text(
           "Dashboard",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
@@ -174,7 +175,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                   child: _buildActionButton(
                     "Add Listing",
                     Icons.add_home,
-                    Colors.blue,
+                    const Color.fromARGB(255, 45, 72, 94),
                     () => Navigator.pushNamed(context, "/add_listing_screen"),
                   ),
                 ),
@@ -183,7 +184,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                   child: _buildActionButton(
                     "Manage Listings ",
                     Icons.manage_history,
-                    Colors.green,
+                    const Color.fromARGB(255, 76, 87, 115),
                     () => Navigator.pushNamed(context, '/mylistings_screen'),
                   ),
                 ),
