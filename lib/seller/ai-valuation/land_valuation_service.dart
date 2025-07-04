@@ -1,4 +1,3 @@
-// services/land_valuation_service.dart
 
 import 'package:smartspace/seller/ai-valuation/property_input.dart';
 
@@ -45,13 +44,6 @@ class LandValuationService {
       modifier -= 0.10;
     }
 
-    // Shape
-    if (input.shape == "Regular") {
-      modifier += 0.05;
-    } else {
-      modifier -= 0.05;
-    }
-
     // Distance to town
     if (input.distanceToTownKm <= 2) {
       modifier += 0.10;
@@ -75,7 +67,7 @@ class LandValuationService {
   }
 
   String explainModifiers(PropertyInput input) {
-    // Optional: explain breakdown for UI
+    //  explain breakdown for UI
     List<String> notes = [];
 
     if (input.isTitled) {
@@ -99,11 +91,11 @@ class LandValuationService {
       notes.add("-10% for rough/swampy land");
     }
 
-    if (input.shape == "Regular") {
-      notes.add("+5% for regular shape");
-    } else {
-      notes.add("-5% for irregular shape");
-    }
+    // if (input.shape == "Regular") {
+    //   notes.add("+5% for regular shape");
+    // } else {
+    //   notes.add("-5% for irregular shape");
+    // }
 
     if (input.distanceToTownKm <= 2) {
       notes.add("+10% for being close to town");
