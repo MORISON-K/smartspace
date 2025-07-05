@@ -6,24 +6,25 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)?.settings.arguments;
-    final message = arguments is RemoteMessage ? arguments : null;
+    final arguments = ModalRoute.of(context)?.settings.arguments as Map?;
+    final RemoteMessage? message = arguments?['message'];
+    final String? role = arguments?['role'];
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 97, 113, 147),
         title: Text("Notifications"),
       ),
-      body:
-          message != null
-              ? Column(
-                children: [
-                  Text(message.notification?.title?.toString() ?? 'No title'),
-                  Text(message.notification?.body?.toString() ?? 'No body'),
-                  Text(message.data.toString()),
-                ],
-              )
-              : const Center(child: Text('No notification data available')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Role: $role"),
+            Text("Title: ${message?.notification?.title ?? 'No Title'}"),
+            Text("Body: ${message?.notification?.body ?? 'No Body'}"),
+          ],
+        ),
+      ),
     );
   }
 }
