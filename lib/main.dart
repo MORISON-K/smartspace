@@ -9,6 +9,7 @@ import 'package:smartspace/seller/analytics_screen.dart';
 import 'package:smartspace/notifications/notifications_screen.dart';
 import 'package:smartspace/seller/profile_screen.dart';
 import 'package:smartspace/seller/seller_home_screen.dart';
+import 'package:smartspace/notifications/notifications_service.dart';
 
 // Global navigator key for navigation from anywhere in the app
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
