@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:smartspace/models/listings.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:smartspace/buyer/favorite_screen.dart';
+import 'package:smartspace/buyer/home_screen_content.dart';
+import 'package:smartspace/buyer/search_screen.dart';
 
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
@@ -10,73 +11,38 @@ class BuyerHomeScreen extends StatefulWidget {
 }
 
 class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
-  late Future<List<Listing>> _listings;
+  int _selectedPage = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _listings = _fetchListings();
+  void _navigationBottomBar(int index) {
+    setState(() {
+      _selectedPage = index;
+    });
   }
 
-  Future<List<Listing>> _fetchListings() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('listings')
-        .orderBy('createdAt', descending: true)
-        .get();
-
-    return snapshot.docs
-        .map((doc) => Listing.fromFirestore(
-              doc.data(),
-              doc.id,
-            ))
-        .toList();
-  }
+  final List _pages = [
+    HomeScreenContent(),
+    SearchScreen(),
+    FavoriteScreen(),
+    ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Explore Properties')),
-      body: FutureBuilder<List<Listing>>(
-        future: _listings,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No listings found.'));
-          }
+      appBar: AppBar(backgroundColor: Colors.blue),
+      body: _pages[_selectedPage],
 
-          final listings = snapshot.data!;
-          return ListView.builder(
-            itemCount: listings.length,
-            itemBuilder: (context, index) {
-              final listing = listings[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                elevation: 3,
-                child: ListTile(
-                  leading: listing.imageUrl.isNotEmpty
-                      ? Image.network(
-                          listing.imageUrl,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        )
-                      : const Icon(Icons.image_not_supported),
-                  title: Text(listing.title),
-                  subtitle:
-                      Text('${listing.location} • UGX ${listing.price}'),
-                  onTap: () {
-                    // TODO: push a detail page
-                    // Navigator.push(context, MaterialPageRoute(
-                    //   builder: (_) => ListingDetailScreen(listing: listing)));
-                  },
-                ),
-              );
-            },
-          );
-        },
+      bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+
+        currentIndex: _selectedPage,
+        onTap: _navigationBottomBar,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Saved'),
+          
+        ],
       ),
     );
   }
