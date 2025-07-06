@@ -357,6 +357,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                     );
 
                     return ListTile(
+                      isThreeLine: true,
                       leading: const CircleAvatar(child: Icon(Icons.person)),
                       title: Text(user.name),
                       subtitle: Column(
