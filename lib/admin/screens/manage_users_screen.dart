@@ -76,7 +76,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                   DropdownButtonFormField<String>(
                     value: role,
                     items:
-                        ['User', 'Moderator', 'Guest']
+                        ['User', 'Seller', 'Admin']
                             .map(
                               (r) => DropdownMenuItem(value: r, child: Text(r)),
                             )
@@ -162,7 +162,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                   DropdownButtonFormField<String>(
                     value: role,
                     items:
-                        ['User', 'Moderator', 'Guest']
+                        ['User', 'Seller', 'Admin']
                             .map(
                               (r) => DropdownMenuItem(value: r, child: Text(r)),
                             )
@@ -258,7 +258,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                     value: _selectedRole,
                     hint: const Text('Filter by Role'),
                     items:
-                        ['User', 'Moderator', 'Guest']
+                        ['User', 'Seller', 'Admin']
                             .map(
                               (role) => DropdownMenuItem(
                                 value: role,
