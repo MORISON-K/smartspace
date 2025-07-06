@@ -26,6 +26,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
+  String? _selectedRole;
+  String? _selectedStatus;
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -245,6 +248,63 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: _selectedRole,
+                    hint: const Text('Filter by Role'),
+                    items:
+                        ['User', 'Moderator', 'Guest']
+                            .map(
+                              (role) => DropdownMenuItem(
+                                value: role,
+                                child: Text(role),
+                              ),
+                            )
+                            .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRole = value;
+                      });
+                    },
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: _selectedStatus,
+                  hint: const Text('Filter by Status'),
+                  items:
+                      ['Active', 'Disabled']
+                          .map(
+                            (status) => DropdownMenuItem(
+                              value: status,
+                              child: Text(status),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedStatus = value;
+                    });
+                  },
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedRole = null;
+                      _selectedStatus = null;
+                    });
+                  },
+                  icon: const Icon(Icons.clear),
+                  tooltip: 'Clear Filters',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
 
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -260,13 +320,34 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 }
 
                 final docs = snapshot.data!.docs;
+                final filteredDocs =
+                    docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final name = data['name']?.toLowerCase() ?? '';
+                      final email = data['email']?.toLowerCase() ?? '';
+                      final role = data['role']?.toLowerCase() ?? '';
+                      final status = data['status']?.toLowerCase() ?? '';
+
+                      final matchesSearchQuery =
+                          name.contains(_searchQuery) ||
+                          email.contains(_searchQuery);
+                      final matchesRole =
+                          _selectedRole == null ||
+                          role == _selectedRole!.toLowerCase();
+                      final matchesStatus =
+                          _selectedStatus == null ||
+                          status == _selectedStatus!.toLowerCase();
+
+                      return matchesSearchQuery && matchesRole && matchesStatus;
+                    }).toList();
 
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: docs.length,
+                  itemCount: filteredDocs.length,
+
                   separatorBuilder: (_, __) => const Divider(),
                   itemBuilder: (context, index) {
-                    final doc = docs[index];
+                    final doc = filteredDocs[index];
                     final data = doc.data() as Map<String, dynamic>;
                     final user = User(
                       name: data['name'] ?? '',
