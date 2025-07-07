@@ -43,7 +43,7 @@ exports.notifyAdminOnNewListing = onDocumentCreated(
             title: "New listing has been submitted",
             body: `Seller ${sellerName} submitted: ${listingTitle}`,
           },
-          topic: "admin",
+          topic: "admin", // Send to admin topic
         };
 
         const response = await admin.messaging().send(message);
@@ -188,7 +188,7 @@ exports.notifyBuyersOnApprovedListing = onDocumentUpdated(
             title: "New Property Available!",
             body: `${listingTitle} is now live. Check it out.`,
           },
-          topic: "buyer",
+          topic: "buyer", // This matches the topic subscription in your app
         };
 
         const response = await admin.messaging().send(message);
@@ -205,6 +205,41 @@ exports.notifyBuyersOnApprovedListing = onDocumentUpdated(
           stack: error.stack,
         });
         // Don't throw - we don't want to retry this function
+      }
+    },
+);
+
+// Additional function to notify sellers about general announcements
+exports.notifyAllSellers = onDocumentCreated(
+    "announcements/{announcementId}",
+    async (event) => {
+      try {
+        if (!event.data || !event.data.data) {
+          console.error("Invalid announcement data received");
+          return;
+        }
+
+        const announcement = event.data.data();
+
+        // Only send if it's targeted at sellers
+        const targetRole = announcement.targetRole;
+        if (targetRole === "seller" || targetRole === "all") {
+          const message = {
+            notification: {
+              title: announcement.title || "New Announcement",
+              body: announcement.message || "You have a new announcement",
+            },
+            topic: "seller",
+          };
+
+          const response = await admin.messaging().send(message);
+          console.log("Announcement sent to sellers successfully:", response);
+        }
+      } catch (error) {
+        console.error("Error sending announcement to sellers:", {
+          error: error.message,
+          stack: error.stack,
+        });
       }
     },
 );
