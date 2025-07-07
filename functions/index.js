@@ -76,3 +76,24 @@ exports.notifySellerOnStatusChange = functions.firestore
         console.log("Notification sent to seller");
     }
 });
+
+//Notify Buyers when a listing is approved
+exports.notifyBuyersOnApprovedListing = functions.firestore
+  .document("listings/{listingId}")
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+
+    if (before.status !== "approved" && after.status === "approved") {
+      const message = {
+        notification: {
+          title: "New Property Available!",
+          body: `A new listing "${after.title}" is now live. Check it out.`,
+        },
+        topic: "buyer",
+      };
+
+      await admin.messaging().send(message);
+      console.log("Notification sent to buyers.");
+    }
+  });
