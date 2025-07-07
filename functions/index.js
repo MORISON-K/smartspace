@@ -24,7 +24,7 @@ admin.initializeApp();
 
 //Notify Admin when seller uploads a listing
 exports.notifyAdminOnNewListing = functions.firestore
-.documenent("listings/listingId")
+.document("listings/listingId")
 .onCreate( async (snap, context) => {
     const listing =snap.data();
 
@@ -38,4 +38,41 @@ exports.notifyAdminOnNewListing = functions.firestore
 
     await admin.messaging().send(messsage);
     console.log("Notification sent to admin");
+});
+
+//Notify Seller when listing is approved or rejected
+exports.notifySellerOnStatusChange = functions.firestore
+.document("listing/{listingId}")
+.onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+
+    if (before.status !== after.status) {
+        const sellerId = after.sellerId;
+        if (!sellerId) return;
+
+        const sellerDoc = await admin.firestore().collection("users").doc(sellerId).get();
+        const fcmToken = sellerDoc.data()?.fcmToken;
+        if(!fcmToken) return;
+
+        let messageBody = "";
+        if (after.status ==="approved") {
+            messageBody = `Your listing "${after.title}" has been approved.`;
+        } else if(after.status === "rejected") {
+            messageBody = `Your listing "${after.title}" has been rejected.`;
+        } else {
+            return;
+        }
+
+        const message = {
+            notification: {
+                title: "Listing Status Updated",
+                body: messageBody,
+            },
+            token: fcmToken,
+        };
+
+        await admin.messaging().send.send(message);
+        console.log("Notification sent to seller");
+    }
 });
