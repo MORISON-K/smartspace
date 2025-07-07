@@ -28,7 +28,7 @@ exports.notifyAdminOnNewListing = functions.firestore
 .onCreate( async (snap, context) => {
     const listing =snap.data();
 
-    const payload = {
+    const message = {
         notification: {
             title: "New listing has been submitted",
             body: `Seller ${listing.sellerName} submitted a new listing.`
@@ -72,7 +72,7 @@ exports.notifySellerOnStatusChange = functions.firestore
             token: fcmToken,
         };
 
-        await admin.messaging().send.send(message);
+        await admin.messaging().send(message);
         console.log("Notification sent to seller");
     }
 });
