@@ -6,9 +6,11 @@ import 'package:smartspace/seller/my_listings_screen.dart';
 import 'package:smartspace/seller/add_listing_screen.dart';
 import 'package:smartspace/seller/ai-valuation/ai_valuation.dart';
 import 'package:smartspace/seller/analytics_screen.dart';
-import 'package:smartspace/seller/noticications_screen.dart';
+import 'package:smartspace/notifications/notifications_screen.dart';
 import 'package:smartspace/seller/profile_screen.dart';
 import 'package:smartspace/seller/seller_home_screen.dart';
+import 'package:smartspace/notifications/notifications_service.dart';
+import 'package:smartspace/notifications/notification_test.dart';
 
 // Global navigator key for navigation from anywhere in the app
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -16,7 +18,11 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Initialize notifications only, token will be updated when user logs in
+  // or if user is already logged in, it will be updated by the auth state listener
   await FirebaseApi().initNofications();
+
   runApp(const SmartSpace());
 }
 
@@ -33,11 +39,11 @@ class SmartSpace extends StatelessWidget {
         '/mylistings_screen': (context) => const MyListingsScreen(),
         '/analytics_screen': (context) => AnalyticsScreen(),
         '/ai_valuation': (context) => AiValuationScreen(),
-        '/notifications_screen': (context) => NoticicationsScreen(),
+        '/notifications_screen': (context) => NotificationsScreen(),
         '/add_listing_screen': (context) => AddListingScreen(),
         '/seller_home_screen': (context) => SellerHomeScreen(),
         '/profile_screen': (context) => ProfileScreen(),
-
+        '/notification_test': (context) => const NotificationTestScreen(),
       },
     );
   }
