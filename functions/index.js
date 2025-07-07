@@ -48,7 +48,7 @@ exports.notifySellerOnStatusChange = functions.firestore
     const after = change.after.data();
 
     if (before.status !== after.status) {
-        const sellerId = after.sellerId;
+        const sellerId = after.user_id;
         if (!sellerId) return;
 
         const sellerDoc = await admin.firestore().collection("users").doc(sellerId).get();
