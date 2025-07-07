@@ -3,6 +3,7 @@ import 'package:smartspace/buyer/favorite_screen.dart';
 import 'package:smartspace/buyer/home_screen_content.dart';
 import 'package:smartspace/buyer/search_screen.dart';
 
+
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
 
