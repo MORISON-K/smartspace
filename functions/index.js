@@ -36,13 +36,13 @@ exports.notifyAdminOnNewListing = functions.firestore
         topic: "admin",
     };
 
-    await admin.messaging().send(messsage);
+    await admin.messaging().send(message);
     console.log("Notification sent to admin");
 });
 
 //Notify Seller when listing is approved or rejected
 exports.notifySellerOnStatusChange = functions.firestore
-.document("listing/{listingId}")
+.document("listings/{listingId}")
 .onUpdate(async (change, context) => {
     const before = change.before.data();
     const after = change.after.data();
