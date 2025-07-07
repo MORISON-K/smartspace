@@ -17,3 +17,25 @@ const logger = require("firebase-functions/logger");
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
+
+//Notify Admin when seller uploads a listing
+exports.notifyAdminOnNewListing = functions.firestore
+.documenent("listings/listingId")
+.onCreate( async (snap, context) => {
+    const listing =snap.data();
+
+    const payload = {
+        notification: {
+            title: "New listing has been submitted",
+            body: `Seller ${listing.sellerName} submitted a new listing.`
+        },
+        topic: "admin",
+    };
+
+    await admin.messaging().send(messsage);
+    console.log("Notification sent to admin");
+});
