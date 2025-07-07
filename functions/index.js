@@ -7,8 +7,6 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {onRequest} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
@@ -24,7 +22,7 @@ admin.initializeApp();
 
 //Notify Admin when seller uploads a listing
 exports.notifyAdminOnNewListing = functions.firestore
-.document("listings/listingId")
+.document("listings/{listingId}")
 .onCreate( async (snap, context) => {
     const listing =snap.data();
 
@@ -50,11 +48,12 @@ exports.notifySellerOnStatusChange = functions.firestore
     if (before.status !== after.status) {
         const sellerId = after.user_id;
         if (!sellerId) return;
-
+    
         const sellerDoc = await admin.firestore().collection("users").doc(sellerId).get();
-        const fcmToken = sellerDoc.data()?.fcmToken;
+        const sellerData = sellerDoc.data();
+        const fcmToken = sellerData && sellerData.fcmToken;
         if(!fcmToken) return;
-
+    
         let messageBody = "";
         if (after.status ==="approved") {
             messageBody = `Your listing "${after.title}" has been approved.`;
@@ -63,7 +62,7 @@ exports.notifySellerOnStatusChange = functions.firestore
         } else {
             return;
         }
-
+    
         const message = {
             notification: {
                 title: "Listing Status Updated",
@@ -71,7 +70,7 @@ exports.notifySellerOnStatusChange = functions.firestore
             },
             token: fcmToken,
         };
-
+    
         await admin.messaging().send(message);
         console.log("Notification sent to seller");
     }
