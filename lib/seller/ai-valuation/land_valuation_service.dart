@@ -4,9 +4,11 @@ class LandValuationService {
   // Temporary static base prices by district (UGX per acre)
   final Map<String, double> basePrices = {
     "Kampala": 90000000,
-    "Wakiso": 40000000,
+    "Wakiso": 60000000,
     "Mukono": 35000000,
-    "Mbarara": 20000000,
+    "Mbarara": 30000000,
+    "Masaka": 20000000,
+    "Mpigi": 14000000,
     "Gulu": 18000000,
     "Other": 10000000,
   };
