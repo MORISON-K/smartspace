@@ -32,6 +32,11 @@ class SmartSpace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.amber,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       home: LoginScreen(),
