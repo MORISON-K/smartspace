@@ -133,9 +133,11 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
 
               const SizedBox(height: 20),
 
-              ElevatedButton(
+              OutlinedButton.icon(
                 onPressed: _calculateEstimate,
-                child: const Text("Estimate Price"),
+                 icon: const Icon(Icons.auto_awesome),
+                label: const Text("Estimate Price"),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.blue),
               ),
 
               if (_estimatedPrice != null) ...[
