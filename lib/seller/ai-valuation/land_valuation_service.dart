@@ -1,4 +1,3 @@
-
 import 'package:smartspace/seller/ai-valuation/property_input.dart';
 
 class LandValuationService {
@@ -91,16 +90,11 @@ class LandValuationService {
       notes.add("-10% for rough/swampy land");
     }
 
-    // if (input.shape == "Regular") {
-    //   notes.add("+5% for regular shape");
-    // } else {
-    //   notes.add("-5% for irregular shape");
-    // }
-
     if (input.distanceToTownKm <= 2) {
       notes.add("+10% for being close to town");
-    } else if (input.distanceToTownKm > 5)
+    } else if (input.distanceToTownKm > 5) {
       notes.add("-5% for being far from town");
+    }
 
     if (input.landUse == "Commercial" || input.landUse == "Mixed-use") {
       notes.add("+20% for commercial land");
