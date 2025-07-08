@@ -17,6 +17,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
 
+  // Bottom navigation index
+  int _currentIndex = 0;
+
   // Helper to format currency
   String _formatPrice(String price) {
     final value = double.tryParse(price) ?? 0;
@@ -48,182 +51,302 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return DateFormat('h:mm a').format(timestamp.toDate());
   }
 
+  // Build pending listings tab
+  Widget _buildPendingListingsTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: listingsCollection
+          .where('status', isEqualTo: 'pending')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.pending_actions,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "No pending listings",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final listings = snapshot.data!.docs;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SectionHeader(
+                title: "📝 Pending Listings", 
+                count: listings.length
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                itemCount: listings.length,
+                itemBuilder: (context, index) {
+                  final listing = listings[index];
+                  final data = listing.data() as Map<String, dynamic>;
+                  return _PendingItem(
+                    id: listing.id,
+                    title: data['description'] ?? 'No Description',
+                    location: data['location'] ?? 'Unknown Location',
+                    price: data['price'] != null 
+                        ? _formatPrice(data['price']) 
+                        : 'Price not set',
+                    createdAt: data['createdAt'] as Timestamp? ?? Timestamp.now(),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Build user requests tab
+  Widget _buildUserRequestsTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: usersCollection
+          .where('requests', isGreaterThan: 0)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.message_outlined,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "No user requests",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final users = snapshot.data!.docs;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SectionHeader(
+                title: "📩 User Requests", 
+                count: users.length
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  final data = user.data() as Map<String, dynamic>;
+                  return _RequestItem(
+                    id: user.id,
+                    user: data['name'] ?? 'Unknown User',
+                    message: data['lastRequest'] ?? 'No message',
+                    createdAt: data['lastRequestTime'] as Timestamp? ?? Timestamp.now(),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "👋 Welcome back, Admin!",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "👋 Welcome back, Admin!",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "Manage your platform",
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                       ),
-                      Text(
-                        "Manage your platform",
-                        style: Theme.of(context).textTheme.bodySmall,
+                      const CircleAvatar(
+                        backgroundColor: Colors.blue,
+                        child: Text("A"),
                       ),
                     ],
                   ),
-                  const CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Text("A"),
+                  const SizedBox(height: 20),
+                  // Search bar
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: "Search listings, users or requests...",
+                      prefixIcon: const Icon(Icons.search, size: 22),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Search bar
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Search listings, users or requests...",
-                  prefixIcon: const Icon(Icons.search, size: 22),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Real-time data sections
-              Expanded(
-                child: Column(
-                  children: [
-                    // Pending Listings Section
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          StreamBuilder<QuerySnapshot>(
-                            stream: listingsCollection
-                                .where('status', isEqualTo: 'pending')
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const Center(child: CircularProgressIndicator());
-                              }
-                              
-                              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                                return const SectionHeader(
-                                  title: "📝 Pending Listings", 
-                                  count: 0,
-                                  child: Center(child: Text("No pending listings")),
-                                );
-                              }
-                              
-                              final listings = snapshot.data!.docs;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SectionHeader(
-                                    title: "📝 Pending Listings", 
-                                    count: listings.length
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: listings.length,
-                                      itemBuilder: (context, index) {
-                                        final listing = listings[index];
-                                        final data = listing.data() as Map<String, dynamic>;
-                                        return _PendingItem(
-                                          id: listing.id,
-                                          title: data['description'] ?? 'No Description',
-                                          location: data['location'] ?? 'Unknown Location',
-                                          price: data['price'] != null 
-                                              ? _formatPrice(data['price']) 
-                                              : 'Price not set',
-                                          createdAt: data['createdAt'] as Timestamp? ?? Timestamp.now(),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Responds to Requests Section
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          StreamBuilder<QuerySnapshot>(
-                            stream: usersCollection
-                                .where('requests', isGreaterThan: 0)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const Center(child: CircularProgressIndicator());
-                              }
-                              
-                              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                                return const SectionHeader(
-                                  title: "📩 User Requests", 
-                                  count: 0,
-                                  child: Center(child: Text("No user requests")),
-                                );
-                              }
-                              
-                              final users = snapshot.data!.docs;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SectionHeader(
-                                    title: "📩 User Requests", 
-                                    count: users.length
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: users.length,
-                                      itemBuilder: (context, index) {
-                                        final user = users[index];
-                                        final data = user.data() as Map<String, dynamic>;
-                                        return _RequestItem(
-                                          id: user.id,
-                                          user: data['name'] ?? 'Unknown User',
-                                          message: data['lastRequest'] ?? 'No message',
-                                          createdAt: data['lastRequestTime'] as Timestamp? ?? Timestamp.now(),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+            
+            // Content based on selected tab
+            Expanded(
+              child: _currentIndex == 0 
+                  ? _buildPendingListingsTab()
+                  : _buildUserRequestsTab(),
+            ),
+          ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blue[800],
+        unselectedItemColor: Colors.grey[600],
+        backgroundColor: Colors.white,
+        elevation: 8,
+        items: [
+          BottomNavigationBarItem(
+            icon: StreamBuilder<QuerySnapshot>(
+              stream: listingsCollection
+                  .where('status', isEqualTo: 'pending')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                return Stack(
+                  children: [
+                    const Icon(Icons.pending_actions),
+                    if (count > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            count.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            label: 'Pending Listings',
+          ),
+          BottomNavigationBarItem(
+            icon: StreamBuilder<QuerySnapshot>(
+              stream: usersCollection
+                  .where('requests', isGreaterThan: 0)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                return Stack(
+                  children: [
+                    const Icon(Icons.message),
+                    if (count > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            count.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            label: 'User Requests',
+          ),
+        ],
       ),
     );
   }
@@ -378,7 +501,7 @@ class _PendingItem extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text("Approve"),
+                    child: const                     Text("Approve"),
                   ),
                 ),
               ],
@@ -431,9 +554,54 @@ class _RequestItem extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Text(
-          message,
-          style: TextStyle(color: Colors.grey[600]),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              message,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      // View request details
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text("View Details"),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () async {
+                      // Handle/respond to request
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(id)
+                          .update({'requests': 0});
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text("Respond"),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         trailing: Text(
           formattedTime,
@@ -443,7 +611,7 @@ class _RequestItem extends StatelessWidget {
           ),
         ),
         onTap: () {
-          // Handle request
+          // Handle request tap
         },
       ),
     );
