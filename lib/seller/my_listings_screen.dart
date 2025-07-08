@@ -53,10 +53,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   Future<void> showEditDialog(String docId, Map<String, dynamic> data) async {
-    final _titleController = TextEditingController(text: data['title']);
-    final _priceController = TextEditingController(text: data['price'].toString());
-    final _locationController = TextEditingController(text: data['location']);
-    final _descriptionController = TextEditingController(text: data['description']);
+    final titleController = TextEditingController(text: data['title']);
+    final priceController = TextEditingController(text: data['price'].toString());
+    final locationController = TextEditingController(text: data['location']);
+    final descriptionController = TextEditingController(text: data['description']);
     String imageUrl = (data['images'] as List<dynamic>).isNotEmpty ? data['images'][0] : '';
     File? newImageFile;
 
@@ -93,20 +93,20 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   ),
                   SizedBox(height: 10),
                   TextField(
-                    controller: _titleController,
+                    controller: titleController,
                     decoration: InputDecoration(labelText: 'Title'),
                   ),
                   TextField(
-                    controller: _priceController,
+                    controller: priceController,
                     decoration: InputDecoration(labelText: 'Price'),
                     keyboardType: TextInputType.number,
                   ),
                   TextField(
-                    controller: _locationController,
+                    controller: locationController,
                     decoration: InputDecoration(labelText: 'Location'),
                   ),
                   TextField(
-                    controller: _descriptionController,
+                    controller: descriptionController,
                     decoration: InputDecoration(labelText: 'Description'),
                     maxLines: 2,
                   ),
@@ -130,10 +130,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   }
 
                   await FirebaseFirestore.instance.collection('listings').doc(docId).update({
-                    'title': _titleController.text,
-                    'price': _priceController.text,
-                    'location': _locationController.text,
-                    'description': _descriptionController.text,
+                    'title': titleController.text,
+                    'price': priceController.text,
+                    'location': locationController.text,
+                    'description': descriptionController.text,
                     'images': [updatedImageUrl],
                   });
 
@@ -164,14 +164,17 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             .where('user_id', isEqualTo: user?.uid)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
+          }
 
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(child: Text('No listings found'));
+          }
 
           final docs = snapshot.data!.docs;
           return ListView.builder(
@@ -213,7 +216,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                       isThreeLine: true,
                       trailing: Text('\$$price'),
                     ),
-                    ButtonBar(
+                    OverflowBar(
                       alignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
