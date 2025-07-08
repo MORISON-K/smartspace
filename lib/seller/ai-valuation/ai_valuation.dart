@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:smartspace/seller/ai-valuation/land_valuation_service.dart';
 import 'package:smartspace/seller/ai-valuation/property_input.dart';
 
-
 class AiValuationScreen extends StatefulWidget {
   const AiValuationScreen({super.key});
 
@@ -11,7 +10,7 @@ class AiValuationScreen extends StatefulWidget {
 }
 
 class _AiValuationScreenState extends State<AiValuationScreen> {
-   final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   // Form fields
   double _sizeInAcres = 0.5;
@@ -23,7 +22,6 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
   String _landUse = 'Residential';
   String _terrain = 'Flat';
   double _distanceToTownKm = 1.0;
-  
 
   double? _estimatedPrice;
   String? _explanation;
@@ -31,8 +29,6 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
   final _valuationService = LandValuationService();
 
   void _calculateEstimate() {
-   
-
     final input = PropertyInput(
       sizeInAcres: _sizeInAcres,
       locationDistrict: _district,
@@ -54,9 +50,11 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Estimate Land Value'),
-      backgroundColor:  const Color.fromARGB(255, 167, 184, 198),),
-      body: SingleChildScrollView( 
+      appBar: AppBar(
+        title: const Text('Estimate Land Value'),
+        backgroundColor: const Color.fromARGB(255, 167, 184, 198),
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -64,7 +62,9 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
             children: [
               // Size
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Land Size (acres)'),
+                decoration: _aiDecoration(
+                   'Land Size (acres)',
+                ),
                 keyboardType: TextInputType.number,
                 initialValue: _sizeInAcres.toString(),
                 onChanged: (val) => _sizeInAcres = double.tryParse(val) ?? 0.5,
@@ -74,11 +74,15 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
               // District dropdown
               DropdownButtonFormField(
                 value: _district,
-                items: ['Kampala', 'Wakiso', 'Mukono', 'Mbarara', 'Gulu']
-                    .map((loc) => DropdownMenuItem(value: loc, child: Text(loc)))
-                    .toList(),
+                items:
+                    ['Kampala', 'Wakiso', 'Mukono', 'Mbarara', 'Gulu']
+                        .map(
+                          (loc) =>
+                              DropdownMenuItem(value: loc, child: Text(loc)),
+                        )
+                        .toList(),
                 onChanged: (val) => setState(() => _district = val!),
-                decoration: const InputDecoration(labelText: 'District'),
+                decoration: _aiDecoration('District'),
               ),
 
               // Toggle switches
@@ -106,47 +110,64 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
               // Land use
               DropdownButtonFormField(
                 value: _landUse,
-                items: ['Residential', 'Commercial', 'Agricultural']
-                    .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                    .toList(),
+                items:
+                    ['Residential', 'Commercial', 'Agricultural']
+                        .map(
+                          (type) =>
+                              DropdownMenuItem(value: type, child: Text(type)),
+                        )
+                        .toList(),
                 onChanged: (val) => setState(() => _landUse = val!),
-                decoration: const InputDecoration(labelText: 'Land Use'),
+                decoration: _aiDecoration('Land Use'),
               ),
+
+              SizedBox(height: 15,),
 
               //Terrain
               DropdownButtonFormField(
                 value: _terrain,
-                items: ['Flat', 'Rocky', 'Swampy']
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
+                items:
+                    ['Flat', 'Rocky', 'Swampy']
+                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                        .toList(),
                 onChanged: (val) => setState(() => _terrain = val!),
-                decoration: const InputDecoration(labelText: 'Terrain'),
+                decoration: _aiDecoration('Terrain'),
               ),
+
+               SizedBox(height: 15,),
 
               // Distance to town
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Distance to Town (km)'),
+                decoration: _aiDecoration(
+                   'Distance to Town (km)',
+                ),
                 keyboardType: TextInputType.number,
                 initialValue: _distanceToTownKm.toString(),
-                onChanged: (val) => _distanceToTownKm = double.tryParse(val) ?? 1.0,
+                onChanged:
+                    (val) => _distanceToTownKm = double.tryParse(val) ?? 1.0,
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
 
               OutlinedButton.icon(
                 onPressed: _calculateEstimate,
-                 icon: const Icon(Icons.auto_awesome),
+                icon: const Icon(Icons.auto_awesome),
                 label: const Text("Estimate Price"),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.blue),
               ),
 
               if (_estimatedPrice != null) ...[
                 const SizedBox(height: 20),
-                Text("Estimated Value: ${_estimatedPrice!.toStringAsFixed(2)} UGX",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  "Estimated Value: ${_estimatedPrice!.toStringAsFixed(2)} UGX",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Text("Breakdown: $_explanation"),
-              ]
+              ],
             ],
           ),
         ),
@@ -154,3 +175,21 @@ class _AiValuationScreenState extends State<AiValuationScreen> {
     );
   }
 }
+
+  InputDecoration _aiDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF007BFF), width: 2.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade400),
+      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
