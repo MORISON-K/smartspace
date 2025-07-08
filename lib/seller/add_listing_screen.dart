@@ -99,6 +99,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
           _showSnack("You must be logged in to submit a listing");
           return;
         }
+
+        // Get seller name from users collection
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+        final sellerName = userDoc.data()?['name'] ?? 'Unknown Seller';
         // Convert location string to latitude and longitude coordinates
         final placemarks = await locationFromAddress(
           _locationController.text.trim(),
@@ -137,6 +145,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
           'pdf': pdfUrl,
           'createdAt': Timestamp.now(),
           'user_id': user.uid,
+          'sellerName': sellerName,
           "status": "pending",
         });
 
