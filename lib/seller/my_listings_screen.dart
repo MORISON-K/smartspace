@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -10,8 +14,143 @@ class MyListingsScreen extends StatefulWidget {
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
-
   final user = FirebaseAuth.instance.currentUser;
+
+  Future<void> deleteListing(String docId) async {
+    try {
+      await FirebaseFirestore.instance.collection('listings').doc(docId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Listing deleted")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to delete listing")),
+      );
+    }
+  }
+
+  void confirmDelete(String docId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Confirm Delete"),
+        content: Text("Are you sure you want to delete this listing?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              deleteListing(docId);
+            },
+            child: Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showEditDialog(String docId, Map<String, dynamic> data) async {
+    final _titleController = TextEditingController(text: data['title']);
+    final _priceController = TextEditingController(text: data['price'].toString());
+    final _locationController = TextEditingController(text: data['location']);
+    final _descriptionController = TextEditingController(text: data['description']);
+    String imageUrl = (data['images'] as List<dynamic>).isNotEmpty ? data['images'][0] : '';
+    File? newImageFile;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text("Edit Listing"),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                      if (pickedFile != null) {
+                        setState(() {
+                          newImageFile = File(pickedFile.path);
+                        });
+                      }
+                    },
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: newImageFile != null
+                          ? Image.file(newImageFile!, fit: BoxFit.cover)
+                          : (imageUrl.isNotEmpty
+                              ? Image.network(imageUrl, fit: BoxFit.cover)
+                              : Icon(Icons.add_a_photo)),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(labelText: 'Title'),
+                  ),
+                  TextField(
+                    controller: _priceController,
+                    decoration: InputDecoration(labelText: 'Price'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(labelText: 'Location'),
+                  ),
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(labelText: 'Description'),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  String updatedImageUrl = imageUrl;
+
+                  if (newImageFile != null) {
+                    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+                    final ref = FirebaseStorage.instance.ref().child('listing_images').child(fileName);
+                    await ref.putFile(newImageFile!);
+                    updatedImageUrl = await ref.getDownloadURL();
+                  }
+
+                  await FirebaseFirestore.instance.collection('listings').doc(docId).update({
+                    'title': _titleController.text,
+                    'price': _priceController.text,
+                    'location': _locationController.text,
+                    'description': _descriptionController.text,
+                    'images': [updatedImageUrl],
+                  });
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Listing updated")),
+                  );
+                },
+                child: Text("Save"),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,113 +158,75 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         title: Text("My Listings"),
         backgroundColor: Color.fromARGB(255, 164, 192, 221),
       ),
-      
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-        .collection('listings')
-        .where('user_id', isEqualTo: user?.uid)
-        .snapshots(),
+            .collection('listings')
+            .where('user_id', isEqualTo: user?.uid)
+            .snapshots(),
         builder: (context, snapshot) {
-          // Show loading indicator while data is being fetched
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting)
             return Center(child: CircularProgressIndicator());
-          }
 
-          // Handle errors
-          if (snapshot.hasError) {
+          if (snapshot.hasError)
             return Center(child: Text('Error: ${snapshot.error}'));
-          }
 
-          // Handle case when no data is available
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
             return Center(child: Text('No listings found'));
-          }
 
           final docs = snapshot.data!.docs;
           return ListView.builder(
             itemCount: docs.length,
             itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
+              final doc = docs[index];
+              final data = doc.data() as Map<String, dynamic>;
               final images = data['images'] as List<dynamic>? ?? [];
-              final imageUrl = images.isNotEmpty ? images[0] as String : '';
+              final imageUrl = images.isNotEmpty ? images[0] : '';
               final description = data['description'] ?? 'No description';
-              final title =
-                  data['title'] ?? 'Property Listing'; // Better fallback title
+              final title = data['title'] ?? 'Property Listing';
               final price = data['price'] ?? 'N/A';
               final location = data['location'] ?? 'No location';
 
-              // Debug print to check image URL and data
-              print('Listing $index has ${images.length} images');
-              print('First image URL for listing $index: "$imageUrl"');
-              print('Image URL isEmpty: ${imageUrl.isEmpty}');
-
               return Card(
                 margin: EdgeInsets.all(8.0),
-                child: ListTile(
-                  leading: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: imageUrl.isNotEmpty
+                              ? Image.network(imageUrl, fit: BoxFit.cover)
+                              : Icon(Icons.home, color: Colors.grey),
+                        ),
+                      ),
+                      title: Text(title),
+                      subtitle: Text(
+                        '$description\n📍 $location',
+                        style: TextStyle(height: 1.3),
+                      ),
+                      isThreeLine: true,
+                      trailing: Text('\$$price'),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child:
-                          imageUrl.isNotEmpty
-                              ? Image.network(
-                                imageUrl,
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                                loadingBuilder: (
-                                  context,
-                                  child,
-                                  loadingProgress,
-                                ) {
-                                  if (loadingProgress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  print('Error loading image: $error');
-                                  return Container(
-                                    color: Colors.grey.shade200,
-                                    child: Icon(
-                                      Icons.error,
-                                      color: Colors.red,
-                                      size: 30,
-                                    ),
-                                  );
-                                },
-                              )
-                              : Container(
-                                color: Colors.grey.shade200,
-                                child: Icon(
-                                  Icons.home,
-                                  color: Colors.grey,
-                                  size: 30,
-                                ),
-                              ),
+                    ButtonBar(
+                      alignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => showEditDialog(doc.id, data),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => confirmDelete(doc.id),
+                        ),
+                      ],
                     ),
-                  ),
-                  title: Text(title),
-                  subtitle: Text(
-                    '$description\n📍 $location',
-                    style: TextStyle(height: 1.3),
-                  ),
-                  isThreeLine: true,
-                  trailing: Text('\$$price'),
+                  ],
                 ),
               );
             },
@@ -135,3 +236,5 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 }
+
+
