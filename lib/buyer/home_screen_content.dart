@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Reference to the "lands" collection.
 final CollectionReference<Map<String, dynamic>> landRef =
-    FirebaseFirestore.instance.collection('lands');
+    FirebaseFirestore.instance.collection('listings');
 
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
@@ -62,7 +61,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               final item = listings[index];
               final images = item['images'] as List<dynamic>?;
               final imageUrl = (images != null && images.isNotEmpty) ? images[0] as String : null;
-              final pdfUrl = item['pdf'] as String?;
 
               return Card(
                 elevation: 4,
@@ -100,23 +98,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                           Text('Price: UGX ${item['price'] ?? '0'}'),
                           Text('Contact: ${item['mobile_number'] ?? '-'}'),
                           const SizedBox(height: 10),
-                          if (pdfUrl != null)
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text("View Land Title PDF"),
-                              onPressed: () async {
-                                final uri = Uri.parse(pdfUrl);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri,
-                                      mode: LaunchMode.externalApplication);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Could not open PDF')),
-                                  );
-                                }
-                              },
-                            ),
                         ],
                       ),
                     ),
