@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:smartspace/admin/screens/property_details_screen.dart';
+import 'package:smartspace/admin/models/properties.dart';
+  
+  
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,7 +16,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   // Firestore references
   final CollectionReference listingsCollection =
-      FirebaseFirestore.instance.collection('Listings');
+      FirebaseFirestore.instance.collection('listings');
       
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
@@ -50,6 +54,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _formatTime(Timestamp timestamp) {
     return DateFormat('h:mm a').format(timestamp.toDate());
   }
+
+  // Navigate to property details
+  void _navigateToPropertyDetails(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    
+    // Create a Property object from the document data
+    final property = Property.fromFirestore(data, doc.id);
+      
+
+    // Navigate to PropertyDetailsScreen
+   Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PropertyDetailsScreen(property: property),
+    ),
+  ).then((result) {
+    // Refresh the list if needed
+    if (result == true) {
+      setState(() {});
+    }
+  });
+}
 
   // Build pending listings tab
   Widget _buildPendingListingsTab() {
@@ -103,6 +129,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 itemBuilder: (context, index) {
                   final listing = listings[index];
                   final data = listing.data() as Map<String, dynamic>;
+                  
                   return _PendingItem(
                     id: listing.id,
                     title: data['description'] ?? 'No Description',
@@ -111,6 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? _formatPrice(data['price']) 
                         : 'Price not set',
                     createdAt: data['createdAt'] as Timestamp? ?? Timestamp.now(),
+                    onViewDetails: () => _navigateToPropertyDetails(listing),
                   );
                 },
               ),
@@ -303,7 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
-            label: 'Pending Listings',
+            label: 'Pending listings',
           ),
           BottomNavigationBarItem(
             icon: StreamBuilder<QuerySnapshot>(
@@ -409,6 +437,7 @@ class _PendingItem extends StatelessWidget {
   final String location;
   final String price;
   final Timestamp createdAt;
+  final VoidCallback onViewDetails;
 
   const _PendingItem({
     required this.id,
@@ -416,6 +445,7 @@ class _PendingItem extends StatelessWidget {
     required this.location,
     required this.price,
     required this.createdAt,
+    required this.onViewDetails,
   });
 
   @override
@@ -446,7 +476,7 @@ class _PendingItem extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+                        const SizedBox(height: 8),
             Text(
               title,
               style: const TextStyle(
@@ -472,9 +502,7 @@ class _PendingItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      // View listing details
-                    },
+                    onPressed: onViewDetails,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -490,7 +518,7 @@ class _PendingItem extends StatelessWidget {
                     onPressed: () async {
                       // Approve listing
                       await FirebaseFirestore.instance
-                          .collection('Listings')
+                          .collection('listings')
                           .doc(id)
                           .update({'status': 'approved'});
                     },
@@ -501,7 +529,7 @@ class _PendingItem extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const                     Text("Approve"),
+                    child: const Text("Approve"),
                   ),
                 ),
               ],
@@ -617,3 +645,4 @@ class _RequestItem extends StatelessWidget {
     );
   }
 }
+
