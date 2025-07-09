@@ -3,8 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:smartspace/admin/screens/property_details_screen.dart';
 import 'package:smartspace/admin/models/properties.dart';
-  
-  
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,14 +13,15 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // Firestore references
-  final CollectionReference listingsCollection =
-      FirebaseFirestore.instance.collection('listings');
-      
-  final CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection('users');
+  final CollectionReference listingsCollection = FirebaseFirestore.instance
+      .collection('listings');
+
+  final CollectionReference usersCollection = FirebaseFirestore.instance
+      .collection('users');
 
   // Bottom navigation index
   int _currentIndex = 0;
+  bool _sortDescending = true;
 
   // Helper to format currency
   String _formatPrice(String price) {
@@ -38,7 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final date = timestamp.toDate();
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
     } else if (difference.inHours > 0) {
@@ -58,59 +57,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Navigate to property details
   void _navigateToPropertyDetails(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Create a Property object from the document data
     final property = Property.fromFirestore(data, doc.id);
-      
 
     // Navigate to PropertyDetailsScreen
-   Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PropertyDetailsScreen(property: property),
-    ),
-  ).then((result) {
-    // Refresh the list if needed
-    if (result == true) {
-      setState(() {});
-    }
-  });
-}
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PropertyDetailsScreen(property: property),
+      ),
+    ).then((result) {
+      // Refresh the list if needed
+      if (result == true) {
+        setState(() {});
+      }
+    });
+  }
 
   // Build pending listings tab
   Widget _buildPendingListingsTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: listingsCollection
-          .where('status', isEqualTo: 'pending')
-          .snapshots(),
+      stream:
+          listingsCollection.where('status', isEqualTo: 'pending').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.pending_actions,
-                  size: 64,
-                  color: Colors.grey,
-                ),
+                Icon(Icons.pending_actions, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
                   "No pending listings",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
               ],
             ),
           );
         }
-        
+
         final listings = snapshot.data!.docs;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,8 +108,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SectionHeader(
-                title: "📝 Pending Listings", 
-                count: listings.length
+                title: "📝 Pending Listings",
+                count: listings.length,
               ),
             ),
             Expanded(
@@ -129,15 +119,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 itemBuilder: (context, index) {
                   final listing = listings[index];
                   final data = listing.data() as Map<String, dynamic>;
-                  
+
                   return _PendingItem(
                     id: listing.id,
                     title: data['description'] ?? 'No Description',
                     location: data['location'] ?? 'Unknown Location',
-                    price: data['price'] != null 
-                        ? _formatPrice(data['price']) 
-                        : 'Price not set',
-                    createdAt: data['createdAt'] as Timestamp? ?? Timestamp.now(),
+                    price:
+                        data['price'] != null
+                            ? _formatPrice(data['price'])
+                            : 'Price not set',
+                    createdAt:
+                        data['createdAt'] as Timestamp? ?? Timestamp.now(),
                     onViewDetails: () => _navigateToPropertyDetails(listing),
                   );
                 },
@@ -152,37 +144,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Build user requests tab
   Widget _buildUserRequestsTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: usersCollection
-          .where('requests', isGreaterThan: 0)
-          .snapshots(),
+      stream: usersCollection.where('requests', isGreaterThan: 0).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.message_outlined,
-                  size: 64,
-                  color: Colors.grey,
-                ),
+                Icon(Icons.message_outlined, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
                   "No user requests",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
               ],
             ),
           );
         }
-        
+
         final users = snapshot.data!.docs;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,8 +173,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SectionHeader(
-                title: "📩 User Requests", 
-                count: users.length
+                title: "📩 User Requests",
+                count: users.length,
               ),
             ),
             Expanded(
@@ -205,7 +188,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     id: user.id,
                     user: data['name'] ?? 'Unknown User',
                     message: data['lastRequest'] ?? 'No message',
-                    createdAt: data['lastRequestTime'] as Timestamp? ?? Timestamp.now(),
+                    createdAt:
+                        data['lastRequestTime'] as Timestamp? ??
+                        Timestamp.now(),
                   );
                 },
               ),
@@ -263,18 +248,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       filled: true,
                       fillColor: Colors.grey[100],
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 16,
+                      ),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  DropdownButton<bool>(
+                    value: _sortDescending,
+                    underline: const SizedBox(),
+                    items: const [
+                      DropdownMenuItem(value: true, child: Text("Most Recent")),
+                      DropdownMenuItem(value: false, child: Text("Oldest")),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _sortDescending = value;
+                        });
+                      }
+                    },
                   ),
                 ],
               ),
             ),
-            
+
             // Content based on selected tab
             Expanded(
-              child: _currentIndex == 0 
-                  ? _buildPendingListingsTab()
-                  : _buildUserRequestsTab(),
+              child:
+                  _currentIndex == 0
+                      ? _buildPendingListingsTab()
+                      : _buildUserRequestsTab(),
             ),
           ],
         ),
@@ -294,9 +299,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         items: [
           BottomNavigationBarItem(
             icon: StreamBuilder<QuerySnapshot>(
-              stream: listingsCollection
-                  .where('status', isEqualTo: 'pending')
-                  .snapshots(),
+              stream:
+                  listingsCollection
+                      .where('status', isEqualTo: 'pending')
+                      .snapshots(),
               builder: (context, snapshot) {
                 final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
                 return Stack(
@@ -335,9 +341,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           BottomNavigationBarItem(
             icon: StreamBuilder<QuerySnapshot>(
-              stream: usersCollection
-                  .where('requests', isGreaterThan: 0)
-                  .snapshots(),
+              stream:
+                  usersCollection
+                      .where('requests', isGreaterThan: 0)
+                      .snapshots(),
               builder: (context, snapshot) {
                 final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
                 return Stack(
@@ -386,7 +393,7 @@ class SectionHeader extends StatelessWidget {
   final String title;
   final int count;
   final Widget? child;
-  
+
   const SectionHeader({
     super.key,
     required this.title,
@@ -403,10 +410,7 @@ class SectionHeader extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: 8),
             Container(
@@ -450,7 +454,11 @@ class _PendingItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeAgo = (context.findAncestorStateOfType<_DashboardScreenState>()?._formatTimeDifference(createdAt) ?? '');
+    final timeAgo =
+        (context
+                .findAncestorStateOfType<_DashboardScreenState>()
+                ?._formatTimeDifference(createdAt) ??
+            '');
 
     return Card(
       elevation: 0,
@@ -469,26 +477,17 @@ class _PendingItem extends StatelessWidget {
                 const Spacer(),
                 Text(
                   timeAgo,
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
               ],
             ),
-                        const SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 4),
-            Text(
-              location,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            Text(location, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 4),
             Text(
               price,
@@ -556,7 +555,11 @@ class _RequestItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedTime = (context.findAncestorStateOfType<_DashboardScreenState>()?._formatTime(createdAt) ?? '');
+    final formattedTime =
+        (context.findAncestorStateOfType<_DashboardScreenState>()?._formatTime(
+              createdAt,
+            ) ??
+            '');
 
     return Card(
       elevation: 0,
@@ -576,20 +579,12 @@ class _RequestItem extends StatelessWidget {
           ),
           child: const Icon(Icons.person, color: Colors.blue),
         ),
-        title: Text(
-          user,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text(user, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text(
-              message,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            Text(message, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -633,10 +628,7 @@ class _RequestItem extends StatelessWidget {
         ),
         trailing: Text(
           formattedTime,
-          style: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.grey[500], fontSize: 12),
         ),
         onTap: () {
           // Handle request tap
@@ -645,4 +637,3 @@ class _RequestItem extends StatelessWidget {
     );
   }
 }
-
