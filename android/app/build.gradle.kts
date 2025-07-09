@@ -9,6 +9,7 @@ plugins {
 }
 
 android {
+    
     namespace = "com.example.smartspace"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
@@ -29,7 +30,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
-        versionCode = 1
+        versionCode =31
         versionName = flutter.versionName
     }
 
