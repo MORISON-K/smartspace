@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:smartspace/admin/models/properties.dart';
+import 'pdf_viewer_screen.dart';
 
-class PropertyDetailsScreen extends StatelessWidget {
+class PropertyDetailsScreen extends StatefulWidget {
   final Property property;
 
   const PropertyDetailsScreen({super.key, required this.property});
+
+  @override
+  State<PropertyDetailsScreen> createState() => _PropertyDetailsScreenState();
+}
+
+class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
+  String? currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    currentStatus = widget.property.status; // Assuming Property model has a status field
+  }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
@@ -30,78 +43,129 @@ class PropertyDetailsScreen extends StatelessWidget {
 
   Widget _buildActionButton({
     required BuildContext context,
-    required IconData icon,
+    IconData? icon,
     required String label,
     required Color color,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed, // Made nullable to handle disabled state
+    bool isDisabled = false,
   }) {
+    final buttonColor = isDisabled ? Colors.grey : color;
+    
+    if (icon == null) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: buttonColor,
+          foregroundColor: Colors.white,
+        ),
+        child: Text(label),
+      );
+    }
+
     return ElevatedButton.icon(
-      icon: Icon(icon, size: 20),
-      label: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Text(label, style: const TextStyle(fontSize: 15)),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
       onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: buttonColor,
+        foregroundColor: Colors.white,
+      ),
     );
   }
 
-  void _openPdf(String url) async {
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch PDF';
-    }
+  void _openPdf(BuildContext context, String url) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PDFViewerScreen(pdfUrl: url, title: 'Property Document'),
+      ),
+    );
   }
 
   void _updateStatus(BuildContext context, String status) async {
     try {
       await FirebaseFirestore.instance
           .collection('listings')
-          .doc(property.id)
+          .doc(widget.property.id)
           .update({'status': status});
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Property $status successfully.')));
+      setState(() {
+        currentStatus = status;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Property $status successfully.')),
+      );
 
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update: $e')),
+      );
     }
   }
 
   void _confirmAction(BuildContext context, String status) {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: Text(
-              '${status == 'approved' ? 'Approve' : 'Reject'} Property',
-            ),
-            content: Text(
-              'Are you sure you want to ${status == 'approved' ? 'approve' : 'reject'} this property?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _updateStatus(context, status);
-                },
-                child: const Text('Yes'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: Text(
+          '${status == 'approved' ? 'Approve' : 'Reject'} Property',
+        ),
+        content: Text(
+          'Are you sure you want to ${status == 'approved' ? 'approve' : 'reject'} this property?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateStatus(context, status);
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip() {
+    if (currentStatus == null) return const SizedBox.shrink();
+    
+    Color chipColor;
+    IconData chipIcon;
+    
+    switch (currentStatus) {
+      case 'approved':
+        chipColor = Colors.green;
+        chipIcon = Icons.check_circle;
+        break;
+      case 'rejected':
+        chipColor = Colors.red;
+        chipIcon = Icons.cancel;
+        break;
+      case 'pending':
+        chipColor = Colors.orange;
+        chipIcon = Icons.pending;
+        break;
+      default:
+        chipColor = Colors.grey;
+        chipIcon = Icons.help;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Chip(
+        avatar: Icon(chipIcon, color: Colors.white, size: 18),
+        label: Text(
+          'Status: ${currentStatus!.toUpperCase()}',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: chipColor,
+      ),
     );
   }
 
@@ -109,12 +173,15 @@ class PropertyDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(property.category, overflow: TextOverflow.ellipsis),
+        title: Text(widget.property.category, overflow: TextOverflow.ellipsis),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            // Status Chip
+            _buildStatusChip(),
+            
             // Property Details
             Card(
               elevation: 2,
@@ -129,19 +196,19 @@ class PropertyDetailsScreen extends StatelessWidget {
                     _buildDetailRow(
                       Icons.location_on,
                       'Location:',
-                      property.location,
+                      widget.property.location,
                     ),
                     const SizedBox(height: 12),
                     _buildDetailRow(
-                      Icons.attach_money,
+                      Icons.currency_exchange,
                       'Price:',
-                      property.price,
+                      widget.property.price,
                     ),
                     const SizedBox(height: 12),
                     _buildDetailRow(
                       Icons.description,
                       'Description:',
-                      property.description,
+                      widget.property.description,
                     ),
                   ],
                 ),
@@ -172,21 +239,20 @@ class PropertyDetailsScreen extends StatelessWidget {
                       height: 200,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: property.images.length,
+                        itemCount: widget.property.images.length,
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(right: 12),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                property.images[index],
+                                widget.property.images[index],
                                 width: MediaQuery.of(context).size.width * 0.8,
                                 height: 200,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.8,
+                                    width: MediaQuery.of(context).size.width * 0.8,
                                     height: 200,
                                     color: Colors.grey[200],
                                     child: const Icon(Icons.broken_image),
@@ -223,16 +289,31 @@ class PropertyDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ListTile(
-                      leading: const Icon(Icons.picture_as_pdf, size: 36),
-                      title: const Text('View PDF Document'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.open_in_new),
-                        onPressed: () => _openPdf(property.pdfUrl),
-                      ),
-                      shape: RoundedRectangleBorder(
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
                         borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.picture_as_pdf,
+                            size: 32,
+                            color: Colors.red.shade600,
+                          ),
+                        ),
+                        title: const Text(
+                          'Property Document',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        subtitle: const Text('Tap to view PDF'),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () => _openPdf(context, widget.property.pdfUrl),
                       ),
                     ),
                   ],
@@ -246,9 +327,9 @@ class PropertyDetailsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 'Property Actions:',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -260,18 +341,19 @@ class PropertyDetailsScreen extends StatelessWidget {
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      icon: Icons.check,
-                      label: 'App',
+                      label: currentStatus == 'approved' ? 'Approved' : 'Approve',
                       color: Colors.green,
-                      onPressed: () => _confirmAction(context, 'approved'),
+                      onPressed: currentStatus == 'approved' 
+                          ? null 
+                          : () => _confirmAction(context, 'approved'),
+                      isDisabled: currentStatus == 'approved',
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      icon: Icons.note_add,
-                      label: 'Req',
+                      label: 'Request document',
                       color: Colors.blue,
                       onPressed: () => _showDocumentRequestDialog(context),
                     ),
@@ -280,10 +362,12 @@ class PropertyDetailsScreen extends StatelessWidget {
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      icon: Icons.close,
-                      label: 'Reject',
+                      label: currentStatus == 'rejected' ? 'Rejected' : 'Reject',
                       color: Colors.red,
-                      onPressed: () => _confirmAction(context, 'rejected'),
+                      onPressed: currentStatus == 'rejected' 
+                          ? null 
+                          : () => _confirmAction(context, 'rejected'),
+                      isDisabled: currentStatus == 'rejected',
                     ),
                   ),
                 ],
@@ -300,31 +384,30 @@ class PropertyDetailsScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Request Additional Document'),
-            content: TextField(
-              controller: requestController,
-              decoration: const InputDecoration(
-                hintText: 'Describe what document is needed',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _sendDocumentRequest(context, requestController.text);
-                },
-                child: const Text('Send Request'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Request Additional Document'),
+        content: TextField(
+          controller: requestController,
+          decoration: const InputDecoration(
+            hintText: 'Describe what document is needed',
+            border: OutlineInputBorder(),
           ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _sendDocumentRequest(context, requestController.text);
+            },
+            child: const Text('Send Request'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -332,7 +415,7 @@ class PropertyDetailsScreen extends StatelessWidget {
     try {
       await FirebaseFirestore.instance
           .collection('listings')
-          .doc(property.id)
+          .doc(widget.property.id)
           .collection('documentRequests')
           .add({
             'message': message,
@@ -344,9 +427,9 @@ class PropertyDetailsScreen extends StatelessWidget {
         const SnackBar(content: Text('Document request sent to seller.')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to send request: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send request: $e')),
+      );
     }
   }
 }
