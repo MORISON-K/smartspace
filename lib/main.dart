@@ -10,7 +10,6 @@ import 'package:smartspace/notifications/notifications_screen.dart';
 import 'package:smartspace/seller/profile_screen.dart';
 import 'package:smartspace/seller/seller_home_screen.dart';
 import 'package:smartspace/notifications/notifications_service.dart';
-import 'package:smartspace/notifications/notification_test.dart';
 
 // Global navigator key for navigation from anywhere in the app
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -48,7 +47,6 @@ class SmartSpace extends StatelessWidget {
         '/add_listing_screen': (context) => AddListingScreen(),
         '/seller_home_screen': (context) => SellerHomeScreen(),
         '/profile_screen': (context) => ProfileScreen(),
-        '/notification_test': (context) => const NotificationTestScreen(),
       },
     );
   }

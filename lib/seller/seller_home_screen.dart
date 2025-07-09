@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:smartspace/auth/auth_service.dart';
 import 'package:smartspace/auth/login_screen.dart';
+import 'package:smartspace/notifications/notifications_screen.dart';
 
 class SellerHomeScreen extends StatefulWidget {
   const SellerHomeScreen({super.key});
@@ -42,9 +43,9 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
 
   String _getInitials(String? name) {
     if (name == null || name.isEmpty) return "?";
-final parts = name.trim().split(" ");
-if (parts.length == 1) return parts[0][0].toUpperCase();
-return (parts[0][0] + parts[1][0]).toUpperCase();
+    final parts = name.trim().split(" ");
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   Widget _buildActionButton(
@@ -139,7 +140,7 @@ return (parts[0][0] + parts[1][0]).toUpperCase();
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 234, 236, 240),
       appBar: AppBar(
-        backgroundColor:  const Color.fromARGB(255, 167, 184, 198),
+        backgroundColor: const Color.fromARGB(255, 167, 184, 198),
         title: Text(
           "Dashboard",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
@@ -243,7 +244,6 @@ return (parts[0][0] + parts[1][0]).toUpperCase();
               title: Text("Dashboard"),
               onTap: () {
                 Navigator.pop(context);
-               
               },
             ),
 
@@ -288,7 +288,13 @@ return (parts[0][0] + parts[1][0]).toUpperCase();
               title: Text("Notifications"),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/notifications_screen');
+                // Navigate directly to notifications screen without arguments to show history
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                );
               },
             ),
 
@@ -300,16 +306,6 @@ return (parts[0][0] + parts[1][0]).toUpperCase();
                 Navigator.pushNamed(context, '/profile_screen');
               },
             ),
-
-              ListTile(
-              leading: Icon(Icons.phone),
-              title: Text("Test notifications"),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/notification_test');
-              },
-            ),
-
 
             ListTile(
               leading: Icon(Icons.logout_outlined),
@@ -329,5 +325,3 @@ return (parts[0][0] + parts[1][0]).toUpperCase();
     );
   }
 }
-
-
