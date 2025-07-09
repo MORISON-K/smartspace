@@ -79,7 +79,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildPendingListingsTab() {
     return StreamBuilder<QuerySnapshot>(
       stream:
-          listingsCollection.where('status', isEqualTo: 'pending').snapshots(),
+          listingsCollection
+              .where('status', isEqualTo: 'pending')
+              .orderBy('createdAt', descending: _sortDescending)
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
