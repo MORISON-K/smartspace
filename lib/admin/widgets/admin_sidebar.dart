@@ -15,7 +15,7 @@ class AdminSidebar extends StatelessWidget {
     {'icon': Icons.people, 'label': 'Manage Users'},
     {'icon': Icons.admin_panel_settings, 'label': 'Manage Admins'},
     {'icon': Icons.home, 'label': 'Property Listings'},
-    {'icon': Icons.report, 'label': 'Reports'},
+    {'icon': Icons.report, 'label': 'Notifications'},
     {'icon': Icons.settings, 'label': 'Settings'},
   ];
 
@@ -23,7 +23,7 @@ class AdminSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      color: Colors.blueGrey[900],
+      color: const Color.fromRGBO(38, 50, 56, 1),
       child: Column(
         children: [
           const DrawerHeader(
