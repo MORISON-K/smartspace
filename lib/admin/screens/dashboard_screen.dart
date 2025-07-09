@@ -278,10 +278,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
 
             // Content based on selected tab
+            // Content based on selected tab
             Expanded(
               child:
                   _currentIndex == 0
-                      ? _buildPendingListingsTab()
+                      ? KeyedSubtree(
+                        key: ValueKey(
+                          _sortDescending,
+                        ), // Force StreamBuilder rebuild
+                        child: _buildPendingListingsTab(),
+                      )
                       : _buildUserRequestsTab(),
             ),
           ],
