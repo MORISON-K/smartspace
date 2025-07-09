@@ -535,11 +535,41 @@ class _PendingItem extends StatelessWidget {
                 Expanded(
                   child: FilledButton(
                     onPressed: () async {
-                      // Approve listing
-                      await FirebaseFirestore.instance
-                          .collection('listings')
-                          .doc(id)
-                          .update({'status': 'approved'});
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Confirm Approval'),
+                            content: const Text(
+                              'Are you sure you want to approve this listing?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pop(false), // Cancel
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pop(true), // Confirm
+                                child: const Text('Approve'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (confirm == true) {
+                        // Update Firestore only if confirmed
+                        await FirebaseFirestore.instance
+                            .collection('listings')
+                            .doc(id)
+                            .update({'status': 'approved'});
+                      }
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.blue[800],
