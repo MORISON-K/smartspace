@@ -81,7 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       stream:
           listingsCollection
               .where('status', isEqualTo: 'pending')
-              .orderBy('createdAt', descending: _sortDescending)
+              //.orderBy('createdAt', descending: _sortDescending)
               .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -105,6 +105,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         final listings = snapshot.data!.docs;
+
+        listings.sort((a, b) {
+          final aDate =
+              (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final bDate =
+              (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+          return _sortDescending
+              ? bDate.compareTo(aDate)
+              : aDate.compareTo(bDate);
+        });
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -277,7 +289,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Content based on selected tab
             // Content based on selected tab
             Expanded(
               child:
