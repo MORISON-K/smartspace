@@ -34,10 +34,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         return const ManageAdminsScreen(); // Replace with ManageAdminsScreen()
       case 3:
         return const PropertyListingsScreen();
-      case 4:
-        return const Text("Reports Screen");
-      case 5:
-        return const Text("Settings Screen");
+
       default:
         return const DashboardScreen();
     }
@@ -55,14 +52,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               children: [
                 SizedBox(
                   width: 250,
-                  child: AdminSidebar(selectedIndex: selectedIndex, onSectionSelected: _onSectionSelected),
+                  child: AdminSidebar(
+                    selectedIndex: selectedIndex,
+                    onSectionSelected: _onSectionSelected,
+                  ),
                 ),
                 Expanded(child: _getSelectedScreen()),
               ],
             ),
-
-            );
-                  
+          );
         } else {
           // Mobile Layout with Drawer
           return Scaffold(
