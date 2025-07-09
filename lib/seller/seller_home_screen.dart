@@ -301,16 +301,6 @@ return (parts[0][0] + parts[1][0]).toUpperCase();
               },
             ),
 
-              ListTile(
-              leading: Icon(Icons.phone),
-              title: Text("Test notifications"),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/notification_test');
-              },
-            ),
-
-
             ListTile(
               leading: Icon(Icons.logout_outlined),
               title: Text("Logout"),
