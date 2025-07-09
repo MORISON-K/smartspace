@@ -49,18 +49,20 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       builder: (context, constraints) {
         if (constraints.maxWidth > 600) {
           // Tablet/Desktop Layout
-          return Row(
-            children: [
-              SizedBox(
-                width: 250,
-                child: AdminSidebar(
-                  selectedIndex: selectedIndex,
-                  onSectionSelected: _onSectionSelected,
+          return Scaffold(
+            appBar: AppBar(title: const Text("Admin Panel")),
+            body: Row(
+              children: [
+                SizedBox(
+                  width: 250,
+                  child: AdminSidebar(selectedIndex: selectedIndex, onSectionSelected: _onSectionSelected),
                 ),
-              ),
-              Expanded(child: _getSelectedScreen()),
-            ],
-          );
+                Expanded(child: _getSelectedScreen()),
+              ],
+            ),
+
+            );
+                  
         } else {
           // Mobile Layout with Drawer
           return Scaffold(
