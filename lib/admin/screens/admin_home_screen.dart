@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:smartspace/admin/screens/manage_users_screen.dart';
+import 'package:smartspace/admin/screens/manage_admins_screen.dart';
+import 'package:smartspace/admin/screens/dashboard_screen.dart';
+import 'package:smartspace/admin/screens/property_listings_screen.dart';
+import 'package:smartspace/notifications/notifications_screen.dart';
 import '../widgets/admin_sidebar.dart';
-import 'dashboard_screen.dart';
-import 'property_listings_screen.dart';
-
-// Import other screen widgets here
-// import 'manage_users_screen.dart';
-import 'manage_admins_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -29,15 +27,16 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       case 0:
         return const DashboardScreen();
       case 1:
-        return const ManageUsersScreen(); // Replace with ManageUsersScreen()
+        return const ManageUsersScreen();
       case 2:
-        return const ManageAdminsScreen(); // Replace with ManageAdminsScreen()
+        return const ManageAdminsScreen();
       case 3:
         return const PropertyListingsScreen();
       case 4:
-        return const Text("Reports Screen");
+        return const NotificationsScreen();
       case 5:
         return const Text("Settings Screen");
+      
       default:
         return const DashboardScreen();
     }
@@ -47,26 +46,42 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final appBar = AppBar(
+          title: const Text("Admin Panel"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications),
+              tooltip: 'Notifications',
+              onPressed: () {
+                setState(() {
+                  selectedIndex = 6; // Navigate to Notifications
+                });
+              },
+            ),
+          ],
+        );
+
         if (constraints.maxWidth > 600) {
           // Tablet/Desktop Layout
           return Scaffold(
-            appBar: AppBar(title: const Text("Admin Panel")),
+            appBar: appBar,
             body: Row(
               children: [
                 SizedBox(
                   width: 250,
-                  child: AdminSidebar(selectedIndex: selectedIndex, onSectionSelected: _onSectionSelected),
+                  child: AdminSidebar(
+                    selectedIndex: selectedIndex,
+                    onSectionSelected: _onSectionSelected,
+                  ),
                 ),
                 Expanded(child: _getSelectedScreen()),
               ],
             ),
-
-            );
-                  
+          );
         } else {
           // Mobile Layout with Drawer
           return Scaffold(
-            appBar: AppBar(title: const Text("Admin Panel")),
+            appBar: appBar,
             drawer: Drawer(
               child: AdminSidebar(
                 selectedIndex: selectedIndex,
