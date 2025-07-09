@@ -134,6 +134,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
         // Save all listing data to Firestore database
         await FirebaseFirestore.instance.collection('listings').add({
+          'title': "land",
           'price': _priceController.text.trim(),
           'location': _locationController.text.trim(),
           'latitude': lat,
