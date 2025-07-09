@@ -324,10 +324,20 @@ class _AddListingScreenState extends State<AddListingScreen> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
-                decoration: _inputDecoration('Description'),
+                decoration: _inputDecoration('Description (max 30 words)'),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Description is required';
+                  }
+                  // Count words by splitting on whitespace and filtering empty strings
+                  final words =
+                      value
+                          .trim()
+                          .split(RegExp(r'\s+'))
+                          .where((word) => word.isNotEmpty)
+                          .toList();
+                  if (words.length > 30) {
+                    return 'Description must be 30 words or less (currently ${words.length} words)';
                   }
                   return null;
                 },
