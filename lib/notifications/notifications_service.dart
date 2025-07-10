@@ -17,6 +17,36 @@ class FirebaseApi {
     });
   }
 
+  Future<void> _saveNotificationToFirestore(RemoteMessage message) async {
+    final user = FirebaseAuth.instance.currentUser;
+    print('Attempting to save notification. User: ${user?.uid}'); // Debug log
+
+    if (user == null) {
+      print('No user logged in - cannot save notification'); // Debug log
+      return;
+    }
+
+    try {
+      print(
+        'Saving notification to Firestore for user: ${user.uid}',
+      ); // Debug log
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('notifications')
+          .add({
+            'title': message.notification?.title,
+            'body': message.notification?.body,
+            'data': message.data,
+            'receivedAt': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
+      print("Notification saved to firestore successfully"); // Updated log
+    } catch (e) {
+      print("Error saving notification: $e"); // Updated log
+    }
+  }
+
   Future<void> initNofications() async {
     await _firebaseMessaging.requestPermission();
     await updateFCMToken(); // Always update token
@@ -108,6 +138,8 @@ class FirebaseApi {
   void handleMessage(RemoteMessage? message) async {
     if (message == null) return;
 
+    await _saveNotificationToFirestore(message);
+
     final role = await getUserRole();
 
     // Pass different arguments or route based on role
@@ -147,9 +179,12 @@ class FirebaseApi {
     FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
 
     //handle foreground notifications (when app is open)
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
+
+      // Save notification to Firestore
+      await _saveNotificationToFirestore(message);
 
       if (message.notification != null) {
         print('Message also contained a notification: ${message.notification}');
@@ -160,6 +195,16 @@ class FirebaseApi {
             SnackBar(
               content: Text(message.notification?.body ?? 'New notification'),
               duration: Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () async {
+                  final role = await getUserRole();
+                  navigatorKey.currentState?.pushNamed(
+                    '/notifications_screen',
+                    arguments: {'message': message, 'role': role},
+                  );
+                },
+              ),
             ),
           );
         }
