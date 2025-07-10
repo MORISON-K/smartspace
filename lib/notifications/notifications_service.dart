@@ -96,9 +96,21 @@ class FirebaseApi {
   Future<void> subscribeToRoleTopic() async {
     final role = await getUserRole();
     if (role != null) {
-      String topic = _mapRoleToTopic(role);
-      await _firebaseMessaging.subscribeToTopic(topic);
-      print('Subscribed to topic: $topic');
+      // First, unsubscribe from all possible role topics to prevent cross-subscription
+      final allTopics = ['admin', 'seller', 'buyer', 'general'];
+      for (String topic in allTopics) {
+        try {
+          await _firebaseMessaging.unsubscribeFromTopic(topic);
+          print('Unsubscribed from topic: $topic');
+        } catch (e) {
+          print('Error unsubscribing from topic $topic: $e');
+        }
+      }
+
+      // Then subscribe to the correct topic
+      String correctTopic = _mapRoleToTopic(role);
+      await _firebaseMessaging.subscribeToTopic(correctTopic);
+      print('Subscribed to topic: $correctTopic');
     }
   }
 
