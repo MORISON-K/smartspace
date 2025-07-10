@@ -81,7 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       stream:
           listingsCollection
               .where('status', isEqualTo: 'pending')
-              .orderBy('createdAt', descending: _sortDescending)
+              //.orderBy('createdAt', descending: _sortDescending)
               .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -105,6 +105,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         final listings = snapshot.data!.docs;
+
+        listings.sort((a, b) {
+          final aDate =
+              (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final bDate =
+              (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+          return _sortDescending
+              ? bDate.compareTo(aDate)
+              : aDate.compareTo(bDate);
+        });
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -281,7 +293,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child:
                   _currentIndex == 0
-                      ? _buildPendingListingsTab()
+                      ? KeyedSubtree(
+                        key: ValueKey(
+                          _sortDescending,
+                        ), // Force StreamBuilder rebuild
+                        child: _buildPendingListingsTab(),
+                      )
                       : _buildUserRequestsTab(),
             ),
           ],
@@ -518,11 +535,41 @@ class _PendingItem extends StatelessWidget {
                 Expanded(
                   child: FilledButton(
                     onPressed: () async {
-                      // Approve listing
-                      await FirebaseFirestore.instance
-                          .collection('listings')
-                          .doc(id)
-                          .update({'status': 'approved'});
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Confirm Approval'),
+                            content: const Text(
+                              'Are you sure you want to approve this listing?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pop(false), // Cancel
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(
+                                      context,
+                                    ).pop(true), // Confirm
+                                child: const Text('Approve'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (confirm == true) {
+                        // Update Firestore only if confirmed
+                        await FirebaseFirestore.instance
+                            .collection('listings')
+                            .doc(id)
+                            .update({'status': 'approved'});
+                      }
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.blue[800],
