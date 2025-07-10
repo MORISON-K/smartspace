@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smartspace/seller/recent-activity/activity_service.dart';
 
 /// Screen that allows sellers to add new property listings
 /// Users can input property details, upload images, attach documents, and submit for approval
@@ -134,23 +135,31 @@ class _AddListingScreenState extends State<AddListingScreen> {
         final pdfUrl = await pdfRef.getDownloadURL();
 
         // Save all listing data to Firestore database
-        await FirebaseFirestore.instance.collection('listings').add({
-          'title': "land",
-          'price': _priceController.text.trim(),
-          'location': _locationController.text.trim(),
-          'latitude': lat,
-          'longitude': lng,
-          'mobile_number': '+256 ${_phoneController.text.trim()}',
-          'category': _selectedCategory,
-          'description': _descriptionController.text.trim(),
-          'acreage': '${_acreageController.text.trim()} acres',
-          'images': imageUrls,
-          'pdf': pdfUrl,
-          'createdAt': Timestamp.now(),
-          'user_id': user.uid,
-          'sellerName': sellerName,
-          "status": "pending",
-        });
+        final docRef = await FirebaseFirestore.instance
+            .collection('listings')
+            .add({
+              'title': "land",
+              'price': _priceController.text.trim(),
+              'location': _locationController.text.trim(),
+              'latitude': lat,
+              'longitude': lng,
+              'mobile_number': '+256 ${_phoneController.text.trim()}',
+              'category': _selectedCategory,
+              'description': _descriptionController.text.trim(),
+              'acreage': '${_acreageController.text.trim()} acres',
+              'images': imageUrls,
+              'pdf': pdfUrl,
+              'createdAt': Timestamp.now(),
+              'user_id': user.uid,
+              'sellerName': sellerName,
+              "status": "pending",
+            });
+
+        final ActivityService activityService = ActivityService();
+        await activityService.createListingActivity(
+          _locationController.text.trim(), // propertyTitle
+          docRef.id, // propertyId
+        );
 
         _showSnack("Listing submitted successfully!");
         Navigator.of(context).pop(); // Return to previous screen
