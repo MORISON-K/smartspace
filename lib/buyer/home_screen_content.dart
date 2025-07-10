@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-/// Reference to the "lands" collection.
 final CollectionReference<Map<String, dynamic>> landRef =
-    FirebaseFirestore.instance.collection('lands');
+    FirebaseFirestore.instance.collection('listings');
 
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
@@ -14,69 +13,97 @@ class HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
-  late Future<List<Map<String, dynamic>>> listingsFuture;
+  late Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> listingsFuture;
+  List<String> likedListings = [];
+
+  final user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
     listingsFuture = _getLandListings();
+    _getUserLikedListings();
   }
 
-  /// Fetch approved land listings from Firestore
-  Future<List<Map<String, dynamic>>> _getLandListings() async {
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getLandListings() async {
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await landRef.where('status', isEqualTo: 'approved').get();
-      return snapshot.docs.map((doc) => doc.data()).toList();
-    } catch (e, stack) {
-      debugPrint('Firestore read failed: $e');
-      debugPrintStack(stackTrace: stack);
+      final snapshot = await landRef.where('status', isEqualTo: 'approved').get();
+      return snapshot.docs;
+    } catch (e) {
+      debugPrint('Error fetching listings: $e');
       return [];
     }
+  }
+
+  Future<void> _getUserLikedListings() async {
+    if (user == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    final data = userDoc.data();
+    setState(() {
+      likedListings = List<String>.from(data?['likedListings'] ?? []);
+    });
+  }
+
+  Future<void> _toggleLike(String listingId) async {
+    if (user == null) return;
+
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
+
+    final isLiked = likedListings.contains(listingId);
+    if (isLiked) {
+      await userDoc.update({
+        'likedListings': FieldValue.arrayRemove([listingId])
+      });
+    } else {
+      await userDoc.set({
+        'likedListings': FieldValue.arrayUnion([listingId])
+      }, SetOptions(merge: true));
+    }
+
+    setState(() {
+      isLiked ? likedListings.remove(listingId) : likedListings.add(listingId);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Land Listings")),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
+      body: FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
         future: listingsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Text("Failed to load data"));
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No approved listings found."));
           }
 
           final listings = snapshot.data!;
-          if (listings.isEmpty) {
-            return const Center(child: Text("No approved listings found."));
-          }
 
           return ListView.builder(
             itemCount: listings.length,
             padding: const EdgeInsets.all(12),
             itemBuilder: (context, index) {
-              final item = listings[index];
+              final doc = listings[index];
+              final item = doc.data();
+              final listingId = doc.id;
               final images = item['images'] as List<dynamic>?;
               final imageUrl = (images != null && images.isNotEmpty) ? images[0] as String : null;
-              final pdfUrl = item['pdf'] as String?;
+              final isLiked = likedListings.contains(listingId);
 
               return Card(
                 elevation: 4,
                 margin: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (imageUrl != null)
                       ClipRRect(
-                        borderRadius:
-                            const BorderRadius.vertical(top: Radius.circular(12)),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                         child: Image.network(
                           imageUrl,
                           height: 200,
@@ -89,34 +116,27 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item['location'] ?? 'Unknown location',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                item['location'] ?? 'Unknown location',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  isLiked ? Icons.favorite : Icons.favorite_border,
+                                  color: isLiked ? Colors.red : Colors.grey,
+                                ),
+                                onPressed: () => _toggleLike(listingId),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Text('Category: ${item['category'] ?? '-'}'),
                           Text('Size: ${item['description'] ?? '-'}'),
                           Text('Price: UGX ${item['price'] ?? '0'}'),
                           Text('Contact: ${item['mobile_number'] ?? '-'}'),
-                          const SizedBox(height: 10),
-                          if (pdfUrl != null)
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text("View Land Title PDF"),
-                              onPressed: () async {
-                                final uri = Uri.parse(pdfUrl);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri,
-                                      mode: LaunchMode.externalApplication);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Could not open PDF')),
-                                  );
-                                }
-                              },
-                            ),
                         ],
                       ),
                     ),

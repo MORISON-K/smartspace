@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smartspace/buyer/favorite_screen.dart';
 import 'package:smartspace/buyer/home_screen_content.dart';
 import 'package:smartspace/buyer/search_screen.dart';
-
+import 'package:smartspace/notifications/notifications_screen.dart';
 
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
@@ -20,11 +20,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     });
   }
 
-  final List _pages = [
-    HomeScreenContent(),
-    SearchScreen(),
-    FavoriteScreen(),
-    ];
+  final List _pages = [HomeScreenContent(), SearchScreen(), FavoriteScreen(), NotificationsScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +38,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Saved'),
-          
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
         ],
       ),
     );
