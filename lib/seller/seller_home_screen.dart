@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:smartspace/auth/auth_service.dart';
 import 'package:smartspace/auth/login_screen.dart';
 import 'package:smartspace/notifications/notifications_screen.dart';
+import 'recent-activity/recent_activity_model.dart';
+import 'recent-activity/activity_service.dart';
 
 class SellerHomeScreen extends StatefulWidget {
   const SellerHomeScreen({super.key});
@@ -14,6 +16,7 @@ class SellerHomeScreen extends StatefulWidget {
 
 class _SellerHomeScreenState extends State<SellerHomeScreen> {
   final AuthService _authService = AuthService();
+  final ActivityService _activityService = ActivityService();
 
   String? _userName;
   String? _userEmail;
@@ -82,12 +85,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     );
   }
 
-  Widget _buildActivityCard(
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildActivityCard(Activity activity) {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
@@ -108,10 +106,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
           Container(
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: activity.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(activity.icon, color: activity.color, size: 20),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -119,12 +117,19 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  activity.title,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 2),
                 Text(
-                  time,
+                  activity.description,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 2),
+                Text(
+                  activity.timeAgo,
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
@@ -132,6 +137,82 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildActivitiesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Recent Activity",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 16),
+        StreamBuilder<List<Activity>>(
+          stream: _activityService.getSellerActivities(limit: 5),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error loading activities',
+                  style: TextStyle(color: Colors.red),
+                ),
+              );
+            }
+            final activities = snapshot.data ?? [];
+
+            if (activities.isEmpty) {
+              return Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      spreadRadius: 1,
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.inbox, size: 48, color: Colors.grey[400]),
+                    SizedBox(height: 8),
+                    Text(
+                      'No recent activity',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Create your first listing to see activity here',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children:
+                  activities
+                      .map((activity) => _buildActivityCard(activity))
+                      .toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -193,30 +274,24 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ),
             SizedBox(height: 30),
 
-            // Recent Activity
-            Text(
-              "Recent Activity",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            _buildActivityCard(
-              "New inquiry for Busabaala Property",
-              "2 hours ago",
-              Icons.message,
-              Colors.blue,
-            ),
-            _buildActivityCard(
-              "Property viewed 5 times today",
-              "4 hours ago",
-              Icons.visibility,
-              Colors.green,
-            ),
-            _buildActivityCard(
-              "Price update completed",
-              "1 day ago",
-              Icons.update,
-              Colors.orange,
-            ),
+            _buildActivitiesSection(),
+
+            // // Recent Activity
+            // Text(
+            //   "Recent Activity",
+            //   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            // ),
+            // SizedBox(height: 16),
+            // // Example usage of _buildActivityCard with a dummy Activity instance:
+            // _buildActivityCard(
+            //   Activity(
+            //     title: "Sample Activity",
+            //     description: "This is a sample recent activity.",
+            //     timeAgo: "2 hours ago",
+            //     icon: Icons.notifications,
+            //     color: Colors.blue,
+            //   ),
+            // ),
             SizedBox(height: 30),
           ],
         ),
