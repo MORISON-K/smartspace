@@ -59,9 +59,60 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
           status: newStatus.toLowerCase(),
         );
       });
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Property ${newStatus.toLowerCase()} successfully.')),
+      );
     } catch (e) {
       print('Error updating status: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update status: $e')),
+      );
     }
+  }
+
+  void _confirmAction(Property property, String status) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(
+          '${status == 'approved' ? 'Approve' : 'Reject'} Property',
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to ${status == 'approved' ? 'approve' : 'reject'} this property?',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Property: ${property.title}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('Location: ${property.location}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateStatus(property, status);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: status == 'approved' ? Colors.green : Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(status == 'approved' ? 'Approve' : 'Reject'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -119,13 +170,13 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
                                     icon: const Icon(Icons.check,
                                         color: Colors.green),
                                     onPressed: () =>
-                                        _updateStatus(property, 'approved'),
+                                        _confirmAction(property, 'approved'),
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.close,
                                         color: Colors.red),
                                     onPressed: () =>
-                                        _updateStatus(property, 'rejected'),
+                                        _confirmAction(property, 'rejected'),
                                   ),
                                 ],
                               )
