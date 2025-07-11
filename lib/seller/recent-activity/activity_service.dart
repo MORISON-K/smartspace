@@ -56,7 +56,7 @@ class ActivityService {
   ) async {
     await createActivity(
       title: 'New listing created',
-      description: 'You successfully listed "$propertyTitle"',
+      description: 'You successfully listed land in $propertyTitle',
       type: 'listing_created',
       propertyId: propertyId,
     );
