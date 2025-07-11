@@ -25,11 +25,11 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.blue),
+      
       body: _pages[_selectedPage],
 
       bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.blue,
+        selectedItemColor: const Color.fromARGB(203, 243, 89, 33),
         unselectedItemColor: Colors.grey,
 
         currentIndex: _selectedPage,
