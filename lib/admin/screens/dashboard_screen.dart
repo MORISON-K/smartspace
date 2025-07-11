@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:smartspace/admin/screens/property_details_screen.dart';
 import 'package:smartspace/admin/models/properties.dart';
+import 'package:smartspace/admin/screens/pdf_viewer_screen.dart';
   
   
 
@@ -117,6 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Filter and sort user requests
+  // Filter and sort user requests (UPDATED to include document uploads)
   List<DocumentSnapshot> _filterAndSortRequests(List<DocumentSnapshot> requests) {
     List<DocumentSnapshot> filtered = requests;
 
@@ -126,23 +128,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final data = doc.data() as Map<String, dynamic>;
         final userName = (data['name'] ?? '').toString().toLowerCase();
         final message = (data['lastRequest'] ?? '').toString().toLowerCase();
+        final documentType = (data['pendingDocumentType'] ?? '').toString().toLowerCase();
         
-        return userName.contains(_searchQuery) || message.contains(_searchQuery);
+        return userName.contains(_searchQuery) || 
+               message.contains(_searchQuery) ||
+               documentType.contains(_searchQuery);
       }).toList();
     }
 
-    // Sort by time
+    // Sort by time (prioritize recent document uploads)
     filtered.sort((a, b) {
       final aData = a.data() as Map<String, dynamic>;
       final bData = b.data() as Map<String, dynamic>;
-      final aTime = (aData['lastRequestTime'] as Timestamp?)?.toDate() ?? DateTime.now();
-      final bTime = (bData['lastRequestTime'] as Timestamp?)?.toDate() ?? DateTime.now();
+      
+      // Get the most recent timestamp between lastRequestTime and documentUploadTime
+      final aRequestTime = (aData['lastRequestTime'] as Timestamp?)?.toDate() ?? DateTime(2000);
+      final aDocumentTime = (aData['documentUploadTime'] as Timestamp?)?.toDate() ?? DateTime(2000);
+      final aTime = aRequestTime.isAfter(aDocumentTime) ? aRequestTime : aDocumentTime;
+      
+      final bRequestTime = (bData['lastRequestTime'] as Timestamp?)?.toDate() ?? DateTime(2000);
+      final bDocumentTime = (bData['documentUploadTime'] as Timestamp?)?.toDate() ?? DateTime(2000);
+      final bTime = bRequestTime.isAfter(bDocumentTime) ? bRequestTime : bDocumentTime;
       
       return _sortBy == 'newest' ? bTime.compareTo(aTime) : aTime.compareTo(bTime);
     });
 
     return filtered;
   }
+
 
   // Build search and filter bar
   Widget _buildSearchAndFilterBar() {
@@ -358,22 +371,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Build user requests tab
+   // Build user requests tab (UPDATED to include document uploads)
+    // Build user requests tab (UPDATED with compatible query)
   Widget _buildUserRequestsTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: usersCollection
-          .where('requests', isGreaterThan: 0)
-          .snapshots(),
+      stream: usersCollection.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text("Error: ${snapshot.error}"),
+                TextButton(
+                  onPressed: () => setState(() {}),
+                  child: const Text("Retry"),
+                ),
+              ],
+            ),
+          );
+        }
+        
         if (!snapshot.hasData) {
-          return const Center(child: Text("Error loading requests"));
+          return const Center(child: Text("No data available"));
         }
 
-        final allRequests = snapshot.data!.docs;
-        final filteredRequests = _filterAndSortRequests(allRequests);
+        // Filter documents that have requests > 0 OR hasNewDocuments = true
+        final allDocs = snapshot.data!.docs;
+        final requestDocs = allDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final hasRequests = (data['requests'] ?? 0) > 0;
+          final hasNewDocuments = data['hasNewDocuments'] == true;
+          return hasRequests || hasNewDocuments;
+        }).toList();
+
+        final filteredRequests = _filterAndSortRequests(requestDocs);
         
         if (filteredRequests.isEmpty) {
           return Center(
@@ -389,7 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   _searchQuery.isNotEmpty 
                       ? "No requests found matching your search"
-                      : "No user requests",
+                      : "No user requests or document uploads",
                   style: const TextStyle(
                     fontSize: 18,
                     color: Colors.grey,
@@ -413,7 +451,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SectionHeader(
-                title: "📩 User Requests", 
+                title: "📩 User Requests & Documents", 
                 count: filteredRequests.length
               ),
             ),
@@ -424,11 +462,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 itemBuilder: (context, index) {
                   final user = filteredRequests[index];
                   final data = user.data() as Map<String, dynamic>;
+                  
+                  // Determine if this is a document upload or regular request
+                  final hasNewDocuments = data['hasNewDocuments'] == true;
+                  final hasRequests = (data['requests'] ?? 0) > 0;
+                  
                   return _RequestItem(
                     id: user.id,
                     user: data['name'] ?? 'Unknown User',
-                    message: data['lastRequest'] ?? 'No message',
-                    createdAt: data['lastRequestTime'] as Timestamp? ?? Timestamp.now(),
+                    message: hasNewDocuments 
+                        ? (data['lastDocumentMessage'] ?? 'Uploaded additional documents')
+                        : (data['lastRequest'] ?? 'No message'),
+                    createdAt: hasNewDocuments 
+                        ? (data['documentUploadTime'] as Timestamp? ?? Timestamp.now())
+                        : (data['lastRequestTime'] as Timestamp? ?? Timestamp.now()),
+                    isDocumentUpload: hasNewDocuments,
+                    documentType: data['pendingDocumentType'] ?? '',
+                    documentUrls: List<String>.from(data['newDocumentUrls'] ?? []),
+                    hasRequests: hasRequests,
                   );
                 },
               ),
@@ -438,6 +489,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
     );
   }
+
+
 
    @override
   Widget build(BuildContext context) {
@@ -544,13 +597,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             label: 'Listings',
           ),
-          BottomNavigationBarItem(
+                    BottomNavigationBarItem(
             icon: StreamBuilder<QuerySnapshot>(
-              stream: usersCollection
-                  .where('requests', isGreaterThan: 0)
-                  .snapshots(),
+              stream: usersCollection.snapshots(),
               builder: (context, snapshot) {
-                final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                if (!snapshot.hasData) {
+                  return const Icon(Icons.message);
+                }
+                
+                // Count documents that have requests > 0 OR hasNewDocuments = true
+                final count = snapshot.data!.docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final hasRequests = (data['requests'] ?? 0) > 0;
+                  final hasNewDocuments = data['hasNewDocuments'] == true;
+                  return hasRequests || hasNewDocuments;
+                }).length;
+                
                 return Stack(
                   children: [
                     const Icon(Icons.message),
@@ -585,6 +647,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             label: 'User Requests',
           ),
+
         ],
       ),
     );
@@ -821,16 +884,73 @@ class _RequestItem extends StatelessWidget {
   final String user;
   final String message;
   final Timestamp createdAt;
+  final bool isDocumentUpload;
+  final String documentType;
+  final List<String> documentUrls;
+  final bool hasRequests;
 
   const _RequestItem({
     required this.id,
     required this.user,
     required this.message,
     required this.createdAt,
+    this.isDocumentUpload = false,
+    this.documentType = '',
+    this.documentUrls = const [],
+    this.hasRequests = false,
   });
 
+
+   // Add this method to open PDF documents
+  void _openDocument(BuildContext context, String url, String fileName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PDFViewerScreen(
+          pdfUrl: url, 
+          title: fileName.isNotEmpty ? fileName : 'Additional Document'
+        ),
+      ),
+    );
+  }
+
+  // Add this method to show document selection if multiple documents
+  void _showDocumentSelectionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Select Document to View'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: documentUrls.asMap().entries.map((entry) {
+            final index = entry.key;
+            final url = entry.value;
+            final fileName = url.split('/').last;
+            
+            return ListTile(
+              leading: Icon(Icons.picture_as_pdf, color: Colors.red[600]),
+              title: Text(fileName),
+              subtitle: Text('Document ${index + 1}'),
+              onTap: () {
+                Navigator.pop(context); // Close selection dialog
+                _openDocument(context, url, fileName);
+              },
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   @override
-  Widget build(BuildContext context) {
+ Widget build(BuildContext context) {
     final formattedTime = (context.findAncestorStateOfType<_DashboardScreenState>()?._formatTime(createdAt) ?? '');
     final timeAgo = (context.findAncestorStateOfType<_DashboardScreenState>()?._formatTimeDifference(createdAt) ?? '');
 
@@ -839,7 +959,10 @@ class _RequestItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(
+          color: isDocumentUpload ? Colors.blue[300]! : Colors.grey[200]!,
+          width: isDocumentUpload ? 2 : 1,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -852,22 +975,62 @@ class _RequestItem extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.blue[100],
+                    color: isDocumentUpload ? Colors.blue[100] : Colors.grey[100],
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, color: Colors.blue),
+                  child: Icon(
+                    isDocumentUpload ? Icons.upload_file : Icons.person, 
+                    color: isDocumentUpload ? Colors.blue : Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        user,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            user,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (isDocumentUpload)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'NEW DOCS',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          if (hasRequests && !isDocumentUpload)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orange[50],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'REQUEST',
+                                style: TextStyle(
+                                  color: Colors.orange[700],
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       Text(
                         timeAgo,
@@ -889,6 +1052,30 @@ class _RequestItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            if (isDocumentUpload && documentType.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.description, color: Colors.blue[700], size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Document Type: $documentType',
+                      style: TextStyle(
+                        color: Colors.blue[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Text(
               message,
               style: TextStyle(
@@ -896,58 +1083,124 @@ class _RequestItem extends StatelessWidget {
                 fontSize: 14,
               ),
             ),
+            if (documentUrls.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.attach_file, color: Colors.green[700], size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${documentUrls.length} document(s) uploaded',
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      // View request details
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Request from $user'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Time: $formattedTime ($timeAgo)'),
-                              const SizedBox(height: 8),
-                              Text('Message: $message'),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Close'),
-                            ),
-                          ],
+                if (documentUrls.isNotEmpty) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        if (documentUrls.length == 1) {
+                          // If only one document, open it directly
+                          final fileName = documentUrls.first.split('/').last;
+                          _openDocument(context, documentUrls.first, fileName);
+                        } else {
+                          // If multiple documents, show selection dialog
+                          _showDocumentSelectionDialog(context);
+                        }
+                      },
+                      icon: const Icon(Icons.visibility),
+                      label: Text(documentUrls.length == 1 ? "View Document" : "View Documents"),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text("View Details"),
                   ),
-                ),
-                const SizedBox(width: 10),
+                  const SizedBox(width: 8),
+                ] else ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        // View request details for non-document requests
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Request from $user'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Time: $formattedTime ($timeAgo)'),
+                                const SizedBox(height: 8),
+                                Text('Message: $message'),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text("View Details"),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: FilledButton(
                     onPressed: () async {
-                      // Handle/respond to request
+                      // Handle/respond to request or approve documents
+                      final updates = <String, dynamic>{};
+                      
+                      if (isDocumentUpload) {
+                        updates['hasNewDocuments'] = false;
+                        updates['documentUploadTime'] = null;
+                        updates['newDocumentUrls'] = [];
+                        updates['pendingDocumentType'] = '';
+                        updates['lastDocumentMessage'] = '';
+                      }
+                      
+                      if (hasRequests) {
+                        updates['requests'] = 0;
+                      }
+                      
                       await FirebaseFirestore.instance
                           .collection('users')
                           .doc(id)
-                          .update({'requests': 0});
+                          .update(updates);
                       
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Request marked as handled'),
+                          SnackBar(
+                            content: Text(isDocumentUpload 
+                                ? 'Documents reviewed and approved' 
+                                : 'Request marked as handled'),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -960,7 +1213,7 @@ class _RequestItem extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text("Respond"),
+                    child: Text(isDocumentUpload ? "Approve" : "Respond"),
                   ),
                 ),
               ],
