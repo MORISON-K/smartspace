@@ -68,10 +68,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = false;
     });
 
-    ScaffoldMessenger.of(
+    if (result == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Signup successfull!")));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text("Signup Failed: $result")));
+    ).showSnackBar(SnackBar(content: Text("Signup Failed: $result")),
+    );
     }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildTextField("Email", _emailController),
               const SizedBox(height: 15),
 
-               // Role Dropdown
+              // Role Dropdown
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: DropdownButtonFormField<String>(
@@ -121,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           )
                           .toList(),
                 ),
-              ), 
+              ),
               const SizedBox(height: 15),
 
               // Password Input
