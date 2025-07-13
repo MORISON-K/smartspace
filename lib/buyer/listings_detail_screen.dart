@@ -23,9 +23,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _images = (widget.listing['images'] as List<dynamic>? ?? [])
-        .map((e) => e.toString())
-        .toList();
+    _images =
+        (widget.listing['images'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
 
     _pageController.addListener(() {
       final newPage = _pageController.page?.round() ?? 0;
@@ -54,7 +55,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   void _launchWhatsApp(String number) async {
-    final url = Uri.parse("https://wa.me/$number");
+    final url = Uri.parse("whatsapp://send?phone=$number");
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
@@ -67,7 +68,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final lng = widget.listing['longitude'];
 
     if (lat != null && lng != null) {
-      final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+      final googleMapsUrl = Uri.parse(
+        "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+      );
       if (await canLaunchUrl(googleMapsUrl)) {
         await launchUrl(googleMapsUrl);
       } else {
@@ -79,7 +82,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   // ─────────── UI ────────────────────────────────
@@ -99,18 +104,25 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _images.length,
-                  itemBuilder: (context, index) => ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      _images[index],
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      loadingBuilder: (c, w, p) =>
-                          p == null ? w : const Center(child: CircularProgressIndicator()),
-                      errorBuilder: (c, e, s) =>
-                          const Center(child: Icon(Icons.broken_image)),
-                    ),
-                  ),
+                  itemBuilder:
+                      (context, index) => ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _images[index],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          loadingBuilder:
+                              (c, w, p) =>
+                                  p == null
+                                      ? w
+                                      : const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                          errorBuilder:
+                              (c, e, s) =>
+                                  const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
                 ),
               ),
             if (_images.length > 1)
@@ -142,7 +154,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 children: [
                   Text(
                     widget.listing['location'] ?? 'Unknown location',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text('Category: ${widget.listing['category'] ?? '-'}'),
