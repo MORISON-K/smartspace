@@ -43,6 +43,7 @@ dependencies:
   file_picker: ^10.2.0
   firebase_storage: ^12.4.7
   google_maps_flutter: ^2.12.3
+  google_maps_cluster_manager: ^3.1.0
   geocoding: ^4.0.0
   geolocator: ^14.0.2
 

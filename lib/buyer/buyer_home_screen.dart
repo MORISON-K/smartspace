@@ -20,25 +20,31 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     });
   }
 
-  final List _pages = [HomeScreenContent(), SearchScreen(), FavoriteScreen(), NotificationsScreen()];
+
+  // ✅ Getter for pages instead of late final
+  List<Widget> get _pages => [
+        const HomeScreenContent(),
+        const SearchScreen(),
+        const FavoriteScreen(),
+        const NotificationsScreen(),
+      ];
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.blue),
       body: _pages[_selectedPage],
-
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
-
         currentIndex: _selectedPage,
         onTap: _navigationBottomBar,
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Saved'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.notifications), label: 'Notifications'),
         ],
       ),
     );

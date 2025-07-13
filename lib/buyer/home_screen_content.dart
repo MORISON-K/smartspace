@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-final CollectionReference<Map<String, dynamic>> landRef =
-    FirebaseFirestore.instance.collection('listings');
+import 'listings_detail_screen.dart';
+final CollectionReference<Map<String,dynamic>> landRef =
+  FirebaseFirestore.instance.collection('listings');
 
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
@@ -38,7 +38,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   Future<void> _getUserLikedListings() async {
     if (user == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
     final data = userDoc.data();
     setState(() {
       likedListings = List<String>.from(data?['likedListings'] ?? []);
@@ -53,11 +54,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     final isLiked = likedListings.contains(listingId);
     if (isLiked) {
       await userDoc.update({
-        'likedListings': FieldValue.arrayRemove([listingId])
+        'likedListings': FieldValue.arrayRemove([listingId]),
       });
     } else {
       await userDoc.set({
-        'likedListings': FieldValue.arrayUnion([listingId])
+        'likedListings': FieldValue.arrayUnion([listingId]),
       }, SetOptions(merge: true));
     }
 
@@ -94,53 +95,71 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               final imageUrl = (images != null && images.isNotEmpty) ? images[0] as String : null;
               final isLiked = likedListings.contains(listingId);
 
-              return Card(
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (imageUrl != null)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                        child: Image.network(
-                          imageUrl,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                item['location'] ?? 'Unknown location',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  isLiked ? Icons.favorite : Icons.favorite_border,
-                                  color: isLiked ? Colors.red : Colors.grey,
-                                ),
-                                onPressed: () => _toggleLike(listingId),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Category: ${item['category'] ?? '-'}'),
-                          Text('Size: ${item['description'] ?? '-'}'),
-                          Text('Price: UGX ${item['price'] ?? '0'}'),
-                          Text('Contact: ${item['mobile_number'] ?? '-'}'),
-                        ],
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ListingDetailScreen(
+                        listing: item,
+                        listingId: listingId,
                       ),
                     ),
-                  ],
+                  );
+                },
+                child: Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (imageUrl != null)
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          child: Image.network(
+                            imageUrl,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (_, child, progress) =>
+                                progress == null ? child : const Center(child: CircularProgressIndicator()),
+                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image)),
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  item['location'] ?? 'Unknown location',
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    isLiked ? Icons.favorite : Icons.favorite_border,
+                                    color: isLiked ? Colors.red : Colors.grey,
+                                  ),
+                                  onPressed: () => _toggleLike(listingId),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Category: ${item['category'] ?? '-'}'),
+                            Text('Size: ${item['description'] ?? '-'}'),
+                            Text('Price: UGX ${item['price'] ?? '0'}'),
+                            Text('Contact: ${item['mobile_number'] ?? '-'}'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

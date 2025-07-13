@@ -5,7 +5,14 @@ import 'package:geocoding/geocoding.dart'; // For locationFromAddress
 const LatLng currentLocation = LatLng(0.3152, 32.5816); // Kampala
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final LatLng? targetLocation;
+  final String? label;
+
+  const SearchScreen({
+    super.key,
+    this.targetLocation,
+    this.label,
+  });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -26,13 +33,25 @@ class _SearchScreenState extends State<SearchScreen> {
       body: Stack(
         children: [
           GoogleMap(
-            initialCameraPosition: const CameraPosition(
-              target: currentLocation,
+            initialCameraPosition: CameraPosition(
+              target: widget.targetLocation ?? currentLocation,
               zoom: 12.0,
             ),
             onMapCreated: (controller) {
               mapController = controller;
-              addMarker('Kampala', currentLocation);
+              if (widget.targetLocation != null) {
+                // Listing location provided
+                mapController.animateCamera(
+                  CameraUpdate.newLatLngZoom(widget.targetLocation!, 15),
+                );
+                addMarker(
+                  widget.label ?? "Listing Location",
+                  widget.targetLocation!,
+                );
+              } else {
+                // Default location
+                addMarker("Kampala", currentLocation);
+              }
             },
             markers: markers.values.toSet(),
           ),
@@ -76,35 +95,35 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
+
   Future<void> _searchPlace() async {
-  final query = searchController.text.trim();
+    final query = searchController.text.trim();
 
-  if (query.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please enter a place name')),
-    );
-    return;
-  }
-
-  try {
-    List<Location> locations = await locationFromAddress(query);
-    if (locations.isNotEmpty) {
-      final location = locations.first;
-      final target = LatLng(location.latitude, location.longitude);
-
-      mapController.animateCamera(CameraUpdate.newLatLngZoom(target, 14));
-      addMarker(query, target);
-    } else {
-      throw Exception("No locations found");
+    if (query.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a place name')),
+      );
+      return;
     }
-  } catch (e) {
-    debugPrint('Geocoding error: $e');  // 💥 Add this line
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error finding location: $e')),
-    );
-  }
-}
 
+    try {
+      List<Location> locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        final target = LatLng(location.latitude, location.longitude);
+
+        mapController.animateCamera(CameraUpdate.newLatLngZoom(target, 14));
+        addMarker(query, target);
+      } else {
+        throw Exception("No locations found");
+      }
+    } catch (e) {
+      debugPrint('Geocoding error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error finding location: $e')),
+      );
+    }
+  }
 
   void addMarker(String markerId, LatLng location) {
     final marker = Marker(
