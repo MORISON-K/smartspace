@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../screens/manage_admins_screen.dart';
+import 'package:smartspace/admin/screens/property_listings_screen.dart';
+import 'package:smartspace/notifications/notifications_screen.dart';
+
 import '../screens/dashboard_screen.dart';
 import '../screens/manage_users_screen.dart';
-
-//
 
 class SectionRouter extends StatelessWidget {
   final int index;
@@ -16,14 +16,11 @@ class SectionRouter extends StatelessWidget {
         return const DashboardScreen();
       case 1:
         return const ManageUsersScreen();
-
       case 2:
-        return const ManageAdminsScreen();
+        return const PropertyListingsScreen();
       case 3:
-        return const Center(child: Text("Property Listings"));
+        return const NotificationsScreen();
       case 4:
-        return const Center(child: Text("Reports"));
-      case 5:
         return const Center(child: Text("Settings"));
       default:
         return const Center(child: Text("Select a section"));
