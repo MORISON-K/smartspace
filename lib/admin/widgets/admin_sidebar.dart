@@ -13,15 +13,17 @@ class AdminSidebar extends StatelessWidget {
   final List<Map<String, dynamic>> menuItems = const [
     {'icon': Icons.dashboard, 'label': 'Dashboard'},
     {'icon': Icons.people, 'label': 'Manage Users'},
-    {'icon': Icons.admin_panel_settings, 'label': 'Manage Admins'},
+  
     {'icon': Icons.home, 'label': 'Property Listings'},
+    {'icon': Icons.report, 'label': 'Notifications'},
+    {'icon': Icons.settings, 'label': 'Settings'},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      color: Colors.blueGrey[900],
+      color: const Color.fromRGBO(38, 50, 56, 1),
       child: Column(
         children: [
           const DrawerHeader(

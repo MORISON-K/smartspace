@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartspace/admin/models/properties.dart';
 import 'pdf_viewer_screen.dart';
 
+
 class PropertyDetailsScreen extends StatefulWidget {
   final Property property;
 
