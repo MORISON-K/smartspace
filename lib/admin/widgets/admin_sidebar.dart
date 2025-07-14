@@ -27,7 +27,10 @@ class AdminSidebar extends StatelessWidget {
       child: Column(
         children: [
           const DrawerHeader(
-            child: Text("Admin Panel", style: TextStyle(color: Colors.white, fontSize: 18)),
+            child: Text(
+              "Admin Panel",
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
           ),
           ...menuItems.asMap().entries.map((entry) {
             int index = entry.key;
@@ -37,7 +40,10 @@ class AdminSidebar extends StatelessWidget {
               selected: selectedIndex == index,
               selectedTileColor: const Color.fromARGB(255, 7, 95, 135),
               leading: Icon(item['icon'], color: Colors.white),
-              title: Text(item['label'], style: const TextStyle(color: Colors.white)),
+              title: Text(
+                item['label'],
+                style: const TextStyle(color: Colors.white),
+              ),
               onTap: () => onSectionSelected(index),
             );
           }),

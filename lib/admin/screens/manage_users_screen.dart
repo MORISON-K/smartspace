@@ -23,6 +23,28 @@ class ManageUsersScreen extends StatefulWidget {
 }
 
 class _ManageUsersScreenState extends State<ManageUsersScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  String? _selectedRole;
+  String? _selectedStatus;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
   bool isValidEmail(String email) {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegex.hasMatch(email);
@@ -54,7 +76,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                   DropdownButtonFormField<String>(
                     value: role,
                     items:
-                        ['User', 'Moderator', 'Guest']
+                        ['User', 'Seller', 'Admin']
                             .map(
                               (r) => DropdownMenuItem(value: r, child: Text(r)),
                             )
@@ -140,7 +162,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                   DropdownButtonFormField<String>(
                     value: role,
                     items:
-                        ['User', 'Moderator', 'Guest']
+                        ['User', 'Seller', 'Admin']
                             .map(
                               (r) => DropdownMenuItem(value: r, child: Text(r)),
                             )
@@ -211,66 +233,168 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Users')),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No users found."));
-          }
-
-          final docs = snapshot.data!.docs;
-
-          return ListView.separated(
+      body: Column(
+        children: [
+          Padding(
             padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
-            separatorBuilder: (_, __) => const Divider(),
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              final user = User(
-                name: data['name'] ?? '',
-                email: data['email'] ?? '',
-                role: data['role'] ?? '',
-                status: data['status'] ?? '',
-              );
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by name or email',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: _selectedRole,
+                    hint: const Text('Filter by Role'),
+                    items:
+                        ['User', 'Seller', 'Admin']
+                            .map(
+                              (role) => DropdownMenuItem(
+                                value: role,
+                                child: Text(role),
+                              ),
+                            )
+                            .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRole = value;
+                      });
+                    },
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: _selectedStatus,
+                  hint: const Text('Filter by Status'),
+                  items:
+                      ['Active', 'Disabled']
+                          .map(
+                            (status) => DropdownMenuItem(
+                              value: status,
+                              child: Text(status),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedStatus = value;
+                    });
+                  },
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedRole = null;
+                      _selectedStatus = null;
+                    });
+                  },
+                  icon: const Icon(Icons.clear),
+                  tooltip: 'Clear Filters',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
 
-              return ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(user.name),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(user.email),
-                    Text(
-                      'Role: ${user.role}  •  Status: ${user.status}',
-                      style: TextStyle(
-                        color:
-                            user.status == 'Active' ? Colors.green : Colors.red,
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('users').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("No users found."));
+                }
+
+                final docs = snapshot.data!.docs;
+                final filteredDocs =
+                    docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final name = data['name']?.toLowerCase() ?? '';
+                      final email = data['email']?.toLowerCase() ?? '';
+                      final role = data['role']?.toLowerCase() ?? '';
+                      final status = data['status']?.toLowerCase() ?? '';
+
+                      final matchesSearchQuery =
+                          name.contains(_searchQuery) ||
+                          email.contains(_searchQuery);
+                      final matchesRole =
+                          _selectedRole == null ||
+                          role == _selectedRole!.toLowerCase();
+                      final matchesStatus =
+                          _selectedStatus == null ||
+                          status == _selectedStatus!.toLowerCase();
+
+                      return matchesSearchQuery && matchesRole && matchesStatus;
+                    }).toList();
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredDocs.length,
+
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final doc = filteredDocs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    final user = User(
+                      name: data['name'] ?? '',
+                      email: data['email'] ?? '',
+                      role: data['role'] ?? '',
+                      status: data['status'] ?? '',
+                    );
+
+                    return ListTile(
+                      isThreeLine: true,
+                      leading: const CircleAvatar(child: Icon(Icons.person)),
+                      title: Text(user.name),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(user.email),
+                          Text(
+                            'Role: ${user.role}  •  Status: ${user.status}',
+                            style: TextStyle(
+                              color:
+                                  user.status == 'Active'
+                                      ? Colors.green
+                                      : Colors.red,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showEditUserDialog(doc.id, user),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteUser(doc.id),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _showEditUserDialog(doc.id, user),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _deleteUser(doc.id),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddUserDialog,

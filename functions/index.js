@@ -38,16 +38,59 @@ exports.notifyAdminOnNewListing = onDocumentCreated(
         const sellerName = listing.sellerName || "Unknown Seller";
         const listingTitle = listing.title || "Untitled Listing";
 
-        const message = {
-          notification: {
-            title: "New listing has been submitted",
-            body: `Seller ${sellerName} submitted: ${listingTitle}`,
-          },
-          topic: "admin", // Send to admin topic
-        };
+        // Get all admin users instead of using topic
+        const adminUsersQuery = await admin.firestore()
+            .collection("users")
+            .where("role", "==", "admin")
+            .get();
 
-        const response = await admin.messaging().send(message);
-        console.log("Notification sent to admin successfully:", response);
+        if (adminUsersQuery.empty) {
+          console.warn("No admin users found to notify");
+          return;
+        }
+
+        const notificationPromises = [];
+
+        adminUsersQuery.docs.forEach((adminDoc) => {
+          const adminData = adminDoc.data();
+          const fcmToken = adminData.fcmToken;
+
+          if (fcmToken) {
+            const message = {
+              notification: {
+                title: "New listing has been submitted",
+                body: `Seller ${sellerName} submitted: ${listingTitle}`,
+              },
+              token: fcmToken,
+            };
+
+            notificationPromises.push(
+                admin.messaging().send(message)
+                    .then((response) => {
+                      console.log(
+                          `Notification sent to admin ${adminDoc.id}:`,
+                          response,
+                      );
+                      return response;
+                    })
+                    .catch((error) => {
+                      console.error(
+                          `Failed to send notification to admin ` +
+                          `${adminDoc.id}:`,
+                          error,
+                      );
+                      return null;
+                    }),
+            );
+          } else {
+            console.warn(`Admin ${adminDoc.id} has no FCM token`);
+          }
+        });
+
+        await Promise.allSettled(notificationPromises);
+        console.log(
+            `Attempted to notify ${notificationPromises.length} admin users`,
+        );
       } catch (error) {
         console.error("Error sending notification to admin:", {
           error: error.message,

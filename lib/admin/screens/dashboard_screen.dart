@@ -16,14 +16,15 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // Firestore references
-  final CollectionReference listingsCollection =
-      FirebaseFirestore.instance.collection('listings');
-      
-  final CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection('users');
+  final CollectionReference listingsCollection = FirebaseFirestore.instance
+      .collection('listings');
+
+  final CollectionReference usersCollection = FirebaseFirestore.instance
+      .collection('users');
 
   // Bottom navigation index
   int _currentIndex = 0;
+  bool _sortDescending = true;
 
   // Search functionality
   final TextEditingController _searchController = TextEditingController();
@@ -61,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final date = timestamp.toDate();
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
     } else if (difference.inHours > 0) {
@@ -252,24 +253,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Navigate to property details
   void _navigateToPropertyDetails(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Create a Property object from the document data
     final property = Property.fromFirestore(data, doc.id);
-      
 
     // Navigate to PropertyDetailsScreen
-   Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PropertyDetailsScreen(property: property),
-    ),
-  ).then((result) {
-    // Refresh the list if needed
-    if (result == true) {
-      setState(() {});
-    }
-  });
-}
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PropertyDetailsScreen(property: property),
+      ),
+    ).then((result) {
+      // Refresh the list if needed
+      if (result == true) {
+        setState(() {});
+      }
+    });
+  }
 
   // Build listings tab (now supports all statuses)
   Widget _buildListingsTab() {
@@ -524,6 +524,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     backgroundColor: Colors.blue,
                     child: Text("A"),
                   ),
+                  const SizedBox(width: 12),
+                  DropdownButton<bool>(
+                    value: _sortDescending,
+                    underline: const SizedBox(),
+                    items: const [
+                      DropdownMenuItem(value: true, child: Text("Most Recent")),
+                      DropdownMenuItem(value: false, child: Text("Oldest")),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _sortDescending = value;
+                        });
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -558,9 +574,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         items: [
           BottomNavigationBarItem(
             icon: StreamBuilder<QuerySnapshot>(
-              stream: listingsCollection
-                  .where('status', isEqualTo: 'pending')
-                  .snapshots(),
+              stream:
+                  listingsCollection
+                      .where('status', isEqualTo: 'pending')
+                      .snapshots(),
               builder: (context, snapshot) {
                 final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
                 return Stack(
@@ -660,7 +677,7 @@ class SectionHeader extends StatelessWidget {
   final String title;
   final int count;
   final Widget? child;
-  
+
   const SectionHeader({
     super.key,
     required this.title,
@@ -677,10 +694,7 @@ class SectionHeader extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: 8),
             Container(
@@ -751,7 +765,11 @@ class _ListingItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeAgo = (context.findAncestorStateOfType<_DashboardScreenState>()?._formatTimeDifference(createdAt) ?? '');
+    final timeAgo =
+        (context
+                .findAncestorStateOfType<_DashboardScreenState>()
+                ?._formatTimeDifference(createdAt) ??
+            '');
 
     return Card(
       elevation: 0,
@@ -785,26 +803,17 @@ class _ListingItem extends StatelessWidget {
                 const Spacer(),
                 Text(
                   timeAgo,
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 4),
-            Text(
-              location,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            Text(location, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 4),
             Text(
               price,

@@ -41,8 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
       );
-    }
-    if (result == 'Seller') {
+    } else if (result == 'Seller') {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => SellerHomeScreen()),

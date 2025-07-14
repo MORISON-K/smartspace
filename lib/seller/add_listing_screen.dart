@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smartspace/seller/recent-activity/activity_service.dart';
 
 /// Screen that allows sellers to add new property listings
 /// Users can input property details, upload images, attach documents, and submit for approval
@@ -27,6 +28,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _priceController = TextEditingController();
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _acreageController = TextEditingController();
   final _phoneController = TextEditingController();
 
   // Selected category for the property (Freehold, Leasehold, etc.)
@@ -133,21 +135,31 @@ class _AddListingScreenState extends State<AddListingScreen> {
         final pdfUrl = await pdfRef.getDownloadURL();
 
         // Save all listing data to Firestore database
-        await FirebaseFirestore.instance.collection('listings').add({
-          'price': _priceController.text.trim(),
-          'location': _locationController.text.trim(),
-          'latitude': lat,
-          'longitude': lng,
-          'mobile_number': '+256 ${_phoneController.text.trim()}',
-          'category': _selectedCategory,
-          'description': _descriptionController.text.trim(),
-          'images': imageUrls,
-          'pdf': pdfUrl,
-          'createdAt': Timestamp.now(),
-          'user_id': user.uid,
-          'sellerName': sellerName,
-          "status": "pending",
-        });
+        final docRef = await FirebaseFirestore.instance
+            .collection('listings')
+            .add({
+              'title': "land",
+              'price': _priceController.text.trim(),
+              'location': _locationController.text.trim(),
+              'latitude': lat,
+              'longitude': lng,
+              'mobile_number': '+256 ${_phoneController.text.trim()}',
+              'category': _selectedCategory,
+              'description': _descriptionController.text.trim(),
+              'acreage': '${_acreageController.text.trim()} acres',
+              'images': imageUrls,
+              'pdf': pdfUrl,
+              'createdAt': Timestamp.now(),
+              'user_id': user.uid,
+              'sellerName': sellerName,
+              "status": "pending",
+            });
+
+        final ActivityService activityService = ActivityService();
+        await activityService.createListingActivity(
+          _locationController.text.trim(), // propertyTitle
+          docRef.id, // propertyId
+        );
 
         _showSnack("Listing submitted successfully!");
         Navigator.of(context).pop(); // Return to previous screen
@@ -182,6 +194,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
     _priceController.dispose();
     _locationController.dispose();
     _descriptionController.dispose();
+    _acreageController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -192,7 +206,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back_ios_new,
+            Icons.arrow_back_ios,
             color: const Color.fromARGB(255, 164, 192, 221),
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -200,7 +214,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         title: const Text(
           "Add New Property",
           style: TextStyle(
-            color: Color.fromARGB(255, 0, 153, 255),
+            color: Color.fromARGB(255, 22, 24, 25),
             fontWeight: FontWeight.bold,
             fontSize: 22,
             letterSpacing: 1.2,
@@ -298,14 +312,41 @@ class _AddListingScreenState extends State<AddListingScreen> {
               ),
               const SizedBox(height: 12),
 
+              // Acreage input field
+              TextFormField(
+                controller: _acreageController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration('Acreage (in acres)'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Acreage is required';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Enter a valid number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
               // Multi-line description input field
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
-                decoration: _inputDecoration('Description'),
+                decoration: _inputDecoration('Description (max 30 words)'),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Description is required';
+                  }
+                  // Count words by splitting on whitespace and filtering empty strings
+                  final words =
+                      value
+                          .trim()
+                          .split(RegExp(r'\s+'))
+                          .where((word) => word.isNotEmpty)
+                          .toList();
+                  if (words.length > 30) {
+                    return 'Description must be 30 words or less (currently ${words.length} words)';
                   }
                   return null;
                 },
@@ -367,7 +408,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 label: const Text('SUBMIT FOR APPROVAL'),
                 onPressed: _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007BFF),
+                  backgroundColor: const Color.fromARGB(255, 149, 65, 23),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
