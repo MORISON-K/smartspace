@@ -13,7 +13,7 @@ class AdminSidebar extends StatelessWidget {
   final List<Map<String, dynamic>> menuItems = const [
     {'icon': Icons.dashboard, 'label': 'Dashboard'},
     {'icon': Icons.people, 'label': 'Manage Users'},
-    {'icon': Icons.admin_panel_settings, 'label': 'Manage Admins'},
+  
     {'icon': Icons.home, 'label': 'Property Listings'},
     {'icon': Icons.report, 'label': 'Notifications'},
     {'icon': Icons.settings, 'label': 'Settings'},
