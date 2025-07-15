@@ -1,10 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'listing_detail_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -120,6 +120,16 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
+                  if (titleController.text.isEmpty ||
+                      priceController.text.isEmpty ||
+                      locationController.text.isEmpty ||
+                      descriptionController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Please fill in all fields")),
+                    );
+                    return;
+                  }
+
                   String updatedImageUrl = imageUrl;
 
                   if (newImageFile != null) {
@@ -193,28 +203,44 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 margin: EdgeInsets.all(8.0),
                 child: Column(
                   children: [
-                    ListTile(
-                      leading: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ListingDetailScreen(
+                              imageUrl: imageUrl,
+                              title: title,
+                              price: price.toString(),
+                              location: location,
+                              description: description,
+                            ),
+                          ),
+                        );
+                      },
+                      child: ListTile(
+                        leading: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(imageUrl, fit: BoxFit.cover)
+                                : Icon(Icons.home, color: Colors.grey),
+                          ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: imageUrl.isNotEmpty
-                              ? Image.network(imageUrl, fit: BoxFit.cover)
-                              : Icon(Icons.home, color: Colors.grey),
+                        title: Text(title),
+                        subtitle: Text(
+                          '$description\n📍 $location',
+                          style: TextStyle(height: 1.3),
                         ),
+                        isThreeLine: true,
+                        trailing: Text('\$$price'),
                       ),
-                      title: Text(title),
-                      subtitle: Text(
-                        '$description\n📍 $location',
-                        style: TextStyle(height: 1.3),
-                      ),
-                      isThreeLine: true,
-                      trailing: Text('\$$price'),
                     ),
                     OverflowBar(
                       alignment: MainAxisAlignment.end,
