@@ -143,7 +143,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
               'location': _locationController.text.trim(),
               'latitude': lat,
               'longitude': lng,
-              'mobile_number': '+256 ${_phoneController.text.trim()}',
+              'mobile_number': '256 ${_phoneController.text.trim()}',
               'category': _selectedCategory,
               'description': _descriptionController.text.trim(),
               'acreage': '${_acreageController.text.trim()} acres',
@@ -266,7 +266,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: _inputDecoration('Mobile Number').copyWith(
-                  prefixText: '+256 ',
+                  prefixText: '256 ',
                   prefixStyle: TextStyle(
                     color: Colors.black87,
                     fontWeight: FontWeight.w500,
