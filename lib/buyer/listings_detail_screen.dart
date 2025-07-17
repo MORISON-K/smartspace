@@ -53,15 +53,44 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       _showError("Cannot make a call.");
     }
   }
-
   void _launchWhatsApp(String number) async {
-    final url = Uri.parse("whatsapp://send?phone=$number");
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      _showError("WhatsApp not installed.");
-    }
+  final cleanedNumber = _formatPhoneNumber(number);
+  final message = 'Hi, I\'m interested in your property listed on SmartSpace.';
+  final url = Uri.parse("https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}");
+
+  debugPrint("💡 Cleaned number: $cleanedNumber");
+  debugPrint("🔗 WhatsApp URL: $url");
+
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+    _showError("Could not open WhatsApp. Please make sure WhatsApp is installed.");
   }
+}
+
+String _formatPhoneNumber(String number) {
+  // Strip all non-digit characters
+  String digits = number.replaceAll(RegExp(r'[^\d+]'), '');
+
+  // Handle numbers that start with '0' (e.g. 0700...)
+  if (digits.startsWith('0')) {
+    // Replace leading 0 with country code — customize default country here
+    return '256${digits.substring(1)}';
+  }
+
+  // If already starts with country code but missing '+', add it
+  if (digits.startsWith('256') && !digits.startsWith('+')) {
+    return digits;
+  }
+
+  // Fallback: Assume number is complete (already international)
+  return digits.replaceAll('+', '');
+}
+
+  
+
+
+  
 
   void _launchMap() async {
     final lat = widget.listing['latitude'];
@@ -176,10 +205,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         label: const Text("Call"),
                       ),
                       ElevatedButton.icon(
-                        onPressed: () => _launchWhatsApp(phone),
+                        onPressed: () => _launchWhatsApp(widget.listing['mobile_number'] ?? ''),
                         icon: const Icon(Icons.message),
                         label: const Text("WhatsApp"),
-                      ),
+),
+
                       ElevatedButton.icon(
                         onPressed: _launchMap,
                         icon: const Icon(Icons.map),
