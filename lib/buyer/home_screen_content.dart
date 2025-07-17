@@ -21,6 +21,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   final user = FirebaseAuth.instance.currentUser;
 
   String _sortOrder = 'none';
+  String _searchText = '';
 
   @override
   void initState() {
@@ -41,13 +42,31 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         return int.tryParse(price.toString().replaceAll(',', '')) ?? 0;
       }
 
-      if (_sortOrder == 'lowest') {
-        docs.sort((a, b) => getPrice(a).compareTo(getPrice(b)));
-      } else if (_sortOrder == 'highest') {
-        docs.sort((a, b) => getPrice(b).compareTo(getPrice(a)));
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs = docs;
+
+      // Apply search filtering by location or category (example)
+      if (_searchText.isNotEmpty) {
+        filteredDocs =
+            filteredDocs.where((doc) {
+              final data = doc.data();
+              final location =
+                  (data['location'] ?? '').toString().toLowerCase();
+              final category =
+                  (data['category'] ?? '').toString().toLowerCase();
+              final searchLower = _searchText.toLowerCase();
+              return location.contains(searchLower) ||
+                  category.contains(searchLower);
+            }).toList();
       }
 
-      return docs;
+      // Apply sorting
+      if (_sortOrder == 'lowest') {
+        filteredDocs.sort((a, b) => getPrice(a).compareTo(getPrice(b)));
+      } else if (_sortOrder == 'highest') {
+        filteredDocs.sort((a, b) => getPrice(b).compareTo(getPrice(a)));
+      }
+
+      return filteredDocs;
     } catch (e) {
       debugPrint('Error fetching listings: $e');
       return [];
@@ -100,6 +119,13 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     });
   }
 
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchText = value;
+      listingsFuture = _getLandListings();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,46 +150,93 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         ),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Filter button below the AppBar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            alignment: Alignment.centerRight,
-            child: PopupMenuButton<String>(
-              onSelected: _onSortChanged,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              itemBuilder:
-                  (context) => [
-                    const PopupMenuItem(value: 'none', child: Text('Default')),
-                    const PopupMenuItem(
-                      value: 'lowest',
-                      child: Text('Lowest Price'),
+          const SizedBox(height: 12),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                // Search bar takes most space
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search listings...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 16,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
-                    const PopupMenuItem(
-                      value: 'highest',
-                      child: Text('Highest Price'),
+                    onChanged: _onSearchChanged,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Filter button
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: PopupMenuButton<String>(
+                    onSelected: _onSortChanged,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ],
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.tune, color: Colors.black),
-                  SizedBox(width: 6),
-                  Text(
-                    "Filter",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
+                    itemBuilder:
+                        (context) => const [
+                          PopupMenuItem(value: 'none', child: Text('Default')),
+                          PopupMenuItem(
+                            value: 'lowest',
+                            child: Text('Lowest Price'),
+                          ),
+                          PopupMenuItem(
+                            value: 'highest',
+                            child: Text('Highest Price'),
+                          ),
+                        ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.tune, color: Colors.black),
+                        SizedBox(width: 6),
+                        Text(
+                          "Filter",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
-          // Listings list
+          const SizedBox(height: 12),
+
           Expanded(
             child: FutureBuilder<
               List<QueryDocumentSnapshot<Map<String, dynamic>>>
@@ -219,12 +292,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        clipBehavior:
-                            Clip.antiAlias, // round image corners properly
+                        clipBehavior: Clip.antiAlias,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Image with rounded corners
                             if (imageUrl != null)
                               SizedBox(
                                 height: 200,
@@ -267,7 +338,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Title + Like button row
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -301,8 +371,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-
-                                  // Details
                                   Text(
                                     'Category: ${item['category'] ?? '-'}',
                                     style: TextStyle(
@@ -311,7 +379,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-
                                   Text(
                                     'Size: ${item['description'] ?? '-'}',
                                     style: TextStyle(
@@ -320,8 +387,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-
-                                  // Price - standout style
                                   Text(
                                     'Price: UGX ${item['price'] ?? '0'}',
                                     style: const TextStyle(
@@ -331,8 +396,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-
-                                  // Contact info subtle
                                   Text(
                                     'Contact: ${item['mobile_number'] ?? '-'}',
                                     style: TextStyle(
