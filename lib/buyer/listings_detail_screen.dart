@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
 class ListingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> listing;
   final String listingId;
@@ -55,40 +54,20 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
   void _launchWhatsApp(String number) async {
-  final cleanedNumber = _formatPhoneNumber(number);
+  final cleanedNumber = number.replaceAll(RegExp(r'[^\d]'), '');
   final message = 'Hi, I\'m interested in your property listed on SmartSpace.';
   final url = Uri.parse("https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}");
 
-  debugPrint(" Cleaned number: $cleanedNumber");
-  debugPrint(" WhatsApp URL: $url");
+  print(" Cleaned number: $cleanedNumber");
+  print(" Full WhatsApp URL: $url");
 
   if (await canLaunchUrl(url)) {
     await launchUrl(url, mode: LaunchMode.externalApplication);
   } else {
-    _showError("Could not open WhatsApp. Please make sure WhatsApp is installed.");
+    print(" Cannot launch: $url");
+    _showError("Could not open WhatsApp. Please make sure it is installed.");
   }
 }
-
-String _formatPhoneNumber(String number) {
-  // Strip all non-digit characters
-  String digits = number.replaceAll(RegExp(r'[^\d+]'), '');
-
-  // Handle numbers that start with '0' (e.g. 0700...)
-  if (digits.startsWith('0')) {
-    // Replace leading 0 with country code — customize default country here
-    return '256${digits.substring(1)}';
-  }
-
-  // If already starts with country code but missing '+', add it
-  if (digits.startsWith('256') && !digits.startsWith('+')) {
-    return digits;
-  }
-
-  // Fallback: Assume number is complete (already international)
-  return digits.replaceAll('+', '');
-}
-
-  
 
 
   
@@ -206,11 +185,10 @@ String _formatPhoneNumber(String number) {
                         label: const Text("Call"),
                       ),
                       ElevatedButton.icon(
-                        onPressed: () => _launchWhatsApp(widget.listing['mobile_number'] ?? ''),
+                        onPressed: () => _launchWhatsApp(phone),
                         icon: const Icon(Icons.message),
                         label: const Text("WhatsApp"),
-),
-
+                      ),
                       ElevatedButton.icon(
                         onPressed: _launchMap,
                         icon: const Icon(Icons.map),
