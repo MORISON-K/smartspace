@@ -107,10 +107,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         title: const Text("Land Listings"),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(
-              Icons.tune,
-              color: Color.fromARGB(255, 0, 0, 0),
-            ), // 👈 Modern filter icon
+            icon: const Icon(Icons.tune, color: Color.fromARGB(255, 0, 0, 0)),
             onSelected: _onSortChanged,
             itemBuilder:
                 (context) => [
