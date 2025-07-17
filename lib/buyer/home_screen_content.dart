@@ -36,7 +36,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           await landRef.where('status', isEqualTo: 'approved').get();
       final docs = snapshot.docs;
 
-      // Local sorting based on selected sort order
       int getPrice(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final price = doc.data()['price'];
         return int.tryParse(price.toString().replaceAll(',', '')) ?? 0;
@@ -110,8 +109,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           PopupMenuButton<String>(
             icon: const Icon(
               Icons.tune,
-              color: Colors.white,
-            ), // ← This is the cool slider icon
+              color: Color.fromARGB(255, 0, 0, 0),
+            ), // 👈 Modern filter icon
             onSelected: _onSortChanged,
             itemBuilder:
                 (context) => [
@@ -129,7 +128,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           const SizedBox(width: 12),
         ],
       ),
-
       body: FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
         future: listingsFuture,
         builder: (context, snapshot) {
