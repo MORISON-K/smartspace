@@ -2,8 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'listings_detail_screen.dart';
-final CollectionReference<Map<String,dynamic>> landRef =
-  FirebaseFirestore.instance.collection('listings');
+
+final CollectionReference<Map<String, dynamic>> landRef = FirebaseFirestore
+    .instance
+    .collection('listings');
 
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
@@ -18,6 +20,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   final user = FirebaseAuth.instance.currentUser;
 
+  String _sortOrder = 'none'; // 'none', 'lowest', or 'highest'
+
   @override
   void initState() {
     super.initState();
@@ -25,10 +29,26 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     _getUserLikedListings();
   }
 
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getLandListings() async {
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+  _getLandListings() async {
     try {
-      final snapshot = await landRef.where('status', isEqualTo: 'approved').get();
-      return snapshot.docs;
+      final snapshot =
+          await landRef.where('status', isEqualTo: 'approved').get();
+      final docs = snapshot.docs;
+
+      // Local sorting based on selected sort order
+      int getPrice(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final price = doc.data()['price'];
+        return int.tryParse(price.toString().replaceAll(',', '')) ?? 0;
+      }
+
+      if (_sortOrder == 'lowest') {
+        docs.sort((a, b) => getPrice(a).compareTo(getPrice(b)));
+      } else if (_sortOrder == 'highest') {
+        docs.sort((a, b) => getPrice(b).compareTo(getPrice(a)));
+      }
+
+      return docs;
     } catch (e) {
       debugPrint('Error fetching listings: $e');
       return [];
@@ -39,7 +59,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     if (user == null) return;
 
     final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user!.uid)
+            .get();
     final data = userDoc.data();
     setState(() {
       likedListings = List<String>.from(data?['likedListings'] ?? []);
@@ -49,7 +72,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   Future<void> _toggleLike(String listingId) async {
     if (user == null) return;
 
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid);
 
     final isLiked = likedListings.contains(listingId);
     if (isLiked) {
@@ -67,10 +92,44 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     });
   }
 
+  void _onSortChanged(String? value) {
+    if (value == null) return;
+
+    setState(() {
+      _sortOrder = value;
+      listingsFuture = _getLandListings(); // Re-fetch and sort
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Land Listings")),
+      appBar: AppBar(
+        title: const Text("Land Listings"),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.tune,
+              color: Colors.white,
+            ), // ← This is the cool slider icon
+            onSelected: _onSortChanged,
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(value: 'none', child: Text('Default')),
+                  const PopupMenuItem(
+                    value: 'lowest',
+                    child: Text('Lowest Price'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'highest',
+                    child: Text('Highest Price'),
+                  ),
+                ],
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+
       body: FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
         future: listingsFuture,
         builder: (context, snapshot) {
@@ -92,7 +151,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               final item = doc.data();
               final listingId = doc.id;
               final images = item['images'] as List<dynamic>?;
-              final imageUrl = (images != null && images.isNotEmpty) ? images[0] as String : null;
+              final imageUrl =
+                  (images != null && images.isNotEmpty)
+                      ? images[0] as String
+                      : null;
               final isLiked = likedListings.contains(listingId);
 
               return GestureDetector(
@@ -100,10 +162,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ListingDetailScreen(
-                        listing: item,
-                        listingId: listingId,
-                      ),
+                      builder:
+                          (_) => ListingDetailScreen(
+                            listing: item,
+                            listingId: listingId,
+                          ),
                     ),
                   );
                 },
@@ -118,15 +181,25 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     children: [
                       if (imageUrl != null)
                         ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
                           child: Image.network(
                             imageUrl,
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            loadingBuilder: (_, child, progress) =>
-                                progress == null ? child : const Center(child: CircularProgressIndicator()),
-                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image)),
+                            loadingBuilder:
+                                (_, child, progress) =>
+                                    progress == null
+                                        ? child
+                                        : const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                            errorBuilder:
+                                (_, __, ___) => const Center(
+                                  child: Icon(Icons.broken_image),
+                                ),
                           ),
                         ),
                       Padding(
@@ -139,11 +212,16 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                               children: [
                                 Text(
                                   item['location'] ?? 'Unknown location',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 IconButton(
                                   icon: Icon(
-                                    isLiked ? Icons.favorite : Icons.favorite_border,
+                                    isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
                                     color: isLiked ? Colors.red : Colors.grey,
                                   ),
                                   onPressed: () => _toggleLike(listingId),
