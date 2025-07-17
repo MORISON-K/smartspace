@@ -58,8 +58,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   final message = 'Hi, I\'m interested in your property listed on SmartSpace.';
   final url = Uri.parse("https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}");
 
-  debugPrint("💡 Cleaned number: $cleanedNumber");
-  debugPrint("🔗 WhatsApp URL: $url");
+  debugPrint(" Cleaned number: $cleanedNumber");
+  debugPrint(" WhatsApp URL: $url");
 
   if (await canLaunchUrl(url)) {
     await launchUrl(url, mode: LaunchMode.externalApplication);
