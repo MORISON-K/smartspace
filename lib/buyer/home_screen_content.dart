@@ -44,7 +44,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
       List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs = docs;
 
-      // Apply search filtering by location or category (example)
       if (_searchText.isNotEmpty) {
         filteredDocs =
             filteredDocs.where((doc) {
@@ -59,7 +58,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             }).toList();
       }
 
-      // Apply sorting
       if (_sortOrder == 'lowest') {
         filteredDocs.sort((a, b) => getPrice(a).compareTo(getPrice(b)));
       } else if (_sortOrder == 'highest') {
@@ -129,36 +127,49 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // light background for contrast
+      backgroundColor: Colors.grey[100],
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
+        preferredSize: const Size.fromHeight(70),
         child: AppBar(
           backgroundColor: Colors.white,
-          elevation: 3,
+          elevation: 5,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-          ),
-          title: const Text(
-            "Land Listings",
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
-            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
           ),
           centerTitle: true,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.landscape, size: 32, color: Colors.black87),
+              const SizedBox(width: 12),
+              const Text(
+                'Land Listings',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                  letterSpacing: 1.5,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 3,
+                      color: Colors.black26,
+                      offset: Offset(1, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                // Search bar takes most space
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
@@ -178,10 +189,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     onChanged: _onSearchChanged,
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
-                // Filter button
                 Container(
                   padding: const EdgeInsets.symmetric(
                     vertical: 10,
@@ -234,9 +242,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               ],
             ),
           ),
-
           const SizedBox(height: 12),
-
           Expanded(
             child: FutureBuilder<
               List<QueryDocumentSnapshot<Map<String, dynamic>>>
@@ -246,15 +252,12 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(
                     child: Text("No approved listings found."),
                   );
                 }
-
                 final listings = snapshot.data!;
-
                 return ListView.builder(
                   itemCount: listings.length,
                   padding: const EdgeInsets.symmetric(
@@ -271,7 +274,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                             ? images[0] as String
                             : null;
                     final isLiked = likedListings.contains(listingId);
-
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -332,7 +334,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                   ),
                                 ),
                               ),
-
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Column(
