@@ -40,11 +40,11 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
 
   String _getApiUrl() {
     if (Platform.isAndroid) {
-      return "http://10.10.111.149/predict"; // Android emulator
+      return "https://smartspace-e7e32524ddcb.herokuapp.com/api/predict/"; // Android emulator
     } else if (Platform.isIOS) {
-      return "http://localhost:8000/predict"; // iOS simulator
+      return "https://smartspace-e7e32524ddcb.herokuapp.com/api/predict/"; // iOS simulator
     } else {
-      // For physical devices, replace with your computer's IP
+      // For physical devices, replace with computer's IP
       return "http://192.168.1.100:8000/predict"; 
     }
   }
@@ -270,15 +270,14 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                         Icon(
                           Icons.trending_up,
                           size: 48,
-                          color: Colors.green[700],
+                          color: const Color.fromARGB(255, 56, 116, 142),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           "Predicted Land Value",
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
+                            color: Color.fromARGB(255, 103, 28, 23)               ),
                         ),
                         const SizedBox(height: 8),
                         Text(
