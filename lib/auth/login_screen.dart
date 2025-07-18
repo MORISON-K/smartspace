@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
- import 'package:smartspace/admin/screens/admin_home_screen.dart';
+import 'package:smartspace/admin/screens/admin_home_screen.dart';
 
 import 'package:smartspace/auth/auth_service.dart';
 import 'package:smartspace/auth/forgot_password_screen.dart';
@@ -31,6 +31,8 @@ class _LoginScreenState extends State<LoginScreen> {
       email: _emailController.text,
       password: _passwordController.text,
     );
+
+    if (!mounted) return;
 
     setState(() {
       _isLoading = false;
