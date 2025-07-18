@@ -336,7 +336,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               title: Text("AI Valuation"),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/ai_valuation');
+                Navigator.pushNamed(context, '/land_valuation');
               },
             ),
 

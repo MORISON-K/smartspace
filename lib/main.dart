@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:smartspace/auth/login_screen.dart';
+import 'package:smartspace/seller/ai-valuation/land_value_predictor.dart';
 
 import 'package:smartspace/seller/my_listings_screen.dart';
 import 'package:smartspace/seller/add_listing_screen.dart';
@@ -47,6 +48,7 @@ class SmartSpace extends StatelessWidget {
         '/add_listing_screen': (context) => AddListingScreen(),
         '/seller_home_screen': (context) => SellerHomeScreen(),
         '/profile_screen': (context) => ProfileScreen(),
+        '/land_valuation': (context) => LandValuePredictorWidget()
       },
     );
   }
