@@ -36,13 +36,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         title: Text("Confirm Delete"),
         content: Text("Are you sure you want to delete this listing?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.pop(context);
               deleteListing(docId);
             },
             child: Text("Delete"),
@@ -81,9 +78,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                     child: Container(
                       width: 100,
                       height: 100,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                      ),
+                      decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
                       child: newImageFile != null
                           ? Image.file(newImageFile!, fit: BoxFit.cover)
                           : (imageUrl.isNotEmpty
@@ -92,19 +87,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                     ),
                   ),
                   SizedBox(height: 10),
-                  TextField(
-                    controller: titleController,
-                    decoration: InputDecoration(labelText: 'Title'),
-                  ),
+                  TextField(controller: titleController, decoration: InputDecoration(labelText: 'Title')),
                   TextField(
                     controller: priceController,
                     decoration: InputDecoration(labelText: 'Price'),
                     keyboardType: TextInputType.number,
                   ),
-                  TextField(
-                    controller: locationController,
-                    decoration: InputDecoration(labelText: 'Location'),
-                  ),
+                  TextField(controller: locationController, decoration: InputDecoration(labelText: 'Location')),
                   TextField(
                     controller: descriptionController,
                     decoration: InputDecoration(labelText: 'Description'),
@@ -114,19 +103,14 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Cancel"),
-              ),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
               ElevatedButton(
                 onPressed: () async {
                   if (titleController.text.isEmpty ||
                       priceController.text.isEmpty ||
                       locationController.text.isEmpty ||
                       descriptionController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Please fill in all fields")),
-                    );
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please fill in all fields")));
                     return;
                   }
 
@@ -148,9 +132,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   });
 
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Listing updated")),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Listing updated")));
                 },
                 child: Text("Save"),
               ),
@@ -158,6 +140,109 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           );
         });
       },
+    );
+  }
+
+  void respondToAdmin(String docId, String adminRequest) {
+    final responseController = TextEditingController();
+    final extraDescriptionController = TextEditingController();
+    List<File> selectedImages = [];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text("Respond to Admin"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (adminRequest.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Admin Request:", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(adminRequest),
+                      SizedBox(height: 10),
+                    ],
+                  ),
+                TextField(
+                  controller: responseController,
+                  decoration: InputDecoration(
+                    labelText: "Your Response",
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: extraDescriptionController,
+                  decoration: InputDecoration(
+                    labelText: "Additional Description",
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (var img in selectedImages)
+                      Image.file(img, width: 70, height: 70, fit: BoxFit.cover),
+                    GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        final pickedFiles = await picker.pickMultiImage();
+                        if (pickedFiles.isNotEmpty) {
+                          setState(() {
+                            selectedImages.addAll(pickedFiles.map((e) => File(e.path)));
+                          });
+                        }
+                      },
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        color: Colors.grey.shade300,
+                        child: Icon(Icons.add_a_photo),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                final response = responseController.text.trim();
+                final extraDesc = extraDescriptionController.text.trim();
+                List<String> uploadedUrls = [];
+
+                for (var imageFile in selectedImages) {
+                  final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+                  final ref = FirebaseStorage.instance.ref().child('listing_responses/$fileName');
+                  await ref.putFile(imageFile);
+                  final downloadUrl = await ref.getDownloadURL();
+                  uploadedUrls.add(downloadUrl);
+                }
+
+                await FirebaseFirestore.instance.collection('listings').doc(docId).update({
+                  if (response.isNotEmpty) 'user_response': response,
+                  if (extraDesc.isNotEmpty) 'extra_description': extraDesc,
+                  if (uploadedUrls.isNotEmpty) 'extra_images': uploadedUrls,
+                  'request_status': 'open',
+                });
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Response sent to admin")));
+              },
+              child: Text("Send"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -174,36 +259,49 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             .where('user_id', isEqualTo: user?.uid)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting)
             return Center(child: CircularProgressIndicator());
-          }
 
-          if (snapshot.hasError) {
+          if (snapshot.hasError)
             return Center(child: Text('Error: ${snapshot.error}'));
-          }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
             return Center(child: Text('No listings found'));
-          }
 
           final docs = snapshot.data!.docs;
+
           return ListView.builder(
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final images = data['images'] as List<dynamic>? ?? [];
-              final imageUrl = images.isNotEmpty ? images[0] : '';
-              final description = data['description'] ?? 'No description';
-              final title = data['title'] ?? 'Property Listing';
+              final imageUrl = (data['images'] as List<dynamic>?)?.first ?? '';
+              final title = data['title'] ?? 'Untitled';
               final price = data['price'] ?? 'N/A';
-              final location = data['location'] ?? 'No location';
+              final location = data['location'] ?? 'Unknown';
+              final description = data['description'] ?? '';
+              final adminRequest = data['admin_request'] ?? '';
+              final userResponse = data['user_response'] ?? '';
+              final extraDesc = data['extra_description'] ?? '';
+              final extraImages = data['extra_images'] as List<dynamic>? ?? [];
+              final requestStatus = data['request_status'] ?? 'open';
 
               return Card(
-                margin: EdgeInsets.all(8.0),
+                margin: EdgeInsets.all(8),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    GestureDetector(
+                    ListTile(
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: imageUrl.isNotEmpty
+                            ? Image.network(imageUrl, width: 60, height: 60, fit: BoxFit.cover)
+                            : Icon(Icons.home, size: 60),
+                      ),
+                      title: Text(title),
+                      subtitle: Text("$description\n📍 $location"),
+                      isThreeLine: true,
+                      trailing: Text('\$$price'),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -218,41 +316,52 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                           ),
                         );
                       },
-                      child: ListTile(
-                        leading: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: imageUrl.isNotEmpty
-                                ? Image.network(imageUrl, fit: BoxFit.cover)
-                                : Icon(Icons.home, color: Colors.grey),
-                          ),
-                        ),
-                        title: Text(title),
-                        subtitle: Text(
-                          '$description\n📍 $location',
-                          style: TextStyle(height: 1.3),
-                        ),
-                        isThreeLine: true,
-                        trailing: Text('\$$price'),
-                      ),
                     ),
+                    if (adminRequest.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("🛑 Admin Request: $adminRequest", style: TextStyle(color: Colors.red)),
+                            if (userResponse.isNotEmpty)
+                              Text("✅ Your Response: $userResponse", style: TextStyle(color: Colors.green)),
+                            if (extraDesc.isNotEmpty)
+                              Text("📄 Extra Description: $extraDesc"),
+                            if (extraImages.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: extraImages.map((url) {
+                                  return Image.network(url, width: 70, height: 70);
+                                }).toList(),
+                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Status: ${requestStatus == 'closed' ? "✅ Resolved" : "⏳ Open"}",
+                                  style: TextStyle(
+                                    color: requestStatus == 'closed' ? Colors.green : Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (requestStatus != 'closed')
+                                  TextButton.icon(
+                                    onPressed: () => respondToAdmin(doc.id, adminRequest),
+                                    icon: Icon(Icons.reply, color: Colors.green),
+                                    label: Text("Respond"),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     OverflowBar(
                       alignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => showEditDialog(doc.id, data),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => confirmDelete(doc.id),
-                        ),
+                        IconButton(icon: Icon(Icons.edit, color: Colors.blue), onPressed: () => showEditDialog(doc.id, data)),
+                        IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () => confirmDelete(doc.id)),
                       ],
                     ),
                   ],
