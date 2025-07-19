@@ -53,15 +53,24 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       _showError("Cannot make a call.");
     }
   }
-
   void _launchWhatsApp(String number) async {
-    final url = Uri.parse("whatsapp://send?phone=$number");
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      _showError("WhatsApp not installed.");
-    }
+  final cleanedNumber = number.replaceAll(RegExp(r'[^\d]'), '');
+  final message = 'Hi, I\'m interested in your property listed on SmartSpace.';
+  final url = Uri.parse("https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}");
+
+  print(" Cleaned number: $cleanedNumber");
+  print(" Full WhatsApp URL: $url");
+
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+    print(" Cannot launch: $url");
+    _showError("Could not open WhatsApp. Please make sure it is installed.");
   }
+}
+
+
+  
 
   void _launchMap() async {
     final lat = widget.listing['latitude'];
