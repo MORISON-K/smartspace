@@ -53,24 +53,43 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       _showError("Cannot make a call.");
     }
   }
+
   void _launchWhatsApp(String number) async {
-  final cleanedNumber = number.replaceAll(RegExp(r'[^\d]'), '');
-  final message = 'Hi, I\'m interested in your property listed on SmartSpace.';
-  final url = Uri.parse("https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}");
+    String cleanedNumber = number.replaceAll(RegExp(r'[^\d]'), '');
 
-  print(" Cleaned number: $cleanedNumber");
-  print(" Full WhatsApp URL: $url");
+    if (!cleanedNumber.startsWith('256')) {
+      if (cleanedNumber.startsWith('0')) {
+        cleanedNumber = '256${cleanedNumber.substring(1)}';
+      } else if (cleanedNumber.startsWith('7')) {
+        cleanedNumber = '256$cleanedNumber';
+      } else {
+        cleanedNumber = '256$cleanedNumber';
+      }
+    }
 
-  if (await canLaunchUrl(url)) {
-    await launchUrl(url, mode: LaunchMode.externalApplication);
-  } else {
-    print(" Cannot launch: $url");
-    _showError("Could not open WhatsApp. Please make sure it is installed.");
+    final message =
+        'Hi, I\'m interested in your property listed on SmartSpace.';
+    final url = Uri.parse(
+      "https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}",
+    );
+
+    print("Original number: $number");
+    print(" Cleaned number: $cleanedNumber");
+    print(" Full WhatsApp URL: $url");
+
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        _showError(
+          "Could not open WhatsApp. Please make sure it is installed.",
+        );
+      }
+    } catch (e) {
+      print("Error lauching whatsapp:$e");
+      _showError("Error opening whatsapp:${e.toString()}");
+    }
   }
-}
-
-
-  
 
   void _launchMap() async {
     final lat = widget.listing['latitude'];
