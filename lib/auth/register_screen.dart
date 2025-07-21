@@ -64,6 +64,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       role: _selectedRole,
     );
 
+    if (!mounted) return;
+
     setState(() {
       _isLoading = false;
     });
@@ -78,9 +80,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } else {
       ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Signup Failed: $result")),
-    );
+        context,
+      ).showSnackBar(SnackBar(content: Text("Signup Failed: $result")));
     }
   }
 

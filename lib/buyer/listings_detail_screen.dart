@@ -23,9 +23,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _images = (widget.listing['images'] as List<dynamic>? ?? [])
-        .map((e) => e.toString())
-        .toList();
+    _images =
+        (widget.listing['images'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
 
     _pageController.addListener(() {
       final newPage = _pageController.page?.round() ?? 0;
@@ -45,7 +46,29 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   // ─────────── LAUNCH HELPERS ────────────────
   void _launchCall(String number) async {
-    final uri = Uri.parse("tel:$number");
+    String phoneNumber = number.replaceAll(RegExp(r'[^\d]'), '');
+  if (!phoneNumber.startsWith('256')) {
+    if (phoneNumber.startsWith('0')) {
+      // Remove leading 0 and add 256
+      phoneNumber = '256${phoneNumber.substring(1)}';
+    } else if (phoneNumber.startsWith('7')) {
+      // Add 256 prefix for numbers starting with 7
+      phoneNumber = '256$phoneNumber';
+    } else {
+      // Default case - add 256 prefix
+      phoneNumber = '256$phoneNumber';
+    }
+  }
+
+  // Add + prefix for international format
+  final formattedNumber = '+$phoneNumber';
+  
+  print("Original number: $number");
+  print("Cleaned number: $phoneNumber");
+  print("Formatted for call: $formattedNumber");
+
+
+    final uri = Uri.parse("tel:$formattedNumber");
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -54,11 +77,39 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   void _launchWhatsApp(String number) async {
-    final url = Uri.parse("https://wa.me/$number");
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      _showError("WhatsApp not installed.");
+    String cleanedNumber = number.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (!cleanedNumber.startsWith('256')) {
+      if (cleanedNumber.startsWith('0')) {
+        cleanedNumber = '256${cleanedNumber.substring(1)}';
+      } else if (cleanedNumber.startsWith('7')) {
+        cleanedNumber = '256$cleanedNumber';
+      } else {
+        cleanedNumber = '256$cleanedNumber';
+      }
+    }
+
+    final message =
+        'Hi, I\'m interested in your property listed on SmartSpace.';
+    final url = Uri.parse(
+      "https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}",
+    );
+
+    print("Original number: $number");
+    print(" Cleaned number: $cleanedNumber");
+    print(" Full WhatsApp URL: $url");
+
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        _showError(
+          "Could not open WhatsApp. Please make sure it is installed.",
+        );
+      }
+    } catch (e) {
+      print("Error lauching whatsapp:$e");
+      _showError("Error opening whatsapp:${e.toString()}");
     }
   }
 
@@ -67,7 +118,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final lng = widget.listing['longitude'];
 
     if (lat != null && lng != null) {
-      final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+      final googleMapsUrl = Uri.parse(
+        "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+      );
       if (await canLaunchUrl(googleMapsUrl)) {
         await launchUrl(googleMapsUrl);
       } else {
@@ -79,7 +132,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   // ─────────── UI ────────────────────────────────
@@ -99,18 +154,25 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _images.length,
-                  itemBuilder: (context, index) => ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      _images[index],
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      loadingBuilder: (c, w, p) =>
-                          p == null ? w : const Center(child: CircularProgressIndicator()),
-                      errorBuilder: (c, e, s) =>
-                          const Center(child: Icon(Icons.broken_image)),
-                    ),
-                  ),
+                  itemBuilder:
+                      (context, index) => ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _images[index],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          loadingBuilder:
+                              (c, w, p) =>
+                                  p == null
+                                      ? w
+                                      : const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                          errorBuilder:
+                              (c, e, s) =>
+                                  const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
                 ),
               ),
             if (_images.length > 1)
@@ -142,7 +204,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 children: [
                   Text(
                     widget.listing['location'] ?? 'Unknown location',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text('Category: ${widget.listing['category'] ?? '-'}'),
