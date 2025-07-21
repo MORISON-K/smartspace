@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'listing_detail_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -20,11 +19,11 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     try {
       await FirebaseFirestore.instance.collection('listings').doc(docId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Listing deleted")),
+        const SnackBar(content: Text("Listing deleted")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to delete listing")),
+        const SnackBar(content: Text("Failed to delete listing")),
       );
     }
   }
@@ -33,19 +32,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Confirm Delete"),
-        content: Text("Are you sure you want to delete this listing?"),
+        title: const Text("Confirm Delete"),
+        content: const Text("Are you sure you want to delete this listing?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
               deleteListing(docId);
             },
-            child: Text("Delete"),
+            child: const Text("Delete"),
           ),
         ],
       ),
@@ -65,7 +64,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            title: Text("Edit Listing"),
+            title: const Text("Edit Listing"),
             content: SingleChildScrollView(
               child: Column(
                 children: [
@@ -88,26 +87,26 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                           ? Image.file(newImageFile!, fit: BoxFit.cover)
                           : (imageUrl.isNotEmpty
                               ? Image.network(imageUrl, fit: BoxFit.cover)
-                              : Icon(Icons.add_a_photo)),
+                              : const Icon(Icons.add_a_photo)),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: titleController,
-                    decoration: InputDecoration(labelText: 'Title'),
+                    decoration: const InputDecoration(labelText: 'Title'),
                   ),
                   TextField(
                     controller: priceController,
-                    decoration: InputDecoration(labelText: 'Price'),
+                    decoration: const InputDecoration(labelText: 'Price'),
                     keyboardType: TextInputType.number,
                   ),
                   TextField(
                     controller: locationController,
-                    decoration: InputDecoration(labelText: 'Location'),
+                    decoration: const InputDecoration(labelText: 'Location'),
                   ),
                   TextField(
                     controller: descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
+                    decoration: const InputDecoration(labelText: 'Description'),
                     maxLines: 2,
                   ),
                 ],
@@ -116,7 +115,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Cancel"),
+                child: const Text("Cancel"),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -125,7 +124,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                       locationController.text.isEmpty ||
                       descriptionController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Please fill in all fields")),
+                      const SnackBar(content: Text("Please fill in all fields")),
                     );
                     return;
                   }
@@ -149,10 +148,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Listing updated")),
+                    const SnackBar(content: Text("Listing updated")),
                   );
                 },
-                child: Text("Save"),
+                child: const Text("Save"),
               ),
             ],
           );
@@ -161,12 +160,66 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
+  void _showReplyDialog(String listingId, String requestId, String currentReply) {
+    final TextEditingController replyController = TextEditingController(text: currentReply);
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reply to Admin Request'),
+        content: TextField(
+          controller: replyController,
+          decoration: const InputDecoration(
+            hintText: 'Type your reply here',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final replyText = replyController.text.trim();
+              if (replyText.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Reply cannot be empty')),
+                );
+                return;
+              }
+
+              // Update Firestore with seller's reply and change status to 'responded'
+              await FirebaseFirestore.instance
+                  .collection('listings')
+                  .doc(listingId)
+                  .collection('documentRequests')
+                  .doc(requestId)
+                  .update({
+                'sellerReply': replyText,
+                'status': 'responded',
+                'responseTimestamp': FieldValue.serverTimestamp(),
+              });
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Reply sent successfully')),
+              );
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("My Listings"),
-        backgroundColor: Color.fromARGB(255, 164, 192, 221),
+        title: const Text("My Listings"),
+        backgroundColor: const Color.fromARGB(255, 164, 192, 221),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -175,7 +228,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -183,7 +236,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No listings found'));
+            return const Center(child: Text('No listings found'));
           }
 
           final docs = snapshot.data!.docs;
@@ -200,62 +253,127 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               final location = data['location'] ?? 'No location';
 
               return Card(
-                margin: EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ListingDetailScreen(
-                              imageUrl: imageUrl,
-                              title: title,
-                              price: price.toString(),
-                              location: location,
-                              description: description,
+                margin: const EdgeInsets.all(8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // Optional: open listing details screen here
+                        },
+                        child: ListTile(
+                          leading: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: imageUrl.isNotEmpty
+                                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                                  : const Icon(Icons.home, color: Colors.grey),
                             ),
                           ),
-                        );
-                      },
-                      child: ListTile(
-                        leading: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
+                          title: Text(title),
+                          subtitle: Text(
+                            '$description\n📍 $location',
+                            style: const TextStyle(height: 1.3),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: imageUrl.isNotEmpty
-                                ? Image.network(imageUrl, fit: BoxFit.cover)
-                                : Icon(Icons.home, color: Colors.grey),
-                          ),
+                          isThreeLine: true,
+                          trailing: Text('\$$price'),
                         ),
-                        title: Text(title),
-                        subtitle: Text(
-                          '$description\n📍 $location',
-                          style: TextStyle(height: 1.3),
-                        ),
-                        isThreeLine: true,
-                        trailing: Text('\$$price'),
                       ),
-                    ),
-                    OverflowBar(
-                      alignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => showEditDialog(doc.id, data),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => confirmDelete(doc.id),
-                        ),
-                      ],
-                    ),
-                  ],
+
+                      // Admin requests for this listing
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('listings')
+                            .doc(doc.id)
+                            .collection('documentRequests')
+                            .orderBy('timestamp', descending: true)
+                            .snapshots(),
+                        builder: (context, reqSnapshot) {
+                          if (reqSnapshot.connectionState == ConnectionState.waiting) {
+                            return const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          if (reqSnapshot.hasError) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text('Error: ${reqSnapshot.error}'),
+                            );
+                          }
+
+                          if (!reqSnapshot.hasData || reqSnapshot.data!.docs.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text('No admin requests'),
+                            );
+                          }
+
+                          final requests = reqSnapshot.data!.docs;
+
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: requests.length,
+                            itemBuilder: (context, i) {
+                              final reqDoc = requests[i];
+                              final reqData = reqDoc.data() as Map<String, dynamic>;
+                              final message = reqData['message'] ?? '';
+                              final status = reqData['status'] ?? 'pending';
+                              final sellerReply = reqData['sellerReply'] ?? '';
+
+                              return Card(
+                                color: status == 'pending'
+                                    ? Colors.orange.shade50
+                                    : Colors.green.shade50,
+                                margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                                child: ListTile(
+                                  title: Text(message),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Status: $status'),
+                                      if (sellerReply.isNotEmpty) Text('Your reply: $sellerReply'),
+                                    ],
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.reply),
+                                    onPressed: () {
+                                      _showReplyDialog(doc.id, reqDoc.id, sellerReply);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+
+                      // Action buttons for listing
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => showEditDialog(doc.id, data),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => confirmDelete(doc.id),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
