@@ -22,7 +22,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Bottom navigation index
   int _currentIndex = 0;
-  bool _sortDescending = true;
 
   // Search functionality
   final TextEditingController _searchController = TextEditingController();
