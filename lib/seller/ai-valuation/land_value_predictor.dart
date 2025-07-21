@@ -100,7 +100,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Land Value Predictor"),
+        title: const Text("AI Land Valuation"),
         backgroundColor: const Color.fromARGB(255, 67, 160, 151),
         foregroundColor: Colors.white,
       ),
@@ -120,7 +120,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                       Icon(
                         Icons.landscape,
                         size: 48,
-                        color: Colors.green[600],
+                        color: const Color.fromARGB(255, 50, 55, 63),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -248,7 +248,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
+                  backgroundColor: const Color.fromARGB(255, 149, 183, 62),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

@@ -143,7 +143,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
               'location': _locationController.text.trim(),
               'latitude': lat,
               'longitude': lng,
-              'mobile_number': '256 ${_phoneController.text.trim()}',
+              'mobile_number': '256 ${_phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '')}',
               'category': _selectedCategory,
               'description': _descriptionController.text.trim(),
               'acreage': '${_acreageController.text.trim()} acres',
