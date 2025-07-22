@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> listing;
@@ -44,31 +45,21 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     super.dispose();
   }
 
-  // ─────────── LAUNCH HELPERS ────────────────
   void _launchCall(String number) async {
     String phoneNumber = number.replaceAll(RegExp(r'[^\d]'), '');
-  if (!phoneNumber.startsWith('256')) {
-    if (phoneNumber.startsWith('0')) {
-      // Remove leading 0 and add 256
-      phoneNumber = '256${phoneNumber.substring(1)}';
-    } else if (phoneNumber.startsWith('7')) {
-      // Add 256 prefix for numbers starting with 7
-      phoneNumber = '256$phoneNumber';
-    } else {
-      // Default case - add 256 prefix
-      phoneNumber = '256$phoneNumber';
+    if (!phoneNumber.startsWith('256')) {
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '256${phoneNumber.substring(1)}';
+      } else if (phoneNumber.startsWith('7')) {
+        phoneNumber = '256$phoneNumber';
+      } else {
+        phoneNumber = '256$phoneNumber';
+      }
     }
-  }
 
-  // Add + prefix for international format
-  final formattedNumber = '+$phoneNumber';
-  
-  print("Original number: $number");
-  print("Cleaned number: $phoneNumber");
-  print("Formatted for call: $formattedNumber");
-
-
+    final formattedNumber = '+$phoneNumber';
     final uri = Uri.parse("tel:$formattedNumber");
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -95,21 +86,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       "https://wa.me/$cleanedNumber?text=${Uri.encodeComponent(message)}",
     );
 
-    print("Original number: $number");
-    print(" Cleaned number: $cleanedNumber");
-    print(" Full WhatsApp URL: $url");
-
     try {
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
-        _showError(
-          "Could not open WhatsApp. Please make sure it is installed.",
-        );
+        _showError("Could not open WhatsApp.");
       }
     } catch (e) {
-      print("Error lauching whatsapp:$e");
-      _showError("Error opening whatsapp:${e.toString()}");
+      _showError("Error opening WhatsApp: ${e.toString()}");
     }
   }
 
@@ -118,11 +102,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final lng = widget.listing['longitude'];
 
     if (lat != null && lng != null) {
-      final googleMapsUrl = Uri.parse(
+      final url = Uri.parse(
         "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
       );
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
       } else {
         _showError("Could not open Google Maps.");
       }
@@ -137,116 +121,147 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // ─────────── UI ────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final phone = widget.listing['mobile_number'] ?? 'Unknown';
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Listing Details")),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(
+          widget.listing['location'] ?? 'Listing Details',
+          style: const TextStyle(color: Colors.black),
+        ),
+      ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_images.isNotEmpty)
-              SizedBox(
-                height: 260,
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _images.length,
-                  itemBuilder:
-                      (context, index) => ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          _images[index],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          loadingBuilder:
-                              (c, w, p) =>
-                                  p == null
-                                      ? w
-                                      : const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                          errorBuilder:
-                              (c, e, s) =>
-                                  const Center(child: Icon(Icons.broken_image)),
-                        ),
-                      ),
-                ),
-              ),
-            if (_images.length > 1)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(_images.length, (i) {
-                      final selected = i == _currentPage;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: selected ? 12 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: selected ? Colors.blueGrey : Colors.grey[400],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.listing['location'] ?? 'Unknown location',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Category: ${widget.listing['category'] ?? '-'}'),
-                  Text('Size: ${widget.listing['description'] ?? '-'}'),
-                  Text('Price: UGX ${widget.listing['price'] ?? '0'}'),
-                  Text('Contact: $phone'),
-                  const SizedBox(height: 16),
-
-                  // ───── ACTION BUTTONS ─────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_images.isNotEmpty)
+                SizedBox(
+                  height: 260,
+                  child: Stack(
                     children: [
-                      ElevatedButton.icon(
-                        onPressed: () => _launchCall(phone),
-                        icon: const Icon(Icons.call),
-                        label: const Text("Call"),
+                      PageView.builder(
+                        controller: _pageController,
+                        itemCount: _images.length,
+                        itemBuilder:
+                            (context, index) => ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                _images[index],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                loadingBuilder:
+                                    (c, w, p) =>
+                                        p == null
+                                            ? w
+                                            : const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                errorBuilder:
+                                    (c, e, s) => const Center(
+                                      child: Icon(Icons.broken_image),
+                                    ),
+                              ),
+                            ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () => _launchWhatsApp(phone),
-                        icon: const Icon(Icons.message),
-                        label: const Text("WhatsApp"),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _launchMap,
-                        icon: const Icon(Icons.map),
-                        label: const Text("Map"),
+                      Positioned(
+                        bottom: 10,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_images.length, (i) {
+                            final selected = i == _currentPage;
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: selected ? 12 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: selected ? Colors.white : Colors.white60,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
+                        ),
                       ),
                     ],
                   ),
+                ),
+              const SizedBox(height: 16),
 
-                  const SizedBox(height: 24),
-                  Text(
-                    'Listing ID: ${widget.listingId}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+              // ───── Listing Details Card ─────
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.listing['location'] ?? 'Unknown location',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Category: ${widget.listing['category'] ?? '-'}'),
+                      Text('Size: ${widget.listing['description'] ?? '-'}'),
+                      Text(
+                        'Price: UGX ${widget.listing['price'] ?? '0'}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text('Contact: $phone'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ───── Action Buttons ─────
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => _launchCall(phone),
+                    icon: const Icon(Icons.call),
+                    label: const Text("Call"),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => _launchWhatsApp(phone),
+                    icon: const FaIcon(
+                      FontAwesomeIcons.whatsapp,
+                      color: Colors.white,
+                    ),
+                    label: const Text("WhatsApp"),
+                  ),
+
+                  FilledButton.icon(
+                    onPressed: _launchMap,
+                    icon: const Icon(Icons.map),
+                    label: const Text("Map"),
                   ),
                 ],
               ),
-            ),
-          ],
+
+              const SizedBox(height: 24),
+              Text(
+                'Listing ID: ${widget.listingId}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );
