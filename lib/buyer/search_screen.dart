@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart'; // For locationFromAddress
+import 'package:geocoding/geocoding.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const LatLng currentLocation = LatLng(0.3152, 32.5816); // Kampala
 
@@ -19,10 +20,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Search Location"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Search Location"), centerTitle: true),
       body: Stack(
         children: [
           GoogleMap(
@@ -33,6 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
             onMapCreated: (controller) {
               mapController = controller;
               addMarker('Kampala', currentLocation);
+              _loadPropertyMarkers(); // Load property listings from Firestore
             },
             markers: markers.values.toSet(),
           ),
@@ -45,12 +44,7 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
               ),
               child: Row(
                 children: [
@@ -76,36 +70,38 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
+
+  // 🔍 Search using geocoding
   Future<void> _searchPlace() async {
-  final query = searchController.text.trim();
+    final query = searchController.text.trim();
 
-  if (query.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please enter a place name')),
-    );
-    return;
-  }
-
-  try {
-    List<Location> locations = await locationFromAddress(query);
-    if (locations.isNotEmpty) {
-      final location = locations.first;
-      final target = LatLng(location.latitude, location.longitude);
-
-      mapController.animateCamera(CameraUpdate.newLatLngZoom(target, 14));
-      addMarker(query, target);
-    } else {
-      throw Exception("No locations found");
+    if (query.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a place name')),
+      );
+      return;
     }
-  } catch (e) {
-    debugPrint('Geocoding error: $e');  // 💥 Add this line
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error finding location: $e')),
-    );
+
+    try {
+      List<Location> locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        final target = LatLng(location.latitude, location.longitude);
+
+        mapController.animateCamera(CameraUpdate.newLatLngZoom(target, 14));
+        addMarker(query, target);
+      } else {
+        throw Exception("No locations found");
+      }
+    } catch (e) {
+      debugPrint('Geocoding error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error finding location: $e')));
+    }
   }
-}
 
-
+  // 📍 Add a custom marker
   void addMarker(String markerId, LatLng location) {
     final marker = Marker(
       markerId: MarkerId(markerId),
@@ -117,5 +113,38 @@ class _SearchScreenState extends State<SearchScreen> {
     );
     markers[markerId] = marker;
     setState(() {});
+  }
+
+  // 🔥 Load property markers from Firestore
+  Future<void> _loadPropertyMarkers() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('listings').get();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final lat = data['latitude'];
+        final lng = data['longitude'];
+        final title = data['title'] ?? 'Property';
+        final price = data['price'] ?? 'N/A';
+
+        if (lat != null && lng != null) {
+          final marker = Marker(
+            markerId: MarkerId(doc.id),
+            position: LatLng(lat, lng),
+            infoWindow: InfoWindow(title: 'UGX $price', snippet: title),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueGreen,
+            ),
+          );
+
+          markers[doc.id] = marker;
+        }
+      }
+
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error loading property markers: $e');
+    }
   }
 }
