@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'listing_detail_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -20,11 +19,11 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     try {
       await FirebaseFirestore.instance.collection('listings').doc(docId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Listing deleted")),
+        const SnackBar(content: Text("Listing deleted")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to delete listing")),
+        const SnackBar(content: Text("Failed to delete listing")),
       );
     }
   }
@@ -33,16 +32,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Confirm Delete"),
-        content: Text("Are you sure you want to delete this listing?"),
+        title: const Text("Confirm Delete"),
+        content: const Text("Are you sure you want to delete this listing?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.of(context).pop();
               deleteListing(docId);
             },
-            child: Text("Delete"),
+            child: const Text("Delete"),
           ),
         ],
       ),
@@ -62,7 +64,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            title: Text("Edit Listing"),
+            title: const Text("Edit Listing"),
             content: SingleChildScrollView(
               child: Column(
                 children: [
@@ -78,39 +80,52 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                     child: Container(
                       width: 100,
                       height: 100,
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                      ),
                       child: newImageFile != null
                           ? Image.file(newImageFile!, fit: BoxFit.cover)
                           : (imageUrl.isNotEmpty
                               ? Image.network(imageUrl, fit: BoxFit.cover)
-                              : Icon(Icons.add_a_photo)),
+                              : const Icon(Icons.add_a_photo)),
                     ),
                   ),
-                  SizedBox(height: 10),
-                  TextField(controller: titleController, decoration: InputDecoration(labelText: 'Title')),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                  ),
                   TextField(
                     controller: priceController,
-                    decoration: InputDecoration(labelText: 'Price'),
+                    decoration: const InputDecoration(labelText: 'Price'),
                     keyboardType: TextInputType.number,
                   ),
-                  TextField(controller: locationController, decoration: InputDecoration(labelText: 'Location')),
+                  TextField(
+                    controller: locationController,
+                    decoration: const InputDecoration(labelText: 'Location'),
+                  ),
                   TextField(
                     controller: descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
+                    decoration: const InputDecoration(labelText: 'Description'),
                     maxLines: 2,
                   ),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
               ElevatedButton(
                 onPressed: () async {
                   if (titleController.text.isEmpty ||
                       priceController.text.isEmpty ||
                       locationController.text.isEmpty ||
                       descriptionController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please fill in all fields")));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please fill in all fields")),
+                    );
                     return;
                   }
 
@@ -132,9 +147,11 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   });
 
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Listing updated")));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Listing updated")),
+                  );
                 },
-                child: Text("Save"),
+                child: const Text("Save"),
               ),
             ],
           );
@@ -143,105 +160,56 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
-  void respondToAdmin(String docId, String adminRequest) {
-    final responseController = TextEditingController();
-    final extraDescriptionController = TextEditingController();
-    List<File> selectedImages = [];
+  void _showReplyDialog(String listingId, String requestId, String currentReply) {
+    final TextEditingController replyController = TextEditingController(text: currentReply);
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text("Respond to Admin"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (adminRequest.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Admin Request:", style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(adminRequest),
-                      SizedBox(height: 10),
-                    ],
-                  ),
-                TextField(
-                  controller: responseController,
-                  decoration: InputDecoration(
-                    labelText: "Your Response",
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: extraDescriptionController,
-                  decoration: InputDecoration(
-                    labelText: "Additional Description",
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (var img in selectedImages)
-                      Image.file(img, width: 70, height: 70, fit: BoxFit.cover),
-                    GestureDetector(
-                      onTap: () async {
-                        final picker = ImagePicker();
-                        final pickedFiles = await picker.pickMultiImage();
-                        if (pickedFiles.isNotEmpty) {
-                          setState(() {
-                            selectedImages.addAll(pickedFiles.map((e) => File(e.path)));
-                          });
-                        }
-                      },
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        color: Colors.grey.shade300,
-                        child: Icon(Icons.add_a_photo),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      builder: (_) => AlertDialog(
+        title: const Text('Reply to Admin Request'),
+        content: TextField(
+          controller: replyController,
+          decoration: const InputDecoration(
+            hintText: 'Type your reply here',
+            border: OutlineInputBorder(),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
-            ElevatedButton(
-              onPressed: () async {
-                final response = responseController.text.trim();
-                final extraDesc = extraDescriptionController.text.trim();
-                List<String> uploadedUrls = [];
-
-                for (var imageFile in selectedImages) {
-                  final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
-                  final ref = FirebaseStorage.instance.ref().child('listing_responses/$fileName');
-                  await ref.putFile(imageFile);
-                  final downloadUrl = await ref.getDownloadURL();
-                  uploadedUrls.add(downloadUrl);
-                }
-
-                await FirebaseFirestore.instance.collection('listings').doc(docId).update({
-                  if (response.isNotEmpty) 'user_response': response,
-                  if (extraDesc.isNotEmpty) 'extra_description': extraDesc,
-                  if (uploadedUrls.isNotEmpty) 'extra_images': uploadedUrls,
-                  'request_status': 'open',
-                });
-
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Response sent to admin")));
-              },
-              child: Text("Send"),
-            ),
-          ],
+          maxLines: 3,
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final replyText = replyController.text.trim();
+              if (replyText.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Reply cannot be empty')),
+                );
+                return;
+              }
+
+              // Update Firestore with seller's reply and change status to 'responded'
+              await FirebaseFirestore.instance
+                  .collection('listings')
+                  .doc(listingId)
+                  .collection('documentRequests')
+                  .doc(requestId)
+                  .update({
+                'sellerReply': replyText,
+                'status': 'responded',
+                'responseTimestamp': FieldValue.serverTimestamp(),
+              });
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Reply sent successfully')),
+              );
+            },
+            child: const Text('Send'),
+          ),
+        ],
       ),
     );
   }
@@ -250,8 +218,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("My Listings"),
-        backgroundColor: Color.fromARGB(255, 164, 192, 221),
+        title: const Text("My Listings"),
+        backgroundColor: const Color.fromARGB(255, 164, 192, 221),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -260,7 +228,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -268,106 +236,144 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No listings found'));
+            return const Center(child: Text('No listings found'));
           }
 
           final docs = snapshot.data!.docs;
-
           return ListView.builder(
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final imageUrl = (data['images'] as List<dynamic>?)?.first ?? '';
-              final title = data['title'] ?? 'Untitled';
+              final images = data['images'] as List<dynamic>? ?? [];
+              final imageUrl = images.isNotEmpty ? images[0] : '';
+              final description = data['description'] ?? 'No description';
+              final title = data['title'] ?? 'Property Listing';
               final price = data['price'] ?? 'N/A';
-              final location = data['location'] ?? 'Unknown';
-              final description = data['description'] ?? '';
-              final adminRequest = data['admin_request'] ?? '';
-              final userResponse = data['user_response'] ?? '';
-              final extraDesc = data['extra_description'] ?? '';
-              final extraImages = data['extra_images'] as List<dynamic>? ?? [];
-              final requestStatus = data['request_status'] ?? 'open';
+              final location = data['location'] ?? 'No location';
 
               return Card(
-                margin: EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: imageUrl.isNotEmpty
-                            ? Image.network(imageUrl, width: 60, height: 60, fit: BoxFit.cover)
-                            : Icon(Icons.home, size: 60),
-                      ),
-                      title: Text(title),
-                      subtitle: Text("$description\n📍 $location"),
-                      isThreeLine: true,
-                      trailing: Text('\$$price'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ListingDetailScreen(
-                              imageUrl: imageUrl,
-                              title: title,
-                              price: price.toString(),
-                              location: location,
-                              description: description,
+                margin: const EdgeInsets.all(8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // Optional: open listing details screen here
+                        },
+                        child: ListTile(
+                          leading: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: imageUrl.isNotEmpty
+                                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                                  : const Icon(Icons.home, color: Colors.grey),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                    if (adminRequest.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("🛑 Admin Request: $adminRequest", style: TextStyle(color: Colors.red)),
-                            if (userResponse.isNotEmpty)
-                              Text("✅ Your Response: $userResponse", style: TextStyle(color: Colors.green)),
-                            if (extraDesc.isNotEmpty)
-                              Text("📄 Extra Description: $extraDesc"),
-                            if (extraImages.isNotEmpty)
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: extraImages.map((url) {
-                                  return Image.network(url, width: 70, height: 70);
-                                }).toList(),
-                              ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Status: ${requestStatus == 'closed' ? "✅ Resolved" : "⏳ Open"}",
-                                  style: TextStyle(
-                                    color: requestStatus == 'closed' ? Colors.green : Colors.orange,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (requestStatus != 'closed')
-                                  TextButton.icon(
-                                    onPressed: () => respondToAdmin(doc.id, adminRequest),
-                                    icon: Icon(Icons.reply, color: Colors.green),
-                                    label: Text("Respond"),
-                                  ),
-                              ],
-                            ),
-                          ],
+                          title: Text(title),
+                          subtitle: Text(
+                            '$description\n📍 $location',
+                            style: const TextStyle(height: 1.3),
+                          ),
+                          isThreeLine: true,
+                          trailing: Text('\$$price'),
                         ),
                       ),
-                    OverflowBar(
-                      alignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(icon: Icon(Icons.edit, color: Colors.blue), onPressed: () => showEditDialog(doc.id, data)),
-                        IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () => confirmDelete(doc.id)),
-                      ],
-                    ),
-                  ],
+
+                      // Admin requests for this listing
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('listings')
+                            .doc(doc.id)
+                            .collection('documentRequests')
+                            .orderBy('timestamp', descending: true)
+                            .snapshots(),
+                        builder: (context, reqSnapshot) {
+                          if (reqSnapshot.connectionState == ConnectionState.waiting) {
+                            return const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          if (reqSnapshot.hasError) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text('Error: ${reqSnapshot.error}'),
+                            );
+                          }
+
+                          if (!reqSnapshot.hasData || reqSnapshot.data!.docs.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text('No admin requests'),
+                            );
+                          }
+
+                          final requests = reqSnapshot.data!.docs;
+
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: requests.length,
+                            itemBuilder: (context, i) {
+                              final reqDoc = requests[i];
+                              final reqData = reqDoc.data() as Map<String, dynamic>;
+                              final message = reqData['message'] ?? '';
+                              final status = reqData['status'] ?? 'pending';
+                              final sellerReply = reqData['sellerReply'] ?? '';
+
+                              return Card(
+                                color: status == 'pending'
+                                    ? Colors.orange.shade50
+                                    : Colors.green.shade50,
+                                margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                                child: ListTile(
+                                  title: Text(message),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Status: $status'),
+                                      if (sellerReply.isNotEmpty) Text('Your reply: $sellerReply'),
+                                    ],
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.reply),
+                                    onPressed: () {
+                                      _showReplyDialog(doc.id, reqDoc.id, sellerReply);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+
+                      // Action buttons for listing
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => showEditDialog(doc.id, data),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => confirmDelete(doc.id),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
