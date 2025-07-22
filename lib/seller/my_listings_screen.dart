@@ -51,166 +51,87 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
-  Future<void> showEditDialog(String docId, Map<String, dynamic> data) async {
-    final titleController = TextEditingController(text: data['title']);
-    final priceController = TextEditingController(text: data['price'].toString());
-    final locationController = TextEditingController(text: data['location']);
-    final descriptionController = TextEditingController(text: data['description']);
-    String imageUrl = (data['images'] as List<dynamic>).isNotEmpty ? data['images'][0] : '';
-    File? newImageFile;
+  void _showReplyDialog(String listingId, String requestId, List<dynamic> existingFiles) {
+    List<File> selectedFiles = [];
 
-    await showDialog(
+    Future<void> _pickFiles() async {
+      final picked = await ImagePicker().pickMultiImage();
+      if (picked.isNotEmpty) {
+        setState(() {
+          selectedFiles.addAll(picked.map((p) => File(p.path)));
+        });
+      }
+    }
+
+    showDialog(
       context: context,
-      builder: (context) {
+      builder: (_) {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            title: const Text("Edit Listing"),
-            content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-                      if (pickedFile != null) {
-                        setState(() {
-                          newImageFile = File(pickedFile.path);
-                        });
-                      }
-                    },
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                      ),
-                      child: newImageFile != null
-                          ? Image.file(newImageFile!, fit: BoxFit.cover)
-                          : (imageUrl.isNotEmpty
-                              ? Image.network(imageUrl, fit: BoxFit.cover)
-                              : const Icon(Icons.add_a_photo)),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                  ),
-                  TextField(
-                    controller: priceController,
-                    decoration: const InputDecoration(labelText: 'Price'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextField(
-                    controller: locationController,
-                    decoration: const InputDecoration(labelText: 'Location'),
-                  ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
+            title: const Text('Upload Documents'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Select Files'),
+                  onPressed: _pickFiles,
+                ),
+                const SizedBox(height: 10),
+                if (selectedFiles.isNotEmpty)
+                  ...selectedFiles.map((file) => Text(file.path.split('/').last)),
+              ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () async {
-                  if (titleController.text.isEmpty ||
-                      priceController.text.isEmpty ||
-                      locationController.text.isEmpty ||
-                      descriptionController.text.isEmpty) {
+                  if (selectedFiles.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please fill in all fields")),
+                      const SnackBar(content: Text('Please select at least one document')),
                     );
                     return;
                   }
 
-                  String updatedImageUrl = imageUrl;
+                  List<String> uploadedUrls = [];
 
-                  if (newImageFile != null) {
-                    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-                    final ref = FirebaseStorage.instance.ref().child('listing_images').child(fileName);
-                    await ref.putFile(newImageFile!);
-                    updatedImageUrl = await ref.getDownloadURL();
+                  for (File file in selectedFiles) {
+                    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+                    final ref = FirebaseStorage.instance
+                        .ref()
+                        .child('request_documents')
+                        .child(listingId)
+                        .child(fileName);
+                    await ref.putFile(file);
+                    final url = await ref.getDownloadURL();
+                    uploadedUrls.add(url);
                   }
 
-                  await FirebaseFirestore.instance.collection('listings').doc(docId).update({
-                    'title': titleController.text,
-                    'price': priceController.text,
-                    'location': locationController.text,
-                    'description': descriptionController.text,
-                    'images': [updatedImageUrl],
+                  await FirebaseFirestore.instance
+                      .collection('listings')
+                      .doc(listingId)
+                      .collection('documentRequests')
+                      .doc(requestId)
+                      .update({
+                    'status': 'responded',
+                    'sellerDocuments': FieldValue.arrayUnion(uploadedUrls),
+                    'responseTimestamp': FieldValue.serverTimestamp(),
                   });
 
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Listing updated")),
+                    const SnackBar(content: Text('Documents sent successfully')),
                   );
                 },
-                child: const Text("Save"),
+                child: const Text('Send'),
               ),
             ],
           );
         });
       },
-    );
-  }
-
-  void _showReplyDialog(String listingId, String requestId, String currentReply) {
-    final TextEditingController replyController = TextEditingController(text: currentReply);
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Reply to Admin Request'),
-        content: TextField(
-          controller: replyController,
-          decoration: const InputDecoration(
-            hintText: 'Type your reply here',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final replyText = replyController.text.trim();
-              if (replyText.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Reply cannot be empty')),
-                );
-                return;
-              }
-
-              // Update Firestore with seller's reply and change status to 'responded'
-              await FirebaseFirestore.instance
-                  .collection('listings')
-                  .doc(listingId)
-                  .collection('documentRequests')
-                  .doc(requestId)
-                  .update({
-                'sellerReply': replyText,
-                'status': 'responded',
-                'responseTimestamp': FieldValue.serverTimestamp(),
-              });
-
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Reply sent successfully')),
-              );
-            },
-            child: const Text('Send'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -259,33 +180,27 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          // Optional: open listing details screen here
-                        },
-                        child: ListTile(
-                          leading: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: imageUrl.isNotEmpty
-                                  ? Image.network(imageUrl, fit: BoxFit.cover)
-                                  : const Icon(Icons.home, color: Colors.grey),
-                            ),
+                      ListTile(
+                        leading: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
                           ),
-                          title: Text(title),
-                          subtitle: Text(
-                            '$description\n📍 $location',
-                            style: const TextStyle(height: 1.3),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(imageUrl, fit: BoxFit.cover)
+                                : const Icon(Icons.home, color: Colors.grey),
                           ),
-                          isThreeLine: true,
-                          trailing: Text('\$$price'),
                         ),
+                        title: Text(title),
+                        subtitle: Text(
+                          '$description\n📍 $location',
+                          style: const TextStyle(height: 1.3),
+                        ),
+                        trailing: Text('\$$price'),
                       ),
 
                       // Admin requests for this listing
@@ -329,7 +244,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               final reqData = reqDoc.data() as Map<String, dynamic>;
                               final message = reqData['message'] ?? '';
                               final status = reqData['status'] ?? 'pending';
-                              final sellerReply = reqData['sellerReply'] ?? '';
+                              final sellerDocs = reqData['sellerDocuments'] ?? [];
 
                               return Card(
                                 color: status == 'pending'
@@ -342,13 +257,17 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text('Status: $status'),
-                                      if (sellerReply.isNotEmpty) Text('Your reply: $sellerReply'),
+                                      if (sellerDocs.isNotEmpty) ...[
+                                        const SizedBox(height: 6),
+                                        const Text('Uploaded Documents:'),
+                                        ...sellerDocs.map<Widget>((url) => Text(url)).toList(),
+                                      ]
                                     ],
                                   ),
                                   trailing: IconButton(
-                                    icon: const Icon(Icons.reply),
+                                    icon: const Icon(Icons.upload_file),
                                     onPressed: () {
-                                      _showReplyDialog(doc.id, reqDoc.id, sellerReply);
+                                      _showReplyDialog(doc.id, reqDoc.id, sellerDocs);
                                     },
                                   ),
                                 ),
@@ -358,13 +277,12 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                         },
                       ),
 
-                      // Action buttons for listing
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => showEditDialog(doc.id, data),
+                            onPressed: () => {}, // add your showEditDialog
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
