@@ -181,7 +181,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                             final selected = i == _currentPage;
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: selected ? 12 : 8,
+                              width: selected ? 12 : 12,
                               height: 8,
                               decoration: BoxDecoration(
                                 color: selected ? Colors.white : Colors.white60,
@@ -203,7 +203,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 ),
                 elevation: 2,
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 45,
+                    vertical: 16,
+                  ),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -214,12 +218,21 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text('Category: ${widget.listing['category'] ?? '-'}'),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Category: ${widget.listing['category'] ?? '-'}',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 236, 175, 7),
+                        ),
+                      ),
                       Text('Size: ${widget.listing['description'] ?? '-'}'),
+
                       Text(
                         'Price: UGX ${widget.listing['price'] ?? '0'}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 236, 175, 7),
+                        ),
                       ),
                       Text('Contact: $phone'),
                     ],
@@ -256,10 +269,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               ),
 
               const SizedBox(height: 24),
-              Text(
-                'Listing ID: ${widget.listingId}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
             ],
           ),
         ),
