@@ -124,8 +124,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return filtered;
   }
 
-  // Filter and sort user requests
-  // Filter and sort user requests (UPDATED to include document uploads)
+  // Filter and sort additional documents
   List<DocumentSnapshot> _filterAndSortRequests(
     List<DocumentSnapshot> requests,
   ) {
@@ -137,13 +136,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           filtered.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             final userName = (data['name'] ?? '').toString().toLowerCase();
-            final message =
-                (data['lastRequest'] ?? '').toString().toLowerCase();
             final documentType =
                 (data['pendingDocumentType'] ?? '').toString().toLowerCase();
 
             return userName.contains(_searchQuery) ||
-                message.contains(_searchQuery) ||
                 documentType.contains(_searchQuery);
           }).toList();
     }
@@ -191,7 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               hintText:
                   _currentIndex == 0
                       ? "Search listings by description, location, or price..."
-                      : "Search requests by user name or message...",
+                      : "Search documents by user name or document type...",
               prefixIcon: const Icon(Icons.search, size: 22),
               suffixIcon:
                   _searchQuery.isNotEmpty
@@ -418,9 +414,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Build user requests tab
-  // Build user requests tab (UPDATED to include document uploads)
-  // Build user requests tab (UPDATED with compatible query)
+  // Build additional documents tab
   Widget _buildUserRequestsTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: usersCollection.snapshots(),
@@ -450,14 +444,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return const Center(child: Text("No data available"));
         }
 
-        // Filter documents that have requests > 0 OR hasNewDocuments = true
+        // Filter documents that have hasNewDocuments = true
         final allDocs = snapshot.data!.docs;
         final requestDocs =
             allDocs.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              final hasRequests = (data['requests'] ?? 0) > 0;
               final hasNewDocuments = data['hasNewDocuments'] == true;
-              return hasRequests || hasNewDocuments;
+              return hasNewDocuments;
             }).toList();
 
         final filteredRequests = _filterAndSortRequests(requestDocs);
@@ -470,15 +463,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Icon(
                   _searchQuery.isNotEmpty
                       ? Icons.search_off
-                      : Icons.message_outlined,
+                      : Icons.file_copy_outlined,
                   size: 64,
                   color: Colors.grey,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   _searchQuery.isNotEmpty
-                      ? "No requests found matching your search"
-                      : "No user requests or document uploads",
+                      ? "No documents found matching your search"
+                      : "No additional documents uploaded",
                   style: const TextStyle(fontSize: 18, color: Colors.grey),
                 ),
                 if (_searchQuery.isNotEmpty)
@@ -499,7 +492,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SectionHeader(
-                title: "📩 User Requests & Documents",
+                title: "📄 Additional Documents",
                 count: filteredRequests.length,
               ),
             ),
@@ -511,30 +504,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   final user = filteredRequests[index];
                   final data = user.data() as Map<String, dynamic>;
 
-                  // Determine if this is a document upload or regular request
-                  final hasNewDocuments = data['hasNewDocuments'] == true;
-                  final hasRequests = (data['requests'] ?? 0) > 0;
-
                   return _RequestItem(
                     id: user.id,
                     user: data['name'] ?? 'Unknown User',
                     message:
-                        hasNewDocuments
-                            ? (data['lastDocumentMessage'] ??
-                                'Uploaded additional documents')
-                            : (data['lastRequest'] ?? 'No message'),
+                        data['lastDocumentMessage'] ??
+                        'Uploaded additional documents',
                     createdAt:
-                        hasNewDocuments
-                            ? (data['documentUploadTime'] as Timestamp? ??
-                                Timestamp.now())
-                            : (data['lastRequestTime'] as Timestamp? ??
-                                Timestamp.now()),
-                    isDocumentUpload: hasNewDocuments,
+                        data['documentUploadTime'] as Timestamp? ??
+                        Timestamp.now(),
+                    isDocumentUpload: true,
                     documentType: data['pendingDocumentType'] ?? '',
                     documentUrls: List<String>.from(
                       data['newDocumentUrls'] ?? [],
                     ),
-                    hasRequests: hasRequests,
+                    hasRequests: false,
                   );
                 },
               ),
@@ -651,21 +635,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               stream: usersCollection.snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Icon(Icons.message);
+                  return const Icon(Icons.file_copy);
                 }
 
-                // Count documents that have requests > 0 OR hasNewDocuments = true
+                // Count documents that have hasNewDocuments = true
                 final count =
                     snapshot.data!.docs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;
-                      final hasRequests = (data['requests'] ?? 0) > 0;
                       final hasNewDocuments = data['hasNewDocuments'] == true;
-                      return hasRequests || hasNewDocuments;
+                      return hasNewDocuments;
                     }).length;
 
                 return Stack(
                   children: [
-                    const Icon(Icons.message),
+                    const Icon(Icons.file_copy),
                     if (count > 0)
                       Positioned(
                         right: 0,
@@ -695,7 +678,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
-            label: 'User Requests',
+            label: 'Additional Docs',
           ),
         ],
       ),
@@ -1015,10 +998,7 @@ class _RequestItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isDocumentUpload ? Colors.blue[300]! : Colors.grey[200]!,
-          width: isDocumentUpload ? 2 : 1,
-        ),
+        side: BorderSide(color: Colors.blue[300]!, width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1031,14 +1011,10 @@ class _RequestItem extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color:
-                        isDocumentUpload ? Colors.blue[100] : Colors.grey[100],
+                    color: Colors.blue[100],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    isDocumentUpload ? Icons.upload_file : Icons.person,
-                    color: isDocumentUpload ? Colors.blue : Colors.grey[600],
-                  ),
+                  child: Icon(Icons.upload_file, color: Colors.blue),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1055,44 +1031,24 @@ class _RequestItem extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          if (isDocumentUpload)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'NEW DOCS',
-                                style: TextStyle(
-                                  color: Colors.blue[700],
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'NEW DOCS',
+                              style: TextStyle(
+                                color: Colors.blue[700],
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          if (hasRequests && !isDocumentUpload)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.orange[50],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'REQUEST',
-                                style: TextStyle(
-                                  color: Colors.orange[700],
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                          ),
                         ],
                       ),
                       Text(
@@ -1109,7 +1065,7 @@ class _RequestItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (isDocumentUpload && documentType.isNotEmpty) ...[
+            if (documentType.isNotEmpty) ...[
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -1192,62 +1148,18 @@ class _RequestItem extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                ] else ...[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // View request details for non-document requests
-                        showDialog(
-                          context: context,
-                          builder:
-                              (context) => AlertDialog(
-                                title: Text('Request from $user'),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Time: $formattedTime ($timeAgo)'),
-                                    const SizedBox(height: 8),
-                                    Text('Message: $message'),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Close'),
-                                  ),
-                                ],
-                              ),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text("View Details"),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                 ],
                 Expanded(
                   child: FilledButton(
                     onPressed: () async {
-                      // Handle/respond to request or approve documents
-                      final updates = <String, dynamic>{};
-
-                      if (isDocumentUpload) {
-                        updates['hasNewDocuments'] = false;
-                        updates['documentUploadTime'] = null;
-                        updates['newDocumentUrls'] = [];
-                        updates['pendingDocumentType'] = '';
-                        updates['lastDocumentMessage'] = '';
-                      }
-
-                      if (hasRequests) {
-                        updates['requests'] = 0;
-                      }
+                      // Approve documents
+                      final updates = <String, dynamic>{
+                        'hasNewDocuments': false,
+                        'documentUploadTime': null,
+                        'newDocumentUrls': [],
+                        'pendingDocumentType': '',
+                        'lastDocumentMessage': '',
+                      };
 
                       await FirebaseFirestore.instance
                           .collection('users')
@@ -1257,11 +1169,7 @@ class _RequestItem extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              isDocumentUpload
-                                  ? 'Documents reviewed and approved'
-                                  : 'Request marked as handled',
-                            ),
+                            content: Text('Documents reviewed and approved'),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -1274,7 +1182,7 @@ class _RequestItem extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(isDocumentUpload ? "Approve" : "Respond"),
+                    child: const Text("Approve"),
                   ),
                 ),
               ],
