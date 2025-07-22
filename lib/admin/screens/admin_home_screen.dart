@@ -234,7 +234,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                   Text('• Notifications: View system alerts'),
                                   SizedBox(height: 12),
                                   Text(
-                                    'For technical support, contact the system administrator.',
+                                    'For technical support, contact the system administrator. serena.robin2323@gmail.com 0775512466/0741549456',
                                   ),
                                 ],
                               ),
@@ -272,10 +272,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                   Text('SmartSpace Admin Panel'),
                                   SizedBox(height: 8),
                                   Text('Version: 1.0.0'),
-                                  Text('Build: 2024.1'),
+                                  Text('Build: 2025.1'),
                                   SizedBox(height: 12),
                                   Text(
-                                    'A modern property management system built with Flutter.',
+                                    'A modern property evaluation  system .',
                                   ),
                                 ],
                               ),
