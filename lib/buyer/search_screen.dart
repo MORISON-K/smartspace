@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'listings_detail_screen.dart';
 
 const LatLng currentLocation = LatLng(0.3152, 32.5816); // Kampala
 
@@ -132,7 +133,22 @@ class _SearchScreenState extends State<SearchScreen> {
           final marker = Marker(
             markerId: MarkerId(doc.id),
             position: LatLng(lat, lng),
-            infoWindow: InfoWindow(title: 'UGX $price', snippet: title),
+            infoWindow: InfoWindow(
+              title: 'UGX $price',
+              snippet: title,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => ListingDetailScreen(
+                          listing: data,
+                          listingId: doc.id,
+                        ),
+                  ),
+                );
+              },
+            ),
             icon: BitmapDescriptor.defaultMarkerWithHue(
               BitmapDescriptor.hueGreen,
             ),
