@@ -14,6 +14,7 @@ class LandValuePredictorWidget extends StatefulWidget {
 class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _plotAcController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
 
   // Dropdown values
   String? selectedTenure;
@@ -22,16 +23,17 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   // Dropdown options
   final List<String> tenureOptions = [
     'Freehold',
-    'Customary', 
+    'Customary',
     'Leasehold',
-    'Mailo'
+    'Mailo',
   ];
 
   final List<String> useOptions = [
     'Residential',
     'Commercial',
     'Agricultural',
-    'Industrial'
+    'Industrial',
+    'Mixed',
   ];
 
   double? predictedValue;
@@ -45,7 +47,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
       return "https://smartspace-e7e32524ddcb.herokuapp.com/api/predict/"; // iOS simulator
     } else {
       // For physical devices, replace with computer's IP
-      return "http://192.168.1.100:8000/predict"; 
+      return "http://192.168.1.100:8000/predict";
     }
   }
 
@@ -59,15 +61,18 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
     final String apiUrl = _getApiUrl();
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "TENURE": selectedTenure!,
-          "USE": selectedUse!,
-          "PLOT_ac": double.parse(_plotAcController.text.trim()),
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse(apiUrl),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "TENURE": selectedTenure!,
+              "LOCATION": _locationController.text.trim(),
+              "USE": selectedUse!,
+              "PLOT_ac": double.parse(_plotAcController.text.trim()),
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -93,6 +98,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   @override
   void dispose() {
     _plotAcController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -125,9 +131,11 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                       const SizedBox(height: 8),
                       Text(
                         "Enter Land Details",
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 67, 160, 151)
+                          color: const Color.fromARGB(255, 67, 160, 151),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -153,19 +161,21 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   border: OutlineInputBorder(),
                   helperText: "Select the type of land ownership",
                 ),
-                items: tenureOptions.map((String tenure) {
-                  return DropdownMenuItem<String>(
-                    value: tenure,
-                    child: Text(tenure),
-                  );
-                }).toList(),
+                items:
+                    tenureOptions.map((String tenure) {
+                      return DropdownMenuItem<String>(
+                        value: tenure,
+                        child: Text(tenure),
+                      );
+                    }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedTenure = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? "Please select a tenure type" : null,
+                validator:
+                    (value) =>
+                        value == null ? "Please select a tenure type" : null,
               ),
               const SizedBox(height: 16),
 
@@ -178,25 +188,45 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   border: OutlineInputBorder(),
                   helperText: "Select the intended use of the land",
                 ),
-                items: useOptions.map((String use) {
-                  return DropdownMenuItem<String>(
-                    value: use,
-                    child: Row(
-                      children: [
-                        Icon(_getUseIcon(use), size: 20),
-                        const SizedBox(width: 8),
-                        Text(use),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                items:
+                    useOptions.map((String use) {
+                      return DropdownMenuItem<String>(
+                        value: use,
+                        child: Row(
+                          children: [
+                            Icon(_getUseIcon(use), size: 20),
+                            const SizedBox(width: 8),
+                            Text(use),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedUse = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? "Please select a land use type" : null,
+                validator:
+                    (value) =>
+                        value == null ? "Please select a land use type" : null,
+              ),
+              const SizedBox(height: 16),
+
+              //Location Input Field
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: "Location",
+                  prefixIcon: Icon(Icons.location_city),
+                  border: OutlineInputBorder(),
+                  helperText: "Enter the location",
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please enter  the location";
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 
@@ -207,10 +237,13 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   labelText: "Plot Size (acres)",
                   prefixIcon: Icon(Icons.crop_free),
                   border: OutlineInputBorder(),
-                  helperText: "Enter the size of the plot in acres (e.g., 0.25)",
+                  helperText:
+                      "Enter the size of the plot in acres (e.g., 0.25)",
                   suffixText: "acres",
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return "Please enter plot size";
@@ -226,26 +259,31 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
 
               // Predict Button
               ElevatedButton.icon(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        if (_formKey.currentState!.validate()) {
-                          _predictLandValue();
-                        }
-                      },
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.calculate),
+                onPressed:
+                    isLoading
+                        ? null
+                        : () {
+                          if (_formKey.currentState!.validate()) {
+                            _predictLandValue();
+                          }
+                        },
+                icon:
+                    isLoading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(Icons.calculate),
                 label: Text(
                   isLoading ? "Predicting..." : "Predict Land Value",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 149, 183, 62),
@@ -275,14 +313,19 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                         const SizedBox(height: 12),
                         Text(
                           "Predicted Land Value",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 103, 28, 23)               ),
+                            color: Color.fromARGB(255, 103, 28, 23),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           "UGX ${predictedValue!.toStringAsFixed(0)}",
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          style: Theme.of(
+                            context,
+                          ).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.green[800],
                           ),
@@ -308,7 +351,10 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                               const SizedBox(height: 8),
                               Text("• Tenure: $selectedTenure"),
                               Text("• Use: $selectedUse"),
-                              Text("• Plot Size: ${_plotAcController.text} acres"),
+                              Text("• Location: ${_locationController.text}"),
+                              Text(
+                                "• Plot Size: ${_plotAcController.text} acres",
+                              ),
                             ],
                           ),
                         ),
@@ -335,7 +381,9 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                         const SizedBox(height: 12),
                         Text(
                           "Prediction Error",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.red[700],
                           ),
