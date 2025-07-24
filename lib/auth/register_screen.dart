@@ -70,10 +70,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = false;
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Signup Failed: $result")));
+    if (result == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Signup successfull!")));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Signup Failed: $result")));
     }
+  }
 
   @override
   Widget build(BuildContext context) {
