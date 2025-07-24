@@ -14,7 +14,7 @@ class PropertyDetailsScreen extends StatefulWidget {
 
 class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   String? currentStatus;
-  PageController _imagePageController = PageController();
+  final PageController _imagePageController = PageController();
   int _currentImageIndex = 0;
 
   @override
