@@ -32,6 +32,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _phoneController = TextEditingController();
 
   String? _selectedLandUse;
+  String? _selectedTenure;
   List<XFile> _images = [];
   File? _pdfFile;
   final ImagePicker _picker = ImagePicker();
@@ -108,6 +109,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
       // Populate form fields with prediction data
       _locationController.text = data.location;
+      _selectedTenure = data.tenure;
       _acreageController.text = data.plotSize.toString();
       _selectedLandUse = data.use;
 
@@ -220,6 +222,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
           'mobile_number':
               '256 ${_phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '')}',
           'land_use': _selectedLandUse,
+          'tenure': _selectedTenure,
           'description': _descriptionController.text.trim(),
           'acreage': '${_acreageController.text.trim()} acres',
           'images': imageUrls,
@@ -353,7 +356,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color.fromARGB(255, 233, 249, 144)!),
+                            border: Border.all(
+                              color: const Color.fromARGB(255, 233, 249, 144),
+                            ),
                           ),
                           child: Text(
                             'UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)}',
@@ -679,6 +684,32 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 },
                 validator:
                     (value) => value == null ? 'Please select land use' : null,
+              ),
+              const SizedBox(height: 12),
+
+              // Tenure dropdown
+              DropdownButtonFormField<String>(
+                decoration: _inputDecoration(
+                  'Tenure',
+                  prefixIcon: Icons.assignment,
+                ),
+                value: _selectedTenure,
+                items:
+                    ['Freehold', 'Customary', 'Leasehold', 'Mailo']
+                        .map(
+                          (tenure) => DropdownMenuItem(
+                            value: tenure,
+                            child: Text(tenure),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedTenure = val;
+                  });
+                },
+                validator:
+                    (value) => value == null ? 'Please select tenure' : null,
               ),
               const SizedBox(height: 12),
 
