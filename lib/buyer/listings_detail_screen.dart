@@ -58,9 +58,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       }
     }
 
-    final formattedNumber = '+$phoneNumber';
-    final uri = Uri.parse("tel:$formattedNumber");
-
+    final uri = Uri.parse("tel:+$phoneNumber");
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -143,11 +141,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_images.isNotEmpty)
-                SizedBox(
-                  height: 260,
-                  child: Stack(
-                    children: [
-                      PageView.builder(
+                Column(
+                  children: [
+                    SizedBox(
+                      height: 250,
+                      child: PageView.builder(
                         controller: _pageController,
                         itemCount: _images.length,
                         itemBuilder:
@@ -187,109 +185,167 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                               ),
                             ),
                       ),
-                      Positioned(
-                        bottom: 10,
-                        left: 0,
-                        right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_images.length, (i) {
-                            final selected = i == _currentPage;
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: selected ? 12 : 12,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: selected ? Colors.white : Colors.white60,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_images.length, (i) {
+                        final selected = i == _currentPage;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: selected ? 14 : 10,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: selected ? Colors.black : Colors.grey[400],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-              const SizedBox(height: 16),
 
-              // ───── Listing Details Card ─────
+              // ───── LISTING DETAILS ─────
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
+                elevation: 3,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 45,
-                    vertical: 16,
+                    horizontal: 20,
+                    vertical: 20,
                   ),
-
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      _buildDetailRow(
+                        Icons.location_on,
                         widget.listing['location'] ?? 'Unknown location',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        isTitle: true,
                       ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Category: ${widget.listing['category'] ?? '-'}',
-                        style: const TextStyle(
-                          color: Color.fromARGB(255, 236, 175, 7),
-                        ),
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        Icons.category,
+                        "Category: ${widget.listing['category'] ?? '-'}",
                       ),
-                      Text(
-                        'Description: ${widget.listing['description'] ?? '-'}',
+                      _buildDetailRow(
+                        Icons.info_outline,
+                        "Description: ${widget.listing['description'] ?? '-'}",
                       ),
-                      Text('Size: ${widget.listing['acreage'] ?? '-'}'),
-
-                      Text(
-                        'Price: UGX ${widget.listing['price'] ?? '0'}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 236, 175, 7),
-                        ),
+                      _buildDetailRow(
+                        Icons.square_foot,
+                        "Size: ${widget.listing['acreage'] ?? '-'}",
                       ),
-                      Text('Contact: $phone'),
+                      _buildDetailRow(
+                        Icons.price_change,
+                        "UGX ${widget.listing['price'] ?? '0'}",
+                        isPrice: true,
+                      ),
+                      _buildDetailRow(Icons.phone, "Contact: $phone"),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // ───── Action Buttons ─────
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
+              // ───── ACTION BUTTONS ─────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  FilledButton.icon(
-                    onPressed: () => _launchCall(phone),
-                    icon: const Icon(Icons.call),
-                    label: const Text("Call"),
+                  _buildActionButton(
+                    Icons.call,
+                    "Call",
+                    () => _launchCall(phone),
                   ),
-                  FilledButton.icon(
-                    onPressed: () => _launchWhatsApp(phone),
-                    icon: const FaIcon(
-                      FontAwesomeIcons.whatsapp,
-                      color: Colors.white,
-                    ),
-                    label: const Text("WhatsApp"),
+                  const SizedBox(width: 8),
+                  _buildActionButton(
+                    FontAwesomeIcons.whatsapp,
+                    "WhatsApp",
+                    () => _launchWhatsApp(phone),
+                    iconColor: Colors.white,
                   ),
-
-                  FilledButton.icon(
-                    onPressed: _launchMap,
-                    icon: const Icon(Icons.map),
-                    label: const Text("Map"),
-                  ),
+                  const SizedBox(width: 8),
+                  _buildActionButton(Icons.map, "Map", _launchMap),
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
+
+              // ───── RELATED LISTINGS PLACEHOLDER ─────
+              Text(
+                "Related Listings",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 10),
+              Container(
+                height: 140,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text("Related listings will appear here."),
+              ),
+
+              const SizedBox(height: 40),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ───── Helper Widgets Inside State ─────
+
+  Widget _buildDetailRow(
+    IconData icon,
+    String text, {
+    bool isTitle = false,
+    bool isPrice = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[700]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: isTitle ? 18 : 14,
+                fontWeight:
+                    isTitle || isPrice ? FontWeight.bold : FontWeight.normal,
+                color:
+                    isPrice
+                        ? const Color.fromARGB(255, 236, 175, 7)
+                        : Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    IconData icon,
+    String label,
+    VoidCallback onPressed, {
+    Color iconColor = Colors.white,
+  }) {
+    return Expanded(
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: iconColor, size: 18),
+        label: Text(label),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF2A2A72),
+          padding: const EdgeInsets.symmetric(vertical: 14),
         ),
       ),
     );
