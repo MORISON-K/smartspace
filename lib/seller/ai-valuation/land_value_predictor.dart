@@ -81,6 +81,8 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
         setState(() {
           predictedValue = data["predicted_value"].toDouble();
         });
+
+        _showPredictionResultModal();
       } else {
         setState(() {
           errorMessage = "Error: ${response.statusCode}\n${response.body}";
@@ -161,6 +163,191 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
       });
     }
     return;
+  }
+
+  void _showPredictionResultModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.trending_up,
+                        size: 48,
+                        color: const Color.fromARGB(255, 56, 116, 142),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Predicted Land Value",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: const Color.fromARGB(255, 103, 28, 23),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "UGX ${predictedValue!.toStringAsFixed(0)}",
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Input Summary:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSummaryRow(
+                              Icons.gavel,
+                              "Tenure",
+                              selectedTenure!,
+                            ),
+                            _buildSummaryRow(
+                              Icons.business,
+                              "Use",
+                              selectedUse!,
+                            ),
+                            _buildSummaryRow(
+                              Icons.location_city,
+                              "Location",
+                              _locationController.text,
+                            ),
+                            _buildSummaryRow(
+                              Icons.crop_free,
+                              "Plot Size",
+                              "${_plotAcController.text} acres",
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
+                              label: const Text('Close'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context); // Close modal first
+                                final predictionData = LandPredictionData(
+                                  tenure: selectedTenure!,
+                                  location: _locationController.text,
+                                  use: selectedUse!,
+                                  plotSize: double.parse(
+                                    _plotAcController.text,
+                                  ),
+                                  predictedValue: predictedValue,
+                                );
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => AddListingScreen(
+                                          predictionData: predictionData,
+                                        ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add_business),
+                              label: const Text('Create Listing'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  67,
+                                  160,
+                                  151,
+                                ),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSummaryRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.green[700]),
+          const SizedBox(width: 8),
+          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.w500)),
+          Expanded(
+            child: Text(value, style: const TextStyle(color: Colors.black87)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -421,116 +608,6 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Results Section
-              if (predictedValue != null) ...[
-                Card(
-                  elevation: 4,
-                  color: Colors.green[50],
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.trending_up,
-                          size: 48,
-                          color: const Color.fromARGB(255, 56, 116, 142),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Predicted Land Value",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 103, 28, 23),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "UGX ${predictedValue!.toStringAsFixed(0)}",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[800],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green[200]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Input Summary:",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green[700],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text("• Tenure: $selectedTenure"),
-                              Text("• Use: $selectedUse"),
-                              Text("• Location: ${_locationController.text}"),
-                              Text(
-                                "• Plot Size: ${_plotAcController.text} acres",
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Button to create listing with this data
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              final predictionData = LandPredictionData(
-                                tenure: selectedTenure!,
-                                location: _locationController.text,
-                                use: selectedUse!,
-                                plotSize: double.parse(_plotAcController.text),
-                                predictedValue: predictedValue,
-                              );
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => AddListingScreen(
-                                        predictionData: predictionData,
-                                      ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.add_business),
-                            label: const Text('Create Listing with this Data'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(
-                                255,
-                                67,
-                                160,
-                                151,
-                              ),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
 
               // Error Message
               if (errorMessage != null) ...[
