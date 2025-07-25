@@ -40,6 +40,16 @@ class _AddListingScreenState extends State<AddListingScreen> {
   // Add these new variables for price handling
   bool _useCustomPrice = false;
   double? _predictedPrice;
+  bool _isAutoPredicating = false;
+  bool _hasAutoPredicted = false;
+
+  // Add tenure options
+  final List<String> tenureOptions = [
+    'Freehold',
+    'Customary',
+    'Leasehold',
+    'Mailo',
+  ];
 
   // Location autocomplete variables
   List<String> allowedLocations = [];
@@ -117,9 +127,68 @@ class _AddListingScreenState extends State<AddListingScreen> {
       if (data.predictedValue != null) {
         _predictedPrice = data.predictedValue!;
         _priceController.text = data.predictedValue!.toStringAsFixed(0);
+        _hasAutoPredicted = true;
       }
 
       setState(() {});
+    }
+  }
+
+  // Add automatic prediction method
+  Future<void> _autoPredicteValue() async {
+    // Check if all required fields are filled for prediction
+    if (_selectedTenure == null ||
+        _locationController.text.trim().isEmpty ||
+        _selectedLandUse == null ||
+        _acreageController.text.trim().isEmpty) {
+      return; // Not enough data for prediction
+    }
+
+    // Don't predict if we already have a prediction or user is using custom price
+    if (_hasAutoPredicted || _useCustomPrice) {
+      return;
+    }
+
+    // Validate acreage is a valid number
+    if (double.tryParse(_acreageController.text.trim()) == null) {
+      return;
+    }
+
+    setState(() {
+      _isAutoPredicating = true;
+    });
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "https://smartspace-e7e32524ddcb.herokuapp.com/api/predict/",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "TENURE": _selectedTenure!,
+              "LOCATION": _locationController.text.trim(),
+              "USE": _selectedLandUse!,
+              "PLOT_ac": double.parse(_acreageController.text.trim()),
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _predictedPrice = data["predicted_value"].toDouble();
+          _priceController.text = _predictedPrice!.toStringAsFixed(0);
+          _hasAutoPredicted = true;
+        });
+      }
+    } catch (e) {
+      // Silent failure for auto-prediction
+      print("Auto-prediction failed: $e");
+    } finally {
+      setState(() {
+        _isAutoPredicating = false;
+      });
     }
   }
 
@@ -234,15 +303,19 @@ class _AddListingScreenState extends State<AddListingScreen> {
         };
 
         // Add prediction data if available
-        if (widget.predictionData != null) {
+        if (_predictedPrice != null) {
           listingData['prediction_data'] = {
             'predicted_value': _predictedPrice,
             'used_predicted_price': !_useCustomPrice,
-            'tenure': widget.predictionData!.tenure,
-            'original_location': widget.predictionData!.location,
-            'original_use': widget.predictionData!.use,
-            'original_plot_size': widget.predictionData!.plotSize,
+            'tenure': _selectedTenure,
+            'original_location': _locationController.text.trim(),
+            'original_use': _selectedLandUse,
+            'original_plot_size':
+                double.tryParse(_acreageController.text.trim()) ?? 0.0,
             'prediction_timestamp': Timestamp.now(),
+            'auto_generated':
+                widget.predictionData ==
+                null, // Track if this was auto-generated
           };
         }
 
@@ -319,9 +392,39 @@ class _AddListingScreenState extends State<AddListingScreen> {
           key: _formKey, // Form key for validation
           child: ListView(
             children: [
-              // Enhanced prediction info card with price options
-              if (widget.predictionData != null &&
-                  widget.predictionData!.predictedValue != null) ...[
+              // Modified price input field
+              TextFormField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                enabled: _predictedPrice == null || _useCustomPrice,
+                decoration: _inputDecoration(
+                  'Price (UGX)',
+                  prefixIcon: Icons.attach_money,
+                ).copyWith(
+                  filled: _predictedPrice != null && !_useCustomPrice,
+                  fillColor:
+                      _predictedPrice != null && !_useCustomPrice
+                          ? Colors.grey[100]
+                          : null,
+                  helperText:
+                      _predictedPrice != null && !_useCustomPrice
+                          ? 'Using AI predicted price'
+                          : 'Enter your desired price',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Price is required';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Enter a valid number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Enhanced prediction info card with price options - positioned after price field
+              if (_predictedPrice != null) ...[
                 Card(
                   elevation: 2,
                   color: Colors.blue[50],
@@ -340,7 +443,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'AI Predicted Value',
+                                widget.predictionData != null
+                                    ? 'AI Predicted Value'
+                                    : 'Auto-Generated Value',
                                 style: TextStyle(
                                   color: Colors.blue[700],
                                   fontSize: 16,
@@ -348,6 +453,15 @@ class _AddListingScreenState extends State<AddListingScreen> {
                                 ),
                               ),
                             ),
+                            if (_isAutoPredicating)
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.blue[700],
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -356,12 +470,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: const Color.fromARGB(255, 233, 249, 144),
-                            ),
+                            border: Border.all(color: Colors.blue[200]!),
                           ),
                           child: Text(
-                            'UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)}',
+                            'UGX ${_predictedPrice!.toStringAsFixed(0)}',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -389,7 +501,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                                 ),
                               ),
                               subtitle: Text(
-                                'UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)}',
+                                'UGX ${_predictedPrice!.toStringAsFixed(0)}',
                                 style: TextStyle(
                                   color: Colors.green[600],
                                   fontWeight: FontWeight.w500,
@@ -401,9 +513,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                                 setState(() {
                                   _useCustomPrice = value!;
                                   if (!_useCustomPrice) {
-                                    _priceController.text = widget
-                                        .predictionData!
-                                        .predictedValue!
+                                    _priceController.text = _predictedPrice!
                                         .toStringAsFixed(0);
                                   }
                                 });
@@ -448,40 +558,30 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 const SizedBox(height: 12),
               ],
 
-              // Modified price input field
-              TextFormField(
-                controller: _priceController,
-                keyboardType: TextInputType.number,
-                enabled:
-                    widget.predictionData?.predictedValue == null ||
-                    _useCustomPrice,
+              // Add Tenure dropdown before location
+              DropdownButtonFormField<String>(
                 decoration: _inputDecoration(
-                  'Price (UGX)',
-                  prefixIcon: Icons.attach_money,
-                ).copyWith(
-                  filled:
-                      widget.predictionData?.predictedValue != null &&
-                      !_useCustomPrice,
-                  fillColor:
-                      widget.predictionData?.predictedValue != null &&
-                              !_useCustomPrice
-                          ? Colors.grey[100]
-                          : null,
-                  helperText:
-                      widget.predictionData?.predictedValue != null &&
-                              !_useCustomPrice
-                          ? 'Using AI predicted price'
-                          : 'Enter your desired price',
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Price is required';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Enter a valid number';
-                  }
-                  return null;
+                  'Land Tenure Type',
+                  prefixIcon: Icons.gavel,
+                ).copyWith(helperText: "Select the type of land ownership"),
+                value: _selectedTenure,
+                items:
+                    tenureOptions.map((String tenure) {
+                      return DropdownMenuItem<String>(
+                        value: tenure,
+                        child: Text(tenure),
+                      );
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedTenure = val;
+                  });
+                  // Trigger auto-prediction when tenure changes
+                  _autoPredicteValue();
                 },
+                validator:
+                    (value) =>
+                        value == null ? 'Please select land tenure type' : null,
               ),
               const SizedBox(height: 12),
 
@@ -552,6 +652,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   },
                   onSelected: (String selection) {
                     _locationController.text = selection;
+                    // Trigger auto-prediction when location is selected
+                    _autoPredicteValue();
                   },
                 )
               else
@@ -570,6 +672,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       return 'Location is required';
                     }
                     return null;
+                  },
+                  onChanged: (value) {
+                    // Trigger auto-prediction after user stops typing for 1 second
+                    Future.delayed(Duration(seconds: 1), () {
+                      if (_locationController.text == value) {
+                        _autoPredicteValue();
+                      }
+                    });
                   },
                 ),
               const SizedBox(height: 12),
@@ -654,6 +764,15 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   }
                   return null;
                 },
+                onChanged: (value) {
+                  // Trigger auto-prediction after user stops typing for 1 second
+                  Future.delayed(Duration(seconds: 1), () {
+                    if (_acreageController.text == value &&
+                        double.tryParse(value) != null) {
+                      _autoPredicteValue();
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 12),
 
@@ -681,35 +800,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   setState(() {
                     _selectedLandUse = val;
                   });
+                  // Trigger auto-prediction when land use changes
+                  _autoPredicteValue();
                 },
                 validator:
                     (value) => value == null ? 'Please select land use' : null,
-              ),
-              const SizedBox(height: 12),
-
-              // Tenure dropdown
-              DropdownButtonFormField<String>(
-                decoration: _inputDecoration(
-                  'Tenure',
-                  prefixIcon: Icons.assignment,
-                ),
-                value: _selectedTenure,
-                items:
-                    ['Freehold', 'Customary', 'Leasehold', 'Mailo']
-                        .map(
-                          (tenure) => DropdownMenuItem(
-                            value: tenure,
-                            child: Text(tenure),
-                          ),
-                        )
-                        .toList(),
-                onChanged: (val) {
-                  setState(() {
-                    _selectedTenure = val;
-                  });
-                },
-                validator:
-                    (value) => value == null ? 'Please select tenure' : null,
               ),
               const SizedBox(height: 12),
 
