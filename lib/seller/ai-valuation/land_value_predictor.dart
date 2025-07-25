@@ -384,7 +384,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
               // Predict Button
               ElevatedButton.icon(
                 onPressed:
-                    isLoading
+                    isLoading || isLoadingLocations
                         ? null
                         : () {
                           if (_formKey.currentState!.validate()) {
