@@ -3,6 +3,9 @@ import 'package:smartspace/buyer/favorite_screen.dart';
 import 'package:smartspace/buyer/home_screen_content.dart';
 import 'package:smartspace/buyer/search_screen.dart';
 import 'package:smartspace/notifications/notifications_screen.dart';
+import 'package:smartspace/buyer/buyer_dashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
@@ -25,6 +28,8 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     const SearchScreen(),
     const FavoriteScreen(),
     const NotificationsScreen(),
+     BuyerDashboardScreen(userId: FirebaseAuth.instance.currentUser!.uid),
+
   ];
 
   @override
@@ -69,6 +74,11 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                   icon: Icon(Icons.notifications),
                   label: 'Notifications',
                 ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Dashboard',
+                ),
+
               ],
             ),
           ),
