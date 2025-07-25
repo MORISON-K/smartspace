@@ -45,6 +45,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   double? _predictedPrice;
   bool _isAutoPredicating = false;
   bool _hasAutoPredicted = false;
+  bool _isSubmitting = false;
 
   // Add tenure options
   final List<String> tenureOptions = [
@@ -241,7 +242,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
         return;
       }
 
-      _showSnack("Uploading...");
+      setState(() {
+        _isSubmitting = true;
+      });
 
       try {
         // Get the current logged-in user
@@ -339,6 +342,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
         }
       } catch (e) {
         _showSnack("Error: $e");
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
       }
     }
   }
@@ -590,11 +599,28 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
               // Submit button
               ElevatedButton.icon(
-                icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                label: const Text('SUBMIT FOR APPROVAL'),
-                onPressed: _handleSubmit,
+                icon:
+                    _isSubmitting
+                        ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : const Icon(Icons.cloud_upload_outlined, size: 18),
+                label: Text(
+                  _isSubmitting ? 'SUBMITTING...' : 'SUBMIT FOR APPROVAL',
+                ),
+                onPressed: _isSubmitting ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 23, 149, 99),
+                  backgroundColor:
+                      _isSubmitting
+                          ? Colors.grey
+                          : const Color.fromARGB(255, 23, 149, 99),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
