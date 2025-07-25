@@ -11,7 +11,6 @@ import 'package:smartspace/seller/recent-activity/activity_service.dart';
 import 'package:smartspace/seller/ai-valuation/land_prediction_data.dart';
 import 'package:smartspace/seller/widgets/price_input_widget.dart';
 import 'package:smartspace/seller/widgets/location_input_widget.dart';
-import 'package:smartspace/seller/widgets/basic_info_widget.dart';
 import 'package:smartspace/seller/widgets/media_upload_widget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -396,7 +395,142 @@ class _AddListingScreenState extends State<AddListingScreen> {
           key: _formKey, // Form key for validation
           child: ListView(
             children: [
-              // Price input and prediction widget
+              // Phone number field (now first)
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: _inputDecoration(
+                  'Mobile Number',
+                  prefixIcon: Icons.phone,
+                ).copyWith(
+                  prefixText: '256 ',
+                  prefixStyle: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  hintText: '700123456',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Mobile Number is required';
+                  }
+                  // Remove any spaces and check if it's a valid phone number
+                  String cleanedValue = value.replaceAll(' ', '');
+                  if (cleanedValue.length < 9 || cleanedValue.length > 10) {
+                    return 'Enter a valid mobile number (9-10 digits)';
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(cleanedValue)) {
+                    return 'Enter only numbers';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Location input widget
+              LocationInputWidget(
+                locationController: _locationController,
+                allowedLocations: allowedLocations,
+                isLoadingLocations: isLoadingLocations,
+                errorMessage: errorMessage,
+                onLocationChanged: (value) {
+                  _locationController.text = value;
+                  _autoPredicteValue();
+                },
+                onLocationSelected: (selection) {
+                  _locationController.text = selection;
+                  _autoPredicteValue();
+                },
+                inputDecoration: _inputDecoration,
+              ),
+
+              // Tenure dropdown
+              DropdownButtonFormField<String>(
+                decoration: _inputDecoration(
+                  'Land Tenure Type',
+                  prefixIcon: Icons.gavel,
+                ).copyWith(helperText: "Select the type of land ownership"),
+                value: _selectedTenure,
+                items:
+                    tenureOptions.map((String tenure) {
+                      return DropdownMenuItem<String>(
+                        value: tenure,
+                        child: Text(tenure),
+                      );
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedTenure = val;
+                  });
+                  _autoPredicteValue();
+                },
+                validator:
+                    (value) =>
+                        value == null ? 'Please select land tenure type' : null,
+              ),
+              const SizedBox(height: 12),
+
+              // Acreage field
+              TextFormField(
+                controller: _acreageController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration(
+                  'Acreage (in acres)',
+                  prefixIcon: Icons.crop_free,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Acreage is required';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Enter a valid number';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  // Trigger auto-prediction after user stops typing for 1 second
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (_acreageController.text == value &&
+                        double.tryParse(value) != null) {
+                      _autoPredicteValue();
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Land Use dropdown
+              DropdownButtonFormField<String>(
+                decoration: _inputDecoration(
+                  'Land Use',
+                  prefixIcon: Icons.business,
+                ),
+                value: _selectedLandUse,
+                items:
+                    [
+                          'Residential',
+                          'Commercial',
+                          'Agricultural',
+                          'Industrial',
+                          'Mixed',
+                        ]
+                        .map(
+                          (use) =>
+                              DropdownMenuItem(value: use, child: Text(use)),
+                        )
+                        .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedLandUse = val;
+                  });
+                  _autoPredicteValue();
+                },
+                validator:
+                    (value) => value == null ? 'Please select land use' : null,
+              ),
+              const SizedBox(height: 12),
+
+              // Price input and prediction widget (now after land use)
               PriceInputWidget(
                 priceController: _priceController,
                 predictedPrice: _predictedPrice,
@@ -419,48 +553,31 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 predictionData: widget.predictionData,
               ),
 
-              // Location input widget
-              LocationInputWidget(
-                locationController: _locationController,
-                allowedLocations: allowedLocations,
-                isLoadingLocations: isLoadingLocations,
-                errorMessage: errorMessage,
-                onLocationChanged: (value) {
-                  _locationController.text = value;
-                  _autoPredicteValue();
+              // Description field
+              TextFormField(
+                controller: _descriptionController,
+                decoration: _inputDecoration(
+                  'Description (max 30 words)',
+                  prefixIcon: Icons.description,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Description is required';
+                  }
+                  // Count words by splitting on whitespace and filtering empty strings
+                  final words =
+                      value
+                          .trim()
+                          .split(RegExp(r'\s+'))
+                          .where((word) => word.isNotEmpty)
+                          .toList();
+                  if (words.length > 30) {
+                    return 'Description must be 30 words or less (currently ${words.length} words)';
+                  }
+                  return null;
                 },
-                onLocationSelected: (selection) {
-                  _locationController.text = selection;
-                  _autoPredicteValue();
-                },
-                inputDecoration: _inputDecoration,
               ),
-
-              // Basic info widgets
-              BasicInfoWidget(
-                phoneController: _phoneController,
-                acreageController: _acreageController,
-                descriptionController: _descriptionController,
-                selectedTenure: _selectedTenure,
-                selectedLandUse: _selectedLandUse,
-                tenureOptions: tenureOptions,
-                onTenureChanged: (val) {
-                  setState(() {
-                    _selectedTenure = val;
-                  });
-                  _autoPredicteValue();
-                },
-                onLandUseChanged: (val) {
-                  setState(() {
-                    _selectedLandUse = val;
-                  });
-                  _autoPredicteValue();
-                },
-                onAcreageChanged: (value) {
-                  _autoPredicteValue();
-                },
-                inputDecoration: _inputDecoration,
-              ),
+              const SizedBox(height: 12),
 
               // Media upload widget
               MediaUploadWidget(
