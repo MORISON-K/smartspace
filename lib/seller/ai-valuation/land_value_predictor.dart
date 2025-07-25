@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:smartspace/seller/ai-valuation/land_prediction_data.dart';
+import 'package:smartspace/seller/add_listing_screen.dart';
 
 class LandValuePredictorWidget extends StatefulWidget {
   const LandValuePredictorWidget({super.key});
@@ -480,6 +482,48 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                                 "• Plot Size: ${_plotAcController.text} acres",
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Button to create listing with this data
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              final predictionData = LandPredictionData(
+                                tenure: selectedTenure!,
+                                location: _locationController.text,
+                                use: selectedUse!,
+                                plotSize: double.parse(_plotAcController.text),
+                                predictedValue: predictedValue,
+                              );
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => AddListingScreen(
+                                        predictionData: predictionData,
+                                      ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add_business),
+                            label: const Text('Create Listing with this Data'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                67,
+                                160,
+                                151,
+                              ),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         ),
                       ],
