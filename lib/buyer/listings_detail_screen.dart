@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:smartspace/buyer/fullscreen_imageview.dart';
+import 'fullscreen_imageview.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> listing;
@@ -157,8 +157,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder:
-                                        (_) => FullScreenImageView(
-                                          imageUrl: _images[index],
+                                        (_) => Scaffold(
+                                          body: FullScreenImageView(
+                                            imageUrl: _images[index],
+                                          ),
                                         ),
                                   ),
                                 );
@@ -239,7 +241,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           color: Color.fromARGB(255, 236, 175, 7),
                         ),
                       ),
-                      Text('Size: ${widget.listing['description'] ?? '-'}'),
+                      Text(
+                        'Description: ${widget.listing['description'] ?? '-'}',
+                      ),
 
                       Text(
                         'Price: UGX ${widget.listing['price'] ?? '0'}',
