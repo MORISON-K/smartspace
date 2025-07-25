@@ -9,6 +9,10 @@ import 'package:geocoding/geocoding.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:smartspace/seller/recent-activity/activity_service.dart';
 import 'package:smartspace/seller/ai-valuation/land_prediction_data.dart';
+import 'package:smartspace/seller/widgets/price_input_widget.dart';
+import 'package:smartspace/seller/widgets/location_input_widget.dart';
+import 'package:smartspace/seller/widgets/basic_info_widget.dart';
+import 'package:smartspace/seller/widgets/media_upload_widget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -392,499 +396,82 @@ class _AddListingScreenState extends State<AddListingScreen> {
           key: _formKey, // Form key for validation
           child: ListView(
             children: [
-              // Modified price input field
-              TextFormField(
-                controller: _priceController,
-                keyboardType: TextInputType.number,
-                enabled: _predictedPrice == null || _useCustomPrice,
-                decoration: _inputDecoration(
-                  'Price (UGX)',
-                  prefixIcon: Icons.attach_money,
-                ).copyWith(
-                  filled: _predictedPrice != null && !_useCustomPrice,
-                  fillColor:
-                      _predictedPrice != null && !_useCustomPrice
-                          ? Colors.grey[100]
-                          : null,
-                  helperText:
-                      _predictedPrice != null && !_useCustomPrice
-                          ? 'Using AI predicted price'
-                          : 'Enter your desired price',
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Price is required';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Enter a valid number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Enhanced prediction info card with price options - positioned after price field
-              if (_predictedPrice != null) ...[
-                Card(
-                  elevation: 2,
-                  color: Colors.blue[50],
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.auto_awesome,
-                              color: Colors.blue[700],
-                              size: 24,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                widget.predictionData != null
-                                    ? 'AI Predicted Value'
-                                    : 'Auto-Generated Value',
-                                style: TextStyle(
-                                  color: Colors.blue[700],
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            if (_isAutoPredicating)
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.blue[700],
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue[200]!),
-                          ),
-                          child: Text(
-                            'UGX ${_predictedPrice!.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[800],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Choose your pricing option:',
-                          style: TextStyle(
-                            color: Colors.blue[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Column(
-                          children: [
-                            RadioListTile<bool>(
-                              title: Text(
-                                'Use AI predicted price',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'UGX ${_predictedPrice!.toStringAsFixed(0)}',
-                                style: TextStyle(
-                                  color: Colors.green[600],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              value: false,
-                              groupValue: _useCustomPrice,
-                              onChanged: (value) {
-                                setState(() {
-                                  _useCustomPrice = value!;
-                                  if (!_useCustomPrice) {
-                                    _priceController.text = _predictedPrice!
-                                        .toStringAsFixed(0);
-                                  }
-                                });
-                              },
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            RadioListTile<bool>(
-                              title: Text(
-                                'Set my own price',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Enter your preferred price below',
-                                style: TextStyle(
-                                  color: Colors.orange[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                              value: true,
-                              groupValue: _useCustomPrice,
-                              onChanged: (value) {
-                                setState(() {
-                                  _useCustomPrice = value!;
-                                  if (_useCustomPrice) {
-                                    _priceController.clear();
-                                  }
-                                });
-                              },
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              // Add Tenure dropdown before location
-              DropdownButtonFormField<String>(
-                decoration: _inputDecoration(
-                  'Land Tenure Type',
-                  prefixIcon: Icons.gavel,
-                ).copyWith(helperText: "Select the type of land ownership"),
-                value: _selectedTenure,
-                items:
-                    tenureOptions.map((String tenure) {
-                      return DropdownMenuItem<String>(
-                        value: tenure,
-                        child: Text(tenure),
+              // Price input and prediction widget
+              PriceInputWidget(
+                priceController: _priceController,
+                predictedPrice: _predictedPrice,
+                useCustomPrice: _useCustomPrice,
+                isAutoPredicating: _isAutoPredicating,
+                hasAutoPredicted: _hasAutoPredicted,
+                onUseCustomPriceChanged: (value) {
+                  setState(() {
+                    _useCustomPrice = value;
+                    if (!_useCustomPrice && _predictedPrice != null) {
+                      _priceController.text = _predictedPrice!.toStringAsFixed(
+                        0,
                       );
-                    }).toList(),
-                onChanged: (val) {
+                    } else if (_useCustomPrice) {
+                      _priceController.clear();
+                    }
+                  });
+                },
+                inputDecoration: _inputDecoration,
+                predictionData: widget.predictionData,
+              ),
+
+              // Location input widget
+              LocationInputWidget(
+                locationController: _locationController,
+                allowedLocations: allowedLocations,
+                isLoadingLocations: isLoadingLocations,
+                errorMessage: errorMessage,
+                onLocationChanged: (value) {
+                  _locationController.text = value;
+                  _autoPredicteValue();
+                },
+                onLocationSelected: (selection) {
+                  _locationController.text = selection;
+                  _autoPredicteValue();
+                },
+                inputDecoration: _inputDecoration,
+              ),
+
+              // Basic info widgets
+              BasicInfoWidget(
+                phoneController: _phoneController,
+                acreageController: _acreageController,
+                descriptionController: _descriptionController,
+                selectedTenure: _selectedTenure,
+                selectedLandUse: _selectedLandUse,
+                tenureOptions: tenureOptions,
+                onTenureChanged: (val) {
                   setState(() {
                     _selectedTenure = val;
                   });
-                  // Trigger auto-prediction when tenure changes
                   _autoPredicteValue();
                 },
-                validator:
-                    (value) =>
-                        value == null ? 'Please select land tenure type' : null,
-              ),
-              const SizedBox(height: 12),
-
-              // Location input field with autocomplete
-              if (isLoadingLocations)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 8),
-                        Text("Loading locations..."),
-                      ],
-                    ),
-                  ),
-                )
-              else if (allowedLocations.isNotEmpty)
-                Autocomplete<String>(
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text == '') {
-                      return const Iterable<String>.empty();
-                    }
-                    return allowedLocations.where((String option) {
-                      return option.toLowerCase().contains(
-                        textEditingValue.text.toLowerCase(),
-                      );
-                    });
-                  },
-                  fieldViewBuilder: (
-                    context,
-                    controller,
-                    focusNode,
-                    onEditingComplete,
-                  ) {
-                    // Sync the autocomplete controller with our location controller
-                    if (_locationController.text.isNotEmpty &&
-                        controller.text.isEmpty) {
-                      controller.text = _locationController.text;
-                    }
-                    return TextFormField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      decoration: _inputDecoration(
-                        'Location',
-                        prefixIcon: Icons.location_city,
-                      ).copyWith(
-                        helperText: "Start typing to choose a valid location",
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Location is required';
-                        }
-                        if (!allowedLocations.contains(value)) {
-                          return "Invalid location. Please select from the suggestions.";
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        _locationController.text = value;
-                      },
-                    );
-                  },
-                  onSelected: (String selection) {
-                    _locationController.text = selection;
-                    // Trigger auto-prediction when location is selected
-                    _autoPredicteValue();
-                  },
-                )
-              else
-                // Fallback: Regular text field if locations couldn't be loaded
-                TextFormField(
-                  controller: _locationController,
-                  decoration: _inputDecoration(
-                    'Location',
-                    prefixIcon: Icons.location_city,
-                  ).copyWith(
-                    helperText:
-                        "Enter the location (auto-suggestions unavailable)",
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Location is required';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    // Trigger auto-prediction after user stops typing for 1 second
-                    Future.delayed(Duration(seconds: 1), () {
-                      if (_locationController.text == value) {
-                        _autoPredicteValue();
-                      }
-                    });
-                  },
-                ),
-              const SizedBox(height: 12),
-
-              // Show error message if location loading failed
-              if (errorMessage != null && !isLoadingLocations) ...[
-                Card(
-                  elevation: 2,
-                  color: Colors.orange[50],
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.warning,
-                          color: Colors.orange[700],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Location suggestions unavailable. You can still enter location manually.',
-                            style: TextStyle(
-                              color: Colors.orange[700],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: _inputDecoration(
-                  'Mobile Number',
-                  prefixIcon: Icons.phone,
-                ).copyWith(
-                  prefixText: '256 ',
-                  prefixStyle: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintText: '700123456',
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Mobile Number is required';
-                  }
-                  // Remove any spaces and check if it's a valid phone number
-                  String cleanedValue = value.replaceAll(' ', '');
-                  if (cleanedValue.length < 9 || cleanedValue.length > 10) {
-                    return 'Enter a valid mobile number (9-10 digits)';
-                  }
-                  if (!RegExp(r'^[0-9]+$').hasMatch(cleanedValue)) {
-                    return 'Enter only numbers';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Acreage input field
-              TextFormField(
-                controller: _acreageController,
-                keyboardType: TextInputType.number,
-                decoration: _inputDecoration(
-                  'Acreage (in acres)',
-                  prefixIcon: Icons.crop_free,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Acreage is required';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Enter a valid number';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  // Trigger auto-prediction after user stops typing for 1 second
-                  Future.delayed(Duration(seconds: 1), () {
-                    if (_acreageController.text == value &&
-                        double.tryParse(value) != null) {
-                      _autoPredicteValue();
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Land Use dropdown
-              DropdownButtonFormField<String>(
-                decoration: _inputDecoration(
-                  'Land Use',
-                  prefixIcon: Icons.business,
-                ),
-                value: _selectedLandUse,
-                items:
-                    [
-                          'Residential',
-                          'Commercial',
-                          'Agricultural',
-                          'Industrial',
-                          'Mixed',
-                        ]
-                        .map(
-                          (use) =>
-                              DropdownMenuItem(value: use, child: Text(use)),
-                        )
-                        .toList(),
-                onChanged: (val) {
+                onLandUseChanged: (val) {
                   setState(() {
                     _selectedLandUse = val;
                   });
-                  // Trigger auto-prediction when land use changes
                   _autoPredicteValue();
                 },
-                validator:
-                    (value) => value == null ? 'Please select land use' : null,
-              ),
-              const SizedBox(height: 12),
-
-              // Multi-line description input field
-              TextFormField(
-                controller: _descriptionController,
-                //maxLines: 3,
-                decoration: _inputDecoration(
-                  'Description (max 30 words)',
-                  prefixIcon: Icons.description,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Description is required';
-                  }
-                  // Count words by splitting on whitespace and filtering empty strings
-                  final words =
-                      value
-                          .trim()
-                          .split(RegExp(r'\s+'))
-                          .where((word) => word.isNotEmpty)
-                          .toList();
-                  if (words.length > 30) {
-                    return 'Description must be 30 words or less (currently ${words.length} words)';
-                  }
-                  return null;
+                onAcreageChanged: (value) {
+                  _autoPredicteValue();
                 },
-              ),
-              const SizedBox(height: 12),
-
-              // Button to select multiple images
-              ElevatedButton.icon(
-                onPressed: _pickImages,
-                icon: const Icon(Icons.photo_library),
-                label: const Text("Upload Images"),
-                style: _buttonStyle(),
+                inputDecoration: _inputDecoration,
               ),
 
-              // Display selected images as thumbnails
-              if (_images.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        _images
-                            .map(
-                              (img) => Image.file(
-                                File(img.path),
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            .toList(),
-                  ),
-                ),
-              const SizedBox(height: 12),
-
-              // Button to select PDF document
-              ElevatedButton.icon(
-                onPressed: _pickPDF,
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text("Attach Land Title (PDF)"),
-                style: _buttonStyle(),
+              // Media upload widget
+              MediaUploadWidget(
+                images: _images,
+                pdfFile: _pdfFile,
+                onPickImages: _pickImages,
+                onPickPDF: _pickPDF,
+                buttonStyle: _buttonStyle,
               ),
 
-              // Display selected PDF file name
-              if (_pdfFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    "Attached: ${_pdfFile!.path.split('/').last}",
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              const SizedBox(height: 20),
-
-              // Submit button that triggers the form submission process
+              // Submit button
               ElevatedButton.icon(
                 icon: const Icon(Icons.cloud_upload_outlined, size: 18),
                 label: const Text('SUBMIT FOR APPROVAL'),
