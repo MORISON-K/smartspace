@@ -119,10 +119,6 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        //Print actual api response for debugging: Print the actual response to understand the structure
-        print("API Response: $data");
-        print("Data type: ${data.runtimeType}");
-
         // Handle different possible response structures
         List<String> locations = [];
 
@@ -135,8 +131,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
           } else if (data['data'] != null) {
             locations = List<String>.from(data['data']);
           } else {
-            // If it's a map but no expected key, list all keys for debugging
-            print("Available keys in response: ${data.keys.toList()}");
+            //  list all keys for debugging
             throw Exception(
               "Expected location data not found in response. Available keys: ${data.keys.toList()}",
             );
@@ -153,14 +148,11 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
           isLoadingLocations = false;
         });
       } else {
-        print("HTTP Error: ${response.statusCode}");
-        print("Response body: ${response.body}");
         throw Exception(
           "Failed to load locations. Status: ${response.statusCode}",
         );
       }
     } catch (e) {
-      print("Error fetching locations: $e");
       setState(() {
         errorMessage = "Could not fetch locations: $e";
         isLoadingLocations = false;
