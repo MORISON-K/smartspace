@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:smartspace/buyer/fullscreen_imageview.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> listing;
@@ -150,24 +151,37 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         controller: _pageController,
                         itemCount: _images.length,
                         itemBuilder:
-                            (context, index) => ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                _images[index],
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                loadingBuilder:
-                                    (c, w, p) =>
-                                        p == null
-                                            ? w
-                                            : const Center(
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            ),
-                                errorBuilder:
-                                    (c, e, s) => const Center(
-                                      child: Icon(Icons.broken_image),
-                                    ),
+                            (context, index) => GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => FullScreenImageView(
+                                          imageUrl: _images[index],
+                                        ),
+                                  ),
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  _images[index],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  loadingBuilder:
+                                      (c, w, p) =>
+                                          p == null
+                                              ? w
+                                              : const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                  errorBuilder:
+                                      (c, e, s) => const Center(
+                                        child: Icon(Icons.broken_image),
+                                      ),
+                                ),
                               ),
                             ),
                       ),
