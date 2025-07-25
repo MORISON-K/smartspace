@@ -1,8 +1,4 @@
-// Required imports for file operations, UI components, image/file picking,
-// Firebase services, and geocoding functionality
 import 'dart:io';
-// import 'dart:convert';
-// import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,18 +8,20 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:smartspace/seller/recent-activity/activity_service.dart';
+import 'package:smartspace/seller/ai-valuation/land_prediction_data.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-/// Screen that allows sellers to add new property listings
-/// Users can input property details, upload images, attach documents, and submit for approval
 class AddListingScreen extends StatefulWidget {
-  const AddListingScreen({super.key});
+  final LandPredictionData? predictionData;
+
+  const AddListingScreen({super.key, this.predictionData});
 
   @override
   State<AddListingScreen> createState() => _AddListingScreenState();
 }
 
 class _AddListingScreenState extends State<AddListingScreen> {
-  // Form key for validation
   final _formKey = GlobalKey<FormState>();
 
   // Text controllers for form inputs
@@ -33,19 +31,91 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _acreageController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  // Selected category for the property (Freehold, Leasehold, etc.)
-  String? _selectedCategory;
-
-  // List to store selected images for the property
+  String? _selectedLandUse;
   List<XFile> _images = [];
-
-  // File to store the selected PDF document (land title)
   File? _pdfFile;
-
-  // Image picker instance for selecting multiple images
   final ImagePicker _picker = ImagePicker();
 
-  /// Allows users to select multiple images from their device gallery
+  // Location autocomplete variables
+  List<String> allowedLocations = [];
+  bool isLoadingLocations = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _populateFieldsFromPrediction();
+    _fetchAllowedLocations();
+  }
+
+  Future<void> _fetchAllowedLocations() async {
+    final url = "https://smartspace-e7e32524ddcb.herokuapp.com/api/locations/";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Handle different possible response structures
+        List<String> locations = [];
+
+        if (data is Map) {
+          // If response is a map, try different possible keys
+          if (data['locations'] != null) {
+            locations = List<String>.from(data['locations']);
+          } else if (data['LOCATION'] != null) {
+            locations = List<String>.from(data['LOCATION']);
+          } else if (data['data'] != null) {
+            locations = List<String>.from(data['data']);
+          } else {
+            //  list all keys for debugging
+            throw Exception(
+              "Expected location data not found in response. Available keys: ${data.keys.toList()}",
+            );
+          }
+        } else if (data is List) {
+          // If response is directly a list
+          locations = List<String>.from(data);
+        } else {
+          throw Exception("Unexpected response format: ${data.runtimeType}");
+        }
+
+        setState(() {
+          allowedLocations = locations;
+          isLoadingLocations = false;
+        });
+      } else {
+        throw Exception(
+          "Failed to load locations. Status: ${response.statusCode}",
+        );
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Could not fetch locations: $e";
+        isLoadingLocations = false;
+      });
+    }
+    return;
+  }
+
+  void _populateFieldsFromPrediction() {
+    if (widget.predictionData != null) {
+      final data = widget.predictionData!;
+
+      // Populate form fields with prediction data
+      _locationController.text = data.location;
+      _acreageController.text = data.plotSize.toString();
+      _selectedLandUse = data.use;
+
+      // If there's a predicted value, suggest it as the price
+      if (data.predictedValue != null) {
+        _priceController.text = data.predictedValue!.toStringAsFixed(0);
+      }
+
+      setState(() {});
+    }
+  }
+
   Future<void> _pickImages() async {
     final picked = await _picker.pickMultiImage();
     if (picked.isNotEmpty) {
@@ -55,7 +125,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
     }
   }
 
-  /// Allows users to pick a PDF file (specifically for land title documents)
   Future<void> _pickPDF() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -137,25 +206,24 @@ class _AddListingScreenState extends State<AddListingScreen> {
         final pdfUrl = await pdfRef.getDownloadURL();
 
         // Save all listing data to Firestore database
-        final docRef = await FirebaseFirestore.instance
-            .collection('listings')
-            .add({
-              'title': "land",
-              'price': _priceController.text.trim(),
-              'location': _locationController.text.trim(),
-              'latitude': lat,
-              'longitude': lng,
-              'mobile_number': '256 ${_phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '')}',
-              'category': _selectedCategory,
-              'description': _descriptionController.text.trim(),
-              'acreage': '${_acreageController.text.trim()} acres',
-              'images': imageUrls,
-              'pdf': pdfUrl,
-              'createdAt': Timestamp.now(),
-              'user_id': user.uid,
-              'sellerName': sellerName,
-              "status": "pending",
-            });
+        final docRef = await FirebaseFirestore.instance.collection('listings').add({
+          'title': "land",
+          'price': _priceController.text.trim(),
+          'location': _locationController.text.trim(),
+          'latitude': lat,
+          'longitude': lng,
+          'mobile_number':
+              '256 ${_phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '')}',
+          'land_use': _selectedLandUse,
+          'description': _descriptionController.text.trim(),
+          'acreage': '${_acreageController.text.trim()} acres',
+          'images': imageUrls,
+          'pdf': pdfUrl,
+          'createdAt': Timestamp.now(),
+          'user_id': user.uid,
+          'sellerName': sellerName,
+          "status": "pending",
+        });
 
         final ActivityService activityService = ActivityService();
         await activityService.createListingActivity(
@@ -164,7 +232,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
         );
 
         _showSnack("Listing submitted successfully!");
-        Navigator.of(context).pop(); // Return to previous screen
+        if (mounted) {
+          Navigator.of(context).pop(); // Return to previous screen
+        }
       } catch (e) {
         _showSnack("Error: $e");
       }
@@ -175,11 +245,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(),
-    );
+      border: OutlineInputBorder());
   }
 
-  /// Clean up text controllers when widget is disposed to prevent memory leaks
   @override
   void dispose() {
     _priceController.dispose();
@@ -223,6 +291,39 @@ class _AddListingScreenState extends State<AddListingScreen> {
           key: _formKey, // Form key for validation
           child: ListView(
             children: [
+              // Show prediction info card if data comes from AI prediction
+              if (widget.predictionData != null &&
+                  widget.predictionData!.predictedValue != null) ...[
+                Card(
+                  elevation: 2,
+                  color: Colors.blue[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: Colors.blue[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'AI predicted value: UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)} (pre-filled below)',
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
               // Price input field with number keyboard and validation
               TextFormField(
                 controller: _priceController,
@@ -240,18 +341,122 @@ class _AddListingScreenState extends State<AddListingScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Location input field
-              TextFormField(
-                controller: _locationController,
-                decoration: _inputDecoration('Location'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Location is required';
-                  }
-                  return null;
-                },
-              ),
+              // Location input field with autocomplete
+              if (isLoadingLocations)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text("Loading locations..."),
+                      ],
+                    ),
+                  ),
+                )
+              else if (allowedLocations.isNotEmpty)
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<String>.empty();
+                    }
+                    return allowedLocations.where((String option) {
+                      return option.toLowerCase().contains(
+                        textEditingValue.text.toLowerCase(),
+                      );
+                    });
+                  },
+                  fieldViewBuilder: (
+                    context,
+                    controller,
+                    focusNode,
+                    onEditingComplete,
+                  ) {
+                    // Sync the autocomplete controller with our location controller
+                    if (_locationController.text.isNotEmpty &&
+                        controller.text.isEmpty) {
+                      controller.text = _locationController.text;
+                    }
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: _inputDecoration('Location').copyWith(
+                        prefixIcon: Icon(Icons.location_city),
+                        helperText: "Start typing to choose a valid location",
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Location is required';
+                        }
+                        if (!allowedLocations.contains(value)) {
+                          return "Invalid location. Please select from the suggestions.";
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        _locationController.text = value;
+                      },
+                    );
+                  },
+                  onSelected: (String selection) {
+                    _locationController.text = selection;
+                  },
+                )
+              else
+                // Fallback: Regular text field if locations couldn't be loaded
+                TextFormField(
+                  controller: _locationController,
+                  decoration: _inputDecoration('Location').copyWith(
+                    prefixIcon: Icon(Icons.location_city),
+                    helperText:
+                        "Enter the location (auto-suggestions unavailable)",
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Location is required';
+                    }
+                    return null;
+                  },
+                ),
               const SizedBox(height: 12),
+
+              // Show error message if location loading failed
+              if (errorMessage != null && !isLoadingLocations) ...[
+                Card(
+                  elevation: 2,
+                  color: Colors.orange[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning,
+                          color: Colors.orange[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Location suggestions unavailable. You can still enter location manually.',
+                            style: TextStyle(
+                              color: Colors.orange[700],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
 
               TextFormField(
                 controller: _phoneController,
@@ -281,28 +486,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Category dropdown with predefined options
-              DropdownButtonFormField<String>(
-                decoration: _inputDecoration('Category'),
-                value: _selectedCategory,
-                items:
-                    ['Freehold', 'Leasehold', 'Mailo', 'Customary']
-                        .map(
-                          (cat) =>
-                              DropdownMenuItem(value: cat, child: Text(cat)),
-                        )
-                        .toList(),
-                onChanged: (val) {
-                  setState(() {
-                    _selectedCategory = val;
-                  });
-                },
-                validator:
-                    (value) =>
-                        value == null ? 'Please select a category' : null,
-              ),
-              const SizedBox(height: 12),
-
               // Acreage input field
               TextFormField(
                 controller: _acreageController,
@@ -317,6 +500,33 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 12),
+
+              // Land Use dropdown
+              DropdownButtonFormField<String>(
+                decoration: _inputDecoration('Land Use'),
+                value: _selectedLandUse,
+                items:
+                    [
+                          'Residential',
+                          'Commercial',
+                          'Agricultural',
+                          'Industrial',
+                          'Mixed',
+                        ]
+                        .map(
+                          (use) =>
+                              DropdownMenuItem(value: use, child: Text(use)),
+                        )
+                        .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedLandUse = val;
+                  });
+                },
+                validator:
+                    (value) => value == null ? 'Please select land use' : null,
               ),
               const SizedBox(height: 12),
 
