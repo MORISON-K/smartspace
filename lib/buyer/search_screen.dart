@@ -150,7 +150,7 @@ class _SearchScreenState extends State<SearchScreen> {
               },
             ),
             icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueGreen,
+              BitmapDescriptor.hueBlue,
             ),
           );
 
