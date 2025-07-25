@@ -242,10 +242,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
   }
 
   /// Creates consistent input decoration styling for all form fields
-  InputDecoration _inputDecoration(String label) {
+  InputDecoration _inputDecoration(String label, {IconData? prefixIcon}) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder());
+      border: OutlineInputBorder(),
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+    );
   }
 
   @override
@@ -328,7 +330,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
               TextFormField(
                 controller: _priceController,
                 keyboardType: TextInputType.number,
-                decoration: _inputDecoration('Price (UGX)'),
+                decoration: _inputDecoration(
+                  'Price (UGX)',
+                  prefixIcon: Icons.attach_money,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Price is required';
@@ -386,8 +391,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     return TextFormField(
                       controller: controller,
                       focusNode: focusNode,
-                      decoration: _inputDecoration('Location').copyWith(
-                        prefixIcon: Icon(Icons.location_city),
+                      decoration: _inputDecoration(
+                        'Location',
+                        prefixIcon: Icons.location_city,
+                      ).copyWith(
                         helperText: "Start typing to choose a valid location",
                       ),
                       validator: (value) {
@@ -412,8 +419,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 // Fallback: Regular text field if locations couldn't be loaded
                 TextFormField(
                   controller: _locationController,
-                  decoration: _inputDecoration('Location').copyWith(
-                    prefixIcon: Icon(Icons.location_city),
+                  decoration: _inputDecoration(
+                    'Location',
+                    prefixIcon: Icons.location_city,
+                  ).copyWith(
                     helperText:
                         "Enter the location (auto-suggestions unavailable)",
                   ),
@@ -461,7 +470,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: _inputDecoration('Mobile Number').copyWith(
+                decoration: _inputDecoration(
+                  'Mobile Number',
+                  prefixIcon: Icons.phone,
+                ).copyWith(
                   prefixText: '256 ',
                   prefixStyle: TextStyle(
                     color: Colors.black87,
@@ -490,7 +502,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
               TextFormField(
                 controller: _acreageController,
                 keyboardType: TextInputType.number,
-                decoration: _inputDecoration('Acreage (in acres)'),
+                decoration: _inputDecoration(
+                  'Acreage (in acres)',
+                  prefixIcon: Icons.crop_free,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Acreage is required';
@@ -505,7 +520,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
               // Land Use dropdown
               DropdownButtonFormField<String>(
-                decoration: _inputDecoration('Land Use'),
+                decoration: _inputDecoration(
+                  'Land Use',
+                  prefixIcon: Icons.business,
+                ),
                 value: _selectedLandUse,
                 items:
                     [
@@ -534,7 +552,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
               TextFormField(
                 controller: _descriptionController,
                 //maxLines: 3,
-                decoration: _inputDecoration('Description (max 30 words)'),
+                decoration: _inputDecoration(
+                  'Description (max 30 words)',
+                  prefixIcon: Icons.description,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Description is required';
@@ -609,7 +630,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 label: const Text('SUBMIT FOR APPROVAL'),
                 onPressed: _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 149, 65, 23),
+                  backgroundColor: const Color.fromARGB(255, 23, 149, 99),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
