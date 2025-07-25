@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class MyListingsScreen extends StatefulWidget {
@@ -88,10 +88,14 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     List<File> selectedFiles = [];
 
     Future<void> pickFiles() async {
-      final picked = await ImagePicker().pickMultiImage();
-      if (picked != null && picked.isNotEmpty) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result != null) {
         setState(() {
-          selectedFiles.addAll(picked.map((p) => File(p.path)));
+          selectedFiles.addAll(result.paths.map((path) => File(path!)));
         });
       }
     }
@@ -106,7 +110,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             children: [
               ElevatedButton.icon(
                 icon: const Icon(Icons.upload_file),
-                label: const Text('Select Files'),
+                label: const Text('Select PDF Files'),
                 onPressed: pickFiles,
               ),
               const SizedBox(height: 10),
