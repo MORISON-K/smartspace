@@ -373,14 +373,14 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               },
             ),
 
-            ListTile(
-              leading: Icon(Icons.person_3),
-              title: Text("Profile"),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/profile_screen');
-              },
-            ),
+            // ListTile(
+            //   leading: Icon(Icons.person_3),
+            //   title: Text("Profile"),
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //     Navigator.pushNamed(context, '/profile_screen');
+            //   },
+            // ),
 
             ListTile(
               leading: Icon(Icons.logout_outlined),
