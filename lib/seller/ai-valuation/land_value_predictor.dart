@@ -102,6 +102,73 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
     super.dispose();
   }
 
+  List<String> allowedLocations = [];
+  bool isLoadingLocations = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllowedLocations();
+  }
+
+  Future<void> _fetchAllowedLocations() async {
+    final url = "https://smartspace-e7e32524ddcb.herokuapp.com/api/locations/";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        //Print actual api response for debugging: Print the actual response to understand the structure
+        print("API Response: $data");
+        print("Data type: ${data.runtimeType}");
+
+        // Handle different possible response structures
+        List<String> locations = [];
+
+        if (data is Map) {
+          // If response is a map, try different possible keys
+          if (data['locations'] != null) {
+            locations = List<String>.from(data['locations']);
+          } else if (data['LOCATION'] != null) {
+            locations = List<String>.from(data['LOCATION']);
+          } else if (data['data'] != null) {
+            locations = List<String>.from(data['data']);
+          } else {
+            // If it's a map but no expected key, list all keys for debugging
+            print("Available keys in response: ${data.keys.toList()}");
+            throw Exception(
+              "Expected location data not found in response. Available keys: ${data.keys.toList()}",
+            );
+          }
+        } else if (data is List) {
+          // If response is directly a list
+          locations = List<String>.from(data);
+        } else {
+          throw Exception("Unexpected response format: ${data.runtimeType}");
+        }
+
+        setState(() {
+          allowedLocations = locations;
+          isLoadingLocations = false;
+        });
+      } else {
+        print("HTTP Error: ${response.statusCode}");
+        print("Response body: ${response.body}");
+        throw Exception(
+          "Failed to load locations. Status: ${response.statusCode}",
+        );
+      }
+    } catch (e) {
+      print("Error fetching locations: $e");
+      setState(() {
+        errorMessage = "Could not fetch locations: $e";
+        isLoadingLocations = false;
+      });
+    }
+    return;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -212,22 +279,87 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
               ),
               const SizedBox(height: 16),
 
-              //Location Input Field
-              TextFormField(
-                controller: _locationController,
-                decoration: const InputDecoration(
-                  labelText: "Location",
-                  prefixIcon: Icon(Icons.location_city),
-                  border: OutlineInputBorder(),
-                  helperText: "Enter the location",
+              //Location Autocomplete Field
+              if (isLoadingLocations)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text("Loading locations..."),
+                      ],
+                    ),
+                  ),
+                )
+              else if (allowedLocations.isNotEmpty)
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<String>.empty();
+                    }
+                    return allowedLocations.where((String option) {
+                      return option.toLowerCase().contains(
+                        textEditingValue.text.toLowerCase(),
+                      );
+                    });
+                  },
+                  fieldViewBuilder: (
+                    context,
+                    controller,
+                    focusNode,
+                    onEditingComplete,
+                  ) {
+                    _locationController.text = controller.text;
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: "Location",
+                        prefixIcon: Icon(Icons.location_city),
+                        border: OutlineInputBorder(),
+                        helperText: "Start typing to choose a valid location",
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter the location";
+                        }
+                        if (!allowedLocations.contains(value)) {
+                          return "Invalid location. Please select from the suggestions.";
+                        }
+                        return null;
+                      },
+                    );
+                  },
+                  onSelected: (String selection) {
+                    _locationController.text = selection;
+                  },
+                )
+              else
+                // Fallback: Regular text field if locations couldn't be loaded
+                TextFormField(
+                  controller: _locationController,
+                  decoration: const InputDecoration(
+                    labelText: "Location",
+                    prefixIcon: Icon(Icons.location_city),
+                    border: OutlineInputBorder(),
+                    helperText:
+                        "Enter the location (auto-suggestions unavailable)",
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please enter the location";
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please enter  the location";
-                  }
-                  return null;
-                },
-              ),
+
               const SizedBox(height: 16),
 
               // Plot Size Input
