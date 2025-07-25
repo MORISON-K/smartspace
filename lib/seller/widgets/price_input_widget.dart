@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartspace/seller/widgets/price_choice_modal.dart';
 
 class PriceInputWidget extends StatelessWidget {
   final TextEditingController priceController;
@@ -23,6 +24,22 @@ class PriceInputWidget extends StatelessWidget {
     this.predictionData,
   });
 
+  void _showPriceChoiceModal(BuildContext context) {
+    if (predictedPrice == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder:
+          (context) => PriceChoiceModal(
+            predictedPrice: predictedPrice!,
+            useCustomPrice: useCustomPrice,
+            onChoiceChanged: onUseCustomPriceChanged,
+            predictionData: predictionData,
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -45,6 +62,14 @@ class PriceInputWidget extends StatelessWidget {
                 predictedPrice != null && !useCustomPrice
                     ? 'Using AI predicted price'
                     : 'Enter your desired price',
+            suffixIcon:
+                predictedPrice != null
+                    ? IconButton(
+                      icon: Icon(Icons.tune, color: Colors.blue[700]),
+                      onPressed: () => _showPriceChoiceModal(context),
+                      tooltip: 'Choose pricing option',
+                    )
+                    : null,
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
@@ -56,114 +81,81 @@ class PriceInputWidget extends StatelessWidget {
             return null;
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
-        // Prediction info card
+        // Compact prediction indicator
         if (predictedPrice != null) ...[
-          Card(
-            elevation: 2,
-            color: const Color.fromARGB(147, 247, 246, 246),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          InkWell(
+            onTap: () => _showPriceChoiceModal(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(50, 67, 160, 151),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color.fromARGB(255, 67, 160, 151),
+                  width: 1,
+                ),
+              ),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          predictionData != null
-                              ? 'AI Predicted Value'
-                              : 'Auto-Generated Value',
+                  if (isAutoPredicating)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color.fromARGB(255, 67, 160, 151),
+                      ),
+                    )
+                  else
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: Color.fromARGB(255, 67, 160, 151),
+                      size: 18,
+                    ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          useCustomPrice
+                              ? 'Using custom price'
+                              : 'Using AI predicted price',
                           style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      if (isAutoPredicating)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.black,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black),
-                    ),
-                    child: Text(
-                      'UGX ${predictedPrice!.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Choose your pricing option:',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Column(
-                    children: [
-                      RadioListTile<bool>(
-                        title: const Text(
-                          'Use AI predicted price',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: Text(
-                          'UGX ${predictedPrice!.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 10, 27, 11),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        value: false,
-                        groupValue: useCustomPrice,
-                        onChanged: (value) => onUseCustomPriceChanged(value!),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      RadioListTile<bool>(
-                        title: const Text(
-                          'Set my own price',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: const Text(
-                          'Enter your preferred price below',
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 26, 48, 5),
                             fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color.fromARGB(255, 67, 160, 151),
                           ),
                         ),
-                        value: true,
-                        groupValue: useCustomPrice,
-                        onChanged: (value) => onUseCustomPriceChanged(value!),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ],
+                        if (!useCustomPrice)
+                          Text(
+                            'UGX ${predictedPrice!.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 67, 160, 151),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.tune,
+                    color: Color.fromARGB(255, 67, 160, 151),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Change',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color.fromARGB(255, 67, 160, 151),
+                    ),
                   ),
                 ],
               ),
