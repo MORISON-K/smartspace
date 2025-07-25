@@ -49,10 +49,13 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   Future<void> _fetchRelatedListings() async {
     try {
       final location = widget.listing['location'];
+      final category = widget.listing['category'];
+
       final snapshot =
           await FirebaseFirestore.instance
               .collection('listings')
               .where('location', isEqualTo: location)
+              .where('category', isEqualTo: category)
               .get();
 
       final items =
