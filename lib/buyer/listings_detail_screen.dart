@@ -244,6 +244,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       Text(
                         'Description: ${widget.listing['description'] ?? '-'}',
                       ),
+                      Text('Size: ${widget.listing['acreage'] ?? '-'}'),
 
                       Text(
                         'Price: UGX ${widget.listing['price'] ?? '0'}',
