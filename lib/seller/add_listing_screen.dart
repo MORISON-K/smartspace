@@ -1,6 +1,8 @@
 // Required imports for file operations, UI components, image/file picking,
 // Firebase services, and geocoding functionality
 import 'dart:io';
+// import 'dart:convert';
+// import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -173,18 +175,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      filled: true,
-      fillColor: Colors.white,
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF007BFF), width: 2.0),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
-      ),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(),
     );
   }
 
@@ -332,7 +323,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
               // Multi-line description input field
               TextFormField(
                 controller: _descriptionController,
-                maxLines: 3,
+                //maxLines: 3,
                 decoration: _inputDecoration('Description (max 30 words)'),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
