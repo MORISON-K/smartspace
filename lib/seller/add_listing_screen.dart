@@ -36,6 +36,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
   File? _pdfFile;
   final ImagePicker _picker = ImagePicker();
 
+  // Add these new variables for price handling
+  bool _useCustomPrice = false;
+  double? _predictedPrice;
+
   // Location autocomplete variables
   List<String> allowedLocations = [];
   bool isLoadingLocations = true;
@@ -107,8 +111,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
       _acreageController.text = data.plotSize.toString();
       _selectedLandUse = data.use;
 
-      // If there's a predicted value, suggest it as the price
+      // Store predicted value and set as default price
       if (data.predictedValue != null) {
+        _predictedPrice = data.predictedValue!;
         _priceController.text = data.predictedValue!.toStringAsFixed(0);
       }
 
@@ -205,8 +210,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
         await pdfRef.putFile(_pdfFile!);
         final pdfUrl = await pdfRef.getDownloadURL();
 
-        // Save all listing data to Firestore database
-        final docRef = await FirebaseFirestore.instance.collection('listings').add({
+        // Prepare listing data with both actual and predicted prices
+        Map<String, dynamic> listingData = {
           'title': "land",
           'price': _priceController.text.trim(),
           'location': _locationController.text.trim(),
@@ -223,7 +228,25 @@ class _AddListingScreenState extends State<AddListingScreen> {
           'user_id': user.uid,
           'sellerName': sellerName,
           "status": "pending",
-        });
+        };
+
+        // Add prediction data if available
+        if (widget.predictionData != null) {
+          listingData['prediction_data'] = {
+            'predicted_value': _predictedPrice,
+            'used_predicted_price': !_useCustomPrice,
+            'tenure': widget.predictionData!.tenure,
+            'original_location': widget.predictionData!.location,
+            'original_use': widget.predictionData!.use,
+            'original_plot_size': widget.predictionData!.plotSize,
+            'prediction_timestamp': Timestamp.now(),
+          };
+        }
+
+        // Save all listing data to Firestore database
+        final docRef = await FirebaseFirestore.instance
+            .collection('listings')
+            .add(listingData);
 
         final ActivityService activityService = ActivityService();
         await activityService.createListingActivity(
@@ -293,31 +316,125 @@ class _AddListingScreenState extends State<AddListingScreen> {
           key: _formKey, // Form key for validation
           child: ListView(
             children: [
-              // Show prediction info card if data comes from AI prediction
+              // Enhanced prediction info card with price options
               if (widget.predictionData != null &&
                   widget.predictionData!.predictedValue != null) ...[
                 Card(
                   elevation: 2,
                   color: Colors.blue[50],
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: Colors.blue[700],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'AI predicted value: UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)} (pre-filled below)',
-                            style: TextStyle(
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
                               color: Colors.blue[700],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'AI Predicted Value',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color.fromARGB(255, 233, 249, 144)!),
+                          ),
+                          child: Text(
+                            'UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[800],
                             ),
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Choose your pricing option:',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Column(
+                          children: [
+                            RadioListTile<bool>(
+                              title: Text(
+                                'Use AI predicted price',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'UGX ${widget.predictionData!.predictedValue!.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  color: Colors.green[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              value: false,
+                              groupValue: _useCustomPrice,
+                              onChanged: (value) {
+                                setState(() {
+                                  _useCustomPrice = value!;
+                                  if (!_useCustomPrice) {
+                                    _priceController.text = widget
+                                        .predictionData!
+                                        .predictedValue!
+                                        .toStringAsFixed(0);
+                                  }
+                                });
+                              },
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            RadioListTile<bool>(
+                              title: Text(
+                                'Set my own price',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Enter your preferred price below',
+                                style: TextStyle(
+                                  color: Colors.orange[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              value: true,
+                              groupValue: _useCustomPrice,
+                              onChanged: (value) {
+                                setState(() {
+                                  _useCustomPrice = value!;
+                                  if (_useCustomPrice) {
+                                    _priceController.clear();
+                                  }
+                                });
+                              },
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -326,13 +443,30 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 const SizedBox(height: 12),
               ],
 
-              // Price input field with number keyboard and validation
+              // Modified price input field
               TextFormField(
                 controller: _priceController,
                 keyboardType: TextInputType.number,
+                enabled:
+                    widget.predictionData?.predictedValue == null ||
+                    _useCustomPrice,
                 decoration: _inputDecoration(
                   'Price (UGX)',
                   prefixIcon: Icons.attach_money,
+                ).copyWith(
+                  filled:
+                      widget.predictionData?.predictedValue != null &&
+                      !_useCustomPrice,
+                  fillColor:
+                      widget.predictionData?.predictedValue != null &&
+                              !_useCustomPrice
+                          ? Colors.grey[100]
+                          : null,
+                  helperText:
+                      widget.predictionData?.predictedValue != null &&
+                              !_useCustomPrice
+                          ? 'Using AI predicted price'
+                          : 'Enter your desired price',
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
