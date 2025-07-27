@@ -139,7 +139,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
             .collection('listings')
             .add({
               'title': "land",
-              'price': _priceController.text.trim(),
+              'sellerPrice': _priceController.text.trim(),
+              'price': '0', // placeholder for predicted price, to be updated later
               'location': _locationController.text.trim(),
               'latitude': lat,
               'longitude': lng,
