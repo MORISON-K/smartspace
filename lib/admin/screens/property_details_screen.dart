@@ -511,8 +511,14 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                     const SizedBox(height: 12),
                     _buildDetailRow(
                       Icons.currency_exchange,
-                      'Price:',
-                      widget.property.price,
+                      'Seller Price:',
+                      widget.property.sellerPrice,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDetailRow(
+                      Icons.currency_exchange,
+                      'Predicted Price:',
+                      widget.property.predictedPrice,
                     ),
                     const SizedBox(height: 12),
                     _buildDetailRow(
