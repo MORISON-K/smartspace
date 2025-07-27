@@ -11,6 +11,78 @@ class PropertyListingsScreen extends StatefulWidget {
 }
 
 class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
+  List<Property> properties = [];
+  List<Property> filteredProperties = [];
+
+  bool _isLoading = true;
+
+  String _selectedStatus = 'All';
+  String _searchQuery = '';
+
+  final List<String> _statusOptions = [
+    'All',
+    'Pending',
+    'Approved',
+    'Rejected',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProperties();
+  }
+
+  Future<void> _fetchProperties() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('listings').orderBy('createdAt', descending: true).get();
+      final list =
+          snapshot.docs
+              .map((doc) => Property.fromFirestore(doc.data(), doc.id))
+              .toList();
+
+      if (!mounted) return;
+
+      setState(() {
+        properties = list;
+        _isLoading = false;
+      });
+
+      _applyFilters();
+    } catch (e) {
+      print('Error fetching properties: $e');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _applyFilters() {
+    List<Property> filtered = properties;
+
+    if (_selectedStatus != 'All') {
+      filtered =
+          filtered
+              .where(
+                (p) => p.status.toLowerCase() == _selectedStatus.toLowerCase(),
+              )
+              .toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      filtered =
+          filtered
+              .where(
+                (p) => p.location.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+              )
+              .toList();
+    }
+
+    setState(() {
+      filteredProperties = filtered;
+    });
+  }
 
   void _updateStatus(Property property, String newStatus) async {
     try {
@@ -19,14 +91,34 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
           .doc(property.id)
           .update({'status': newStatus.toLowerCase()});
 
-      // Show success message
+      if (!mounted) return;
+
+        setState(() {
+          final index = properties.indexOf(property);
+          properties[index] = Property(
+            id: property.id,
+            title: property.title,
+            description: property.description,
+            location: property.location,
+            category: property.category,
+            sellerPrice: property.sellerPrice,
+            predictedPrice: property.predictedPrice,
+            images: property.images,
+            pdfUrl: property.pdfUrl,
+            status: newStatus.toLowerCase(),
+          );
+        });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Property ${newStatus.toLowerCase()} successfully.'),
         ),
       );
+
+      _applyFilters(); // Refresh filtered list
     } catch (e) {
       print('Error updating status: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to update status: $e')));
@@ -78,88 +170,257 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
     );
   }
 
+  Widget _buildStatusBadge(String status) {
+    Color color;
+    String label;
+
+    switch (status.toLowerCase()) {
+      case 'approved':
+        color = Colors.green;
+        label = 'Approved';
+        break;
+      case 'pending':
+        color = Colors.orange;
+        label = 'Pending';
+        break;
+      case 'rejected':
+        color = Colors.red;
+        label = 'Rejected';
+        break;
+      default:
+        color = Colors.grey;
+        label = status;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Property Listings')),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('listings').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: \\${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No listings found.'));
-          }
-          final docs = snapshot.data!.docs;
-          final properties = docs
-              .map((doc) => Property.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-              .toList();
-          properties.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: properties.length,
-            separatorBuilder: (_, __) => const Divider(),
-            itemBuilder: (context, index) {
-              final property = properties[index];
-              return Card(
-                child: ListTile(
-                  title: Text(property.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Location: \\${property.location}'),
-                      Text('Price: UGX \\${property.price}'),
-                      Text(
-                        'Status: \\${property.status}',
-                        style: TextStyle(
-                          color: property.status == 'approved'
-                              ? Colors.green
-                              : (property.status == 'rejected'
-                                  ? Colors.red
-                                  : Colors.orange),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
                         ),
-                      ),
-                    ],
-                  ),
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PropertyDetailsScreen(property: property),
-                      ),
-                    );
-                  },
-                  trailing: property.status == 'pending'
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Column(
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.check,
-                                color: Colors.green,
-                              ),
-                              onPressed: () => _confirmAction(property, 'approved'),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.red,
-                              ),
-                              onPressed: () => _confirmAction(property, 'rejected'),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.filter_alt_outlined,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 8),
+                                DropdownButton<String>(
+                                  value: _selectedStatus,
+                                  underline: const SizedBox(),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                  items:
+                                      _statusOptions
+                                          .map(
+                                            (status) => DropdownMenuItem(
+                                              value: status,
+                                              child: Text(status),
+                                            ),
+                                          )
+                                          .toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() => _selectedStatus = value);
+                                      _applyFilters();
+                                    }
+                                  },
+                                ),
+                                const Spacer(),
+                                const Icon(
+                                  Icons.search,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 2,
+                                  child: TextField(
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      hintText: 'Search location',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                    ),
+                                    onChanged: (value) {
+                                      _searchQuery = value;
+                                      _applyFilters();
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        )
-                      : null,
-                ),
-              );
-            },
-          );
-        },
-      ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Expanded(
+                    child:
+                        filteredProperties.isEmpty
+                            ? const Center(child: Text('No matching listings.'))
+                            : ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: filteredProperties.length,
+                              separatorBuilder: (_, __) => const Divider(),
+                              itemBuilder: (context, index) {
+                                final property = filteredProperties[index];
+                                return GestureDetector(
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => PropertyDetailsScreen(
+                                              property: property,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  child: Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 2,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            property.title,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            property.location,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Seller Price: UGX ${property.sellerPrice}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Predicted Price: UGX ${property.predictedPrice}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontStyle: FontStyle.italic,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              _buildStatusBadge(
+                                                property.status,
+                                              ),
+                                              if (property.status == 'pending')
+                                                Row(
+                                                  children: [
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                        Icons.check,
+                                                        color: Colors.green,
+                                                      ),
+                                                      onPressed:
+                                                          () => _confirmAction(
+                                                            property,
+                                                            'approved',
+                                                          ),
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.red,
+                                                      ),
+                                                      onPressed:
+                                                          () => _confirmAction(
+                                                            property,
+                                                            'rejected',
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                  ),
+                ],
+              ),
     );
   }
 }

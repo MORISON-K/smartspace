@@ -330,6 +330,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
             .collection('listings')
             .add(listingData);
 
+
         final ActivityService activityService = ActivityService();
         await activityService.createListingActivity(
           _locationController.text.trim(), // propertyTitle

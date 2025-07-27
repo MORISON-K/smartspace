@@ -5,8 +5,10 @@ class Property {
   final String title;
   final String description;
   final String location;
-  final String landUse;
-  final String price;
+
+  final String category;
+  final String sellerPrice;
+  final String predictedPrice;
   final List<String> images;
   final String pdfUrl;
   final String status;
@@ -31,8 +33,9 @@ class Property {
     required this.title,
     required this.description,
     required this.location,
-    required this.landUse,
-    required this.price,
+    required this.category,
+    required this.sellerPrice,
+    required this.predictedPrice,
     required this.images,
     required this.pdfUrl,
     required this.status,
@@ -59,12 +62,15 @@ class Property {
       title: data['title'] ?? 'Untitled',
       description: data['description'] ?? '',
       location: data['location'] ?? '',
-      landUse: data['land_use'] ?? '',
-      price: data['price'] ?? '0',
-      images:
-          (data['images'] is List)
-              ? (data['images'] as List).whereType<String>().toList()
-              : [],
+
+      category: data['category'] ?? '',
+      sellerPrice: data['price'] ?? '0',
+      predictedPrice:
+          data['prediction_data'] != null &&
+                  data['prediction_data']['predicted_value'] != null
+              ? data['prediction_data']['predicted_value'].toString()
+              : '0',
+      images: List<String>.from(data['images'] ?? []),
       pdfUrl: data['pdf'] ?? '',
       status: data['status'] ?? 'Pending',
       latitude: (data['latitude'] ?? 0.0).toDouble(),

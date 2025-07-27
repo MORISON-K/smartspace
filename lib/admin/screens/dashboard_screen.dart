@@ -199,17 +199,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       )
                       : null,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(24),
               ),
               filled: true,
-              fillColor: Colors.grey[100],
+              fillColor: Colors.grey[200],
               contentPadding: const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 16,
+                vertical: 16,
+                horizontal: 20,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Filter and sort options
           Row(
@@ -222,11 +222,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     decoration: InputDecoration(
                       labelText: 'Status',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                     ),
                     items: const [
@@ -261,11 +261,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   decoration: InputDecoration(
                     labelText: 'Sort by',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                   ),
                   items: const [
@@ -541,19 +541,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 horizontal: 16.0,
                 vertical: 16.0,
               ),
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 10,
-                runSpacing: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Dashboard Overview',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [const SizedBox(width: 10)],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Welcome to the SmartSpace Admin Dashboard. Here you can manage property listings, review user requests, and monitor system activity efficiently.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[700],
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),

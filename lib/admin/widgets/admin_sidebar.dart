@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminSidebar extends StatelessWidget {
   final int selectedIndex;
@@ -47,7 +48,7 @@ class AdminSidebar extends StatelessWidget {
                 'Confirm Logout',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E3A8A),
+                  color: Color.fromARGB(255, 181, 183, 74),
                 ),
               ),
             ],
@@ -64,7 +65,49 @@ class AdminSidebar extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
-                _performLogout(context);
+                void _performLogout(BuildContext context) async {
+                  // Show loading indicator
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (BuildContext context) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Color.fromARGB(255, 181, 183, 74),
+            ),
+                        ),
+                      );
+                    },
+                  );
+                  // Sign out from Firebase Auth
+                  await FirebaseAuth.instance.signOut();
+
+                  // Simulate logout process
+                  Future.delayed(const Duration(seconds: 2), () {
+                    Navigator.of(context).pop(); // Close loading dialog
+
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text('Logged out successfully!'),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    );
+                    // Navigate to login screen
+                    Navigator.of(context).pushReplacementNamed('/login');
+                  });
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -137,7 +180,7 @@ class AdminSidebar extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+                    colors: [Color.fromARGB(255, 181, 183, 74), Color.fromARGB(255, 181, 183, 74)],
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -173,7 +216,7 @@ class AdminSidebar extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text(
                 'Close',
-                style: TextStyle(color: Color(0xFF3B82F6)),
+                style: TextStyle(color: Color.fromARGB(255, 181, 183, 74)),
               ),
             ),
           ],
@@ -249,9 +292,9 @@ class AdminSidebar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF1E3A8A), // Deep blue
-            Color(0xFF1E40AF), // Slightly lighter blue
-            Color(0xFF3B82F6), // Medium blue
+            Color.fromARGB(255, 181, 183, 74), // Gold from login button
+            Color(0xFF9DA04A), // Slightly darker shade
+            Color(0xFF7F8438), // Even darker shade
           ],
         ),
         boxShadow: [
@@ -280,11 +323,10 @@ class AdminSidebar extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    size: 30,
-                    color: Colors.white,
-                  ),
+                child: Image.asset(
+                  'assets/logo.png',
+                  fit: BoxFit.contain,
+                ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
