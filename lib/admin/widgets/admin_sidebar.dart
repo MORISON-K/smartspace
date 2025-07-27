@@ -63,51 +63,49 @@ class AdminSidebar extends StatelessWidget {
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(); // Close dialog
-                void _performLogout(BuildContext context) async {
-                  // Show loading indicator
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (BuildContext context) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Color.fromARGB(255, 181, 183, 74),
-            ),
-                        ),
-                      );
-                    },
-                  );
-                  // Sign out from Firebase Auth
-                  await FirebaseAuth.instance.signOut();
-
-                  // Simulate logout process
-                  Future.delayed(const Duration(seconds: 2), () {
-                    Navigator.of(context).pop(); // Close loading dialog
-
-                    // Show success message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text('Logged out successfully!'),
-                          ],
-                        ),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color.fromARGB(255, 181, 183, 74),
                         ),
                       ),
                     );
-                    // Navigate to login screen
-                    Navigator.of(context).pushReplacementNamed('/login');
-                  });
-                }
+                  },
+                );
+                // Sign out from Firebase Auth
+                await FirebaseAuth.instance.signOut();
+
+                // Simulate logout process
+                Future.delayed(const Duration(seconds: 2), () {
+                  Navigator.of(context).pop(); // Close loading dialog
+
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Logged out successfully!'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                  // Navigate to login screen
+                  Navigator.of(context).pushReplacementNamed('/login');
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -124,45 +122,6 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 
-  void _performLogout(BuildContext context) {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
-          ),
-        );
-      },
-    );
-
-    // Simulate logout process
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pop(); // Close loading dialog
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Logged out successfully!'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-
-      // Navigate to login screen
-      // Replace this with your actual login route
-      Navigator.of(context).pushReplacementNamed('/login');
-    });
-  }
 
   // Profile navigation method
   void _navigateToProfile(BuildContext context) {
