@@ -93,20 +93,21 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        final index = properties.indexOf(property);
-        properties[index] = Property(
-          id: property.id,
-          title: property.title,
-          description: property.description,
-          location: property.location,
-          category: property.category,
-          price: property.price,
-          images: property.images,
-          pdfUrl: property.pdfUrl,
-          status: newStatus.toLowerCase(),
-        );
-      });
+        setState(() {
+          final index = properties.indexOf(property);
+          properties[index] = Property(
+            id: property.id,
+            title: property.title,
+            description: property.description,
+            location: property.location,
+            category: property.category,
+            sellerPrice: property.sellerPrice,
+            predictedPrice: property.predictedPrice,
+            images: property.images,
+            pdfUrl: property.pdfUrl,
+            status: newStatus.toLowerCase(),
+          );
+        });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -354,11 +355,24 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-                                          Text(
-                                            'UGX ${property.price}',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                            ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Seller Price: UGX ${property.sellerPrice}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Predicted Price: UGX ${property.predictedPrice}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontStyle: FontStyle.italic,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                           const SizedBox(height: 6),
                                           Row(
