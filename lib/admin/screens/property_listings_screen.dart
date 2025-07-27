@@ -97,10 +97,18 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
           final index = properties.indexOf(property);
           properties[index] = Property(
             id: property.id,
+            userId: property.userId,
+            createdAt: property.createdAt,
+            usedPredictedPrice: property.usedPredictedPrice,
             title: property.title,
             description: property.description,
             location: property.location,
             category: property.category,
+            latitude: property.latitude,
+            longitude: property.longitude,
+            tenure: property.tenure,
+            mobileNumber: property.mobileNumber,
+            sellerName: property.sellerName,
             sellerPrice: property.sellerPrice,
             predictedPrice: property.predictedPrice,
             images: property.images,
