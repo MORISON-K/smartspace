@@ -35,7 +35,7 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
   Future<void> _fetchProperties() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('listings').get();
+          await FirebaseFirestore.instance.collection('listings').orderBy('createdAt', descending: true).get();
       final list =
           snapshot.docs
               .map((doc) => Property.fromFirestore(doc.data(), doc.id))
