@@ -435,7 +435,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.property.landUse, overflow: TextOverflow.ellipsis),
+        title: Text(widget.property.category, overflow: TextOverflow.ellipsis),
         actions: [
           if (widget.property.images.length > 1)
             IconButton(
