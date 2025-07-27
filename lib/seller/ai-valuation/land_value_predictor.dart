@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:smartspace/seller/ai-valuation/land_prediction_data.dart';
+import 'package:smartspace/seller/add_listing_screen.dart';
 
 class LandValuePredictorWidget extends StatefulWidget {
   const LandValuePredictorWidget({super.key});
@@ -14,6 +16,7 @@ class LandValuePredictorWidget extends StatefulWidget {
 class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _plotAcController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
 
   // Dropdown values
   String? selectedTenure;
@@ -22,16 +25,17 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   // Dropdown options
   final List<String> tenureOptions = [
     'Freehold',
-    'Customary', 
+    'Customary',
     'Leasehold',
-    'Mailo'
+    'Mailo',
   ];
 
   final List<String> useOptions = [
     'Residential',
     'Commercial',
     'Agricultural',
-    'Industrial'
+    'Industrial',
+    'Mixed',
   ];
 
   double? predictedValue;
@@ -45,7 +49,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
       return "https://smartspace-e7e32524ddcb.herokuapp.com/api/predict/"; // iOS simulator
     } else {
       // For physical devices, replace with computer's IP
-      return "http://192.168.1.100:8000/predict"; 
+      return "http://192.168.1.100:8000/predict";
     }
   }
 
@@ -59,21 +63,26 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
     final String apiUrl = _getApiUrl();
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "TENURE": selectedTenure!,
-          "USE": selectedUse!,
-          "PLOT_ac": double.parse(_plotAcController.text.trim()),
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse(apiUrl),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "TENURE": selectedTenure!,
+              "LOCATION": _locationController.text.trim(),
+              "USE": selectedUse!,
+              "PLOT_ac": double.parse(_plotAcController.text.trim()),
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
           predictedValue = data["predicted_value"].toDouble();
         });
+
+        _showPredictionResultModal();
       } else {
         setState(() {
           errorMessage = "Error: ${response.statusCode}\n${response.body}";
@@ -93,7 +102,252 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   @override
   void dispose() {
     _plotAcController.dispose();
+    _locationController.dispose();
     super.dispose();
+  }
+
+  List<String> allowedLocations = [];
+  bool isLoadingLocations = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllowedLocations();
+  }
+
+  Future<void> _fetchAllowedLocations() async {
+    final url = "https://smartspace-e7e32524ddcb.herokuapp.com/api/locations/";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Handle different possible response structures
+        List<String> locations = [];
+
+        if (data is Map) {
+          // If response is a map, try different possible keys
+          if (data['locations'] != null) {
+            locations = List<String>.from(data['locations']);
+          } else if (data['LOCATION'] != null) {
+            locations = List<String>.from(data['LOCATION']);
+          } else if (data['data'] != null) {
+            locations = List<String>.from(data['data']);
+          } else {
+            //  list all keys for debugging
+            throw Exception(
+              "Expected location data not found in response. Available keys: ${data.keys.toList()}",
+            );
+          }
+        } else if (data is List) {
+          // If response is directly a list
+          locations = List<String>.from(data);
+        } else {
+          throw Exception("Unexpected response format: ${data.runtimeType}");
+        }
+
+        setState(() {
+          allowedLocations = locations;
+          isLoadingLocations = false;
+        });
+      } else {
+        throw Exception(
+          "Failed to load locations. Status: ${response.statusCode}",
+        );
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Could not fetch locations: $e";
+        isLoadingLocations = false;
+      });
+    }
+    return;
+  }
+
+  void _showPredictionResultModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.trending_up,
+                        size: 48,
+                        color: const Color.fromARGB(255, 56, 116, 142),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Predicted Land Value",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: const Color.fromARGB(255, 103, 28, 23),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "UGX ${predictedValue!.toStringAsFixed(0)}",
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Input Summary:",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSummaryRow(
+                              Icons.gavel,
+                              "Tenure",
+                              selectedTenure!,
+                            ),
+                            _buildSummaryRow(
+                              Icons.business,
+                              "Use",
+                              selectedUse!,
+                            ),
+                            _buildSummaryRow(
+                              Icons.location_city,
+                              "Location",
+                              _locationController.text,
+                            ),
+                            _buildSummaryRow(
+                              Icons.crop_free,
+                              "Plot Size",
+                              "${_plotAcController.text} acres",
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
+                              label: const Text('Close'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context); // Close modal first
+                                final predictionData = LandPredictionData(
+                                  tenure: selectedTenure!,
+                                  location: _locationController.text,
+                                  use: selectedUse!,
+                                  plotSize: double.parse(
+                                    _plotAcController.text,
+                                  ),
+                                  predictedValue: predictedValue,
+                                );
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => AddListingScreen(
+                                          predictionData: predictionData,
+                                        ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add_business),
+                              label: const Text('Create Listing'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  67,
+                                  160,
+                                  151,
+                                ),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSummaryRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.green[700]),
+          const SizedBox(width: 8),
+          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.w500)),
+          Expanded(
+            child: Text(value, style: const TextStyle(color: Colors.black87)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -125,9 +379,11 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                       const SizedBox(height: 8),
                       Text(
                         "Enter Land Details",
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 67, 160, 151)
+                          color: const Color.fromARGB(255, 67, 160, 151),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -153,19 +409,21 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   border: OutlineInputBorder(),
                   helperText: "Select the type of land ownership",
                 ),
-                items: tenureOptions.map((String tenure) {
-                  return DropdownMenuItem<String>(
-                    value: tenure,
-                    child: Text(tenure),
-                  );
-                }).toList(),
+                items:
+                    tenureOptions.map((String tenure) {
+                      return DropdownMenuItem<String>(
+                        value: tenure,
+                        child: Text(tenure),
+                      );
+                    }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedTenure = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? "Please select a tenure type" : null,
+                validator:
+                    (value) =>
+                        value == null ? "Please select a tenure type" : null,
               ),
               const SizedBox(height: 16),
 
@@ -178,26 +436,111 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   border: OutlineInputBorder(),
                   helperText: "Select the intended use of the land",
                 ),
-                items: useOptions.map((String use) {
-                  return DropdownMenuItem<String>(
-                    value: use,
-                    child: Row(
-                      children: [
-                        Icon(_getUseIcon(use), size: 20),
-                        const SizedBox(width: 8),
-                        Text(use),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                items:
+                    useOptions.map((String use) {
+                      return DropdownMenuItem<String>(
+                        value: use,
+                        child: Row(
+                          children: [
+                            Icon(_getUseIcon(use), size: 20),
+                            const SizedBox(width: 8),
+                            Text(use),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedUse = newValue;
                   });
                 },
-                validator: (value) =>
-                    value == null ? "Please select a land use type" : null,
+                validator:
+                    (value) =>
+                        value == null ? "Please select a land use type" : null,
               ),
+              const SizedBox(height: 16),
+
+              //Location Autocomplete Field
+              if (isLoadingLocations)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text("Loading locations..."),
+                      ],
+                    ),
+                  ),
+                )
+              else if (allowedLocations.isNotEmpty)
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<String>.empty();
+                    }
+                    return allowedLocations.where((String option) {
+                      return option.toLowerCase().contains(
+                        textEditingValue.text.toLowerCase(),
+                      );
+                    });
+                  },
+                  fieldViewBuilder: (
+                    context,
+                    controller,
+                    focusNode,
+                    onEditingComplete,
+                  ) {
+                    _locationController.text = controller.text;
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: "Location",
+                        prefixIcon: Icon(Icons.location_city),
+                        border: OutlineInputBorder(),
+                        helperText: "Start typing to choose a valid location",
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter the location";
+                        }
+                        if (!allowedLocations.contains(value)) {
+                          return "Invalid location. Please select from the suggestions.";
+                        }
+                        return null;
+                      },
+                    );
+                  },
+                  onSelected: (String selection) {
+                    _locationController.text = selection;
+                  },
+                )
+              else
+                // Fallback: Regular text field if locations couldn't be loaded
+                TextFormField(
+                  controller: _locationController,
+                  decoration: const InputDecoration(
+                    labelText: "Location",
+                    prefixIcon: Icon(Icons.location_city),
+                    border: OutlineInputBorder(),
+                    helperText:
+                        "Enter the location (auto-suggestions unavailable)",
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please enter the location";
+                    }
+                    return null;
+                  },
+                ),
+
               const SizedBox(height: 16),
 
               // Plot Size Input
@@ -207,10 +550,13 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   labelText: "Plot Size (acres)",
                   prefixIcon: Icon(Icons.crop_free),
                   border: OutlineInputBorder(),
-                  helperText: "Enter the size of the plot in acres (e.g., 0.25)",
+                  helperText:
+                      "Enter the size of the plot in acres (e.g., 0.25)",
                   suffixText: "acres",
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return "Please enter plot size";
@@ -226,26 +572,31 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
 
               // Predict Button
               ElevatedButton.icon(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        if (_formKey.currentState!.validate()) {
-                          _predictLandValue();
-                        }
-                      },
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.calculate),
+                onPressed:
+                    isLoading || isLoadingLocations
+                        ? null
+                        : () {
+                          if (_formKey.currentState!.validate()) {
+                            _predictLandValue();
+                          }
+                        },
+                icon:
+                    isLoading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(Icons.calculate),
                 label: Text(
                   isLoading ? "Predicting..." : "Predict Land Value",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 149, 183, 62),
@@ -257,66 +608,6 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Results Section
-              if (predictedValue != null) ...[
-                Card(
-                  elevation: 4,
-                  color: Colors.green[50],
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.trending_up,
-                          size: 48,
-                          color: const Color.fromARGB(255, 56, 116, 142),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Predicted Land Value",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 103, 28, 23)               ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "UGX ${predictedValue!.toStringAsFixed(0)}",
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[800],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green[200]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Input Summary:",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green[700],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text("• Tenure: $selectedTenure"),
-                              Text("• Use: $selectedUse"),
-                              Text("• Plot Size: ${_plotAcController.text} acres"),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
 
               // Error Message
               if (errorMessage != null) ...[
@@ -335,7 +626,9 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                         const SizedBox(height: 12),
                         Text(
                           "Prediction Error",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.red[700],
                           ),

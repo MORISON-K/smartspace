@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'fullscreen_imageview.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> listing;
@@ -21,6 +23,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  List<Map<String, dynamic>> relatedListings = [];
+  bool loadingRelated = true;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +33,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         (widget.listing['images'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
+
+    _fetchRelatedListings();
 
     _pageController.addListener(() {
       final newPage = _pageController.page?.round() ?? 0;
@@ -37,6 +44,36 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         });
       }
     });
+  }
+
+  Future<void> _fetchRelatedListings() async {
+    try {
+      final location = widget.listing['location'];
+      final category = widget.listing['category'];
+
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('listings')
+              .where('location', isEqualTo: location)
+              .where('category', isEqualTo: category)
+              .get();
+
+      final items =
+          snapshot.docs
+              .where((doc) => doc.id != widget.listingId)
+              .map((doc) => {'id': doc.id, ...doc.data()})
+              .toList();
+
+      setState(() {
+        relatedListings = items;
+        loadingRelated = false;
+      });
+    } catch (e) {
+      _showError('Error loading related listings.');
+      setState(() {
+        loadingRelated = false;
+      });
+    }
   }
 
   @override
@@ -57,9 +94,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       }
     }
 
-    final formattedNumber = '+$phoneNumber';
-    final uri = Uri.parse("tel:$formattedNumber");
-
+    final uri = Uri.parse("tel:+$phoneNumber");
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -136,21 +171,34 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_images.isNotEmpty)
-                SizedBox(
-                  height: 260,
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _pageController,
-                        itemCount: _images.length,
-                        itemBuilder:
-                            (context, index) => ClipRRect(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_images.isNotEmpty)
+              Column(
+                children: [
+                  SizedBox(
+                    height: 250,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _images.length,
+                      itemBuilder:
+                          (context, index) => GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => Scaffold(
+                                        body: FullScreenImageView(
+                                          imageUrl: _images[index],
+                                        ),
+                                      ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Image.network(
                                 _images[index],
@@ -170,107 +218,229 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                     ),
                               ),
                             ),
-                      ),
-                      Positioned(
-                        bottom: 10,
-                        left: 0,
-                        right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_images.length, (i) {
-                            final selected = i == _currentPage;
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: selected ? 12 : 12,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: selected ? Colors.white : Colors.white60,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 16),
-
-              // ───── Listing Details Card ─────
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 45,
-                    vertical: 16,
-                  ),
-
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.listing['location'] ?? 'Unknown location',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Category: ${widget.listing['category'] ?? '-'}',
-                        style: const TextStyle(
-                          color: Color.fromARGB(255, 236, 175, 7),
-                        ),
-                      ),
-                      Text('Size: ${widget.listing['description'] ?? '-'}'),
-
-                      Text(
-                        'Price: UGX ${widget.listing['price'] ?? '0'}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 236, 175, 7),
-                        ),
-                      ),
-                      Text('Contact: $phone'),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // ───── Action Buttons ─────
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  FilledButton.icon(
-                    onPressed: () => _launchCall(phone),
-                    icon: const Icon(Icons.call),
-                    label: const Text("Call"),
-                  ),
-                  FilledButton.icon(
-                    onPressed: () => _launchWhatsApp(phone),
-                    icon: const FaIcon(
-                      FontAwesomeIcons.whatsapp,
-                      color: Colors.white,
+                          ),
                     ),
-                    label: const Text("WhatsApp"),
                   ),
-
-                  FilledButton.icon(
-                    onPressed: _launchMap,
-                    icon: const Icon(Icons.map),
-                    label: const Text("Map"),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_images.length, (i) {
+                      final selected = i == _currentPage;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: selected ? 14 : 10,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: selected ? Colors.black : Colors.grey[400],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    }),
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
 
-              const SizedBox(height: 24),
-            ],
+            // Listing details
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow(
+                      Icons.location_on,
+                      widget.listing['location'] ?? 'Unknown location',
+                      isTitle: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
+                      Icons.category,
+                      "Category: ${widget.listing['category'] ?? '-'}",
+                    ),
+                    _buildDetailRow(
+                      Icons.info_outline,
+                      "Description: ${widget.listing['description'] ?? '-'}",
+                    ),
+                    _buildDetailRow(
+                      Icons.square_foot,
+                      "Size: ${widget.listing['acreage'] ?? '-'}",
+                    ),
+                    _buildDetailRow(
+                      Icons.price_change,
+                      "UGX ${widget.listing['price'] ?? '0'}",
+                      isPrice: true,
+                    ),
+                    _buildDetailRow(Icons.phone, "Contact: $phone"),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildActionButton(
+                  Icons.call,
+                  "Call",
+                  () => _launchCall(phone),
+                ),
+                const SizedBox(width: 8),
+                _buildActionButton(
+                  FontAwesomeIcons.whatsapp,
+                  "WhatsApp",
+                  () => _launchWhatsApp(phone),
+                ),
+                const SizedBox(width: 8),
+                _buildActionButton(Icons.map, "Map", _launchMap),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Related Listings Section
+            Text(
+              "Related Listings",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 10),
+            if (loadingRelated)
+              const Center(child: CircularProgressIndicator())
+            else if (relatedListings.isEmpty)
+              const Text("No related listings found.")
+            else
+              SizedBox(
+                height: 200,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: relatedListings.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final item = relatedListings[index];
+                    final image = (item['images'] as List?)?.first ?? '';
+
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (_) => ListingDetailScreen(
+                                  listing: item,
+                                  listingId: item['id'],
+                                ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 160,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12),
+                              ),
+                              child: Image.network(
+                                image,
+                                height: 100,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (c, e, s) => const Icon(Icons.broken_image),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item['location'] ?? '-',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "UGX ${item['price'] ?? '0'}",
+                                    style: const TextStyle(color: Colors.green),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(
+    IconData icon,
+    String text, {
+    bool isTitle = false,
+    bool isPrice = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[700]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: isTitle ? 18 : 14,
+                fontWeight:
+                    isTitle || isPrice ? FontWeight.bold : FontWeight.normal,
+                color:
+                    isPrice
+                        ? const Color.fromARGB(255, 236, 175, 7)
+                        : Colors.black87,
+              ),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    IconData icon,
+    String label,
+    VoidCallback onPressed, {
+    Color iconColor = Colors.white,
+  }) {
+    return Expanded(
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: iconColor, size: 18),
+        label: Text(label),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF2A2A72),
+          padding: const EdgeInsets.symmetric(vertical: 14),
         ),
       ),
     );

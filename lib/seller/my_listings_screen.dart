@@ -295,24 +295,20 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
                                     Color badgeColor;
                                     Icon badgeIcon;
-                                    String statusText;
 
                                     switch (status) {
                                       case 'responded':
                                         badgeColor = Colors.green.shade100;
                                         badgeIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
-                                        statusText = 'Responded';
                                         break;
                                       case 'denied':
                                         badgeColor = Colors.red.shade100;
                                         badgeIcon = const Icon(Icons.cancel, color: Colors.red, size: 20);
-                                        statusText = 'Denied';
                                         break;
                                       case 'pending':
                                       default:
                                         badgeColor = Colors.orange.shade100;
                                         badgeIcon = const Icon(Icons.hourglass_top, color: Colors.orange, size: 20);
-                                        statusText = 'Pending';
                                         break;
                                     }
 
