@@ -85,7 +85,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PDFViewerScreen(pdfUrl: url, title: 'Property Document'),
+        builder:
+            (context) =>
+                PDFViewerScreen(pdfUrl: url, title: 'Property Document'),
       ),
     );
   }
@@ -101,36 +103,42 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         currentStatus = status;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Property $status successfully.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Property $status successfully.')));
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
     }
   }
 
   void _confirmAction(BuildContext context, String status) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text('${status == 'approved' ? 'Approve' : 'Reject'} Property'),
-        content: Text(
-            'Are you sure you want to ${status == 'approved' ? 'approve' : 'reject'} this property?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (_) => AlertDialog(
+            title: Text(
+              '${status == 'approved' ? 'Approve' : 'Reject'} Property',
+            ),
+            content: Text(
+              'Are you sure you want to ${status == 'approved' ? 'approve' : 'reject'} this property?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _updateStatus(context, status);
+                },
+                child: const Text('Yes'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _updateStatus(context, status);
-            },
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -236,9 +244,16 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                Icon(
+                                  Icons.broken_image,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
                                 SizedBox(height: 8),
-                                Text('Failed to load image', style: TextStyle(color: Colors.grey)),
+                                Text(
+                                  'Failed to load image',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                               ],
                             ),
                           );
@@ -251,10 +266,12 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                             color: Colors.grey[100],
                             child: Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
                               ),
                             ),
                           );
@@ -269,7 +286,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(20),
@@ -307,7 +327,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                         ),
                         child: Icon(
                           Icons.chevron_left,
-                          color: _currentImageIndex > 0 ? Colors.white : Colors.grey,
+                          color:
+                              _currentImageIndex > 0
+                                  ? Colors.white
+                                  : Colors.grey,
                           size: 24,
                         ),
                       ),
@@ -321,7 +344,8 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   child: Center(
                     child: GestureDetector(
                       onTap: () {
-                        if (_currentImageIndex < widget.property.images.length - 1) {
+                        if (_currentImageIndex <
+                            widget.property.images.length - 1) {
                           _imagePageController.nextPage(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,
@@ -336,9 +360,11 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                         ),
                         child: Icon(
                           Icons.chevron_right,
-                          color: _currentImageIndex < widget.property.images.length - 1
-                              ? Colors.white
-                              : Colors.grey,
+                          color:
+                              _currentImageIndex <
+                                      widget.property.images.length - 1
+                                  ? Colors.white
+                                  : Colors.grey,
                           size: 24,
                         ),
                       ),
@@ -385,7 +411,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             color: Colors.grey[200],
-                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                            ),
                           );
                         },
                       ),
@@ -414,10 +443,11 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FullScreenImageViewer(
-          images: widget.property.images,
-          initialIndex: initialIndex,
-        ),
+        builder:
+            (context) => FullScreenImageViewer(
+              images: widget.property.images,
+              initialIndex: initialIndex,
+            ),
       ),
     );
   }
@@ -435,7 +465,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.property.landUse, overflow: TextOverflow.ellipsis),
+        title: Text(widget.property.category, overflow: TextOverflow.ellipsis),
         actions: [
           if (widget.property.images.length > 1)
             IconButton(
@@ -460,7 +490,11 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDetailRow(Icons.location_on, 'Location:', widget.property.location),
+                    _buildDetailRow(
+                      Icons.location_on,
+                      'Location:',
+                      widget.property.location,
+                    ),
                     const SizedBox(height: 12),
 
                     Row(
@@ -508,7 +542,11 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                     ),
 
                     const SizedBox(height: 12),
-                    _buildDetailRow(Icons.description, 'Description:', widget.property.description),
+                    _buildDetailRow(
+                      Icons.description,
+                      'Description:',
+                      widget.property.description,
+                    ),
                   ],
                 ),
               ),
@@ -528,12 +566,18 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       children: [
                         const Text(
                           'Property Images:',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const Spacer(),
                         if (widget.property.images.length > 1)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.blue[50],
                               borderRadius: BorderRadius.circular(12),
@@ -568,7 +612,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   children: [
                     const Text(
                       'Attached PDF:',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -607,7 +654,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 'Property Actions:',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 12),
@@ -619,11 +668,13 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      label: currentStatus == 'approved' ? 'Approved' : 'Approve',
+                      label:
+                          currentStatus == 'approved' ? 'Approved' : 'Approve',
                       color: Colors.green,
-                      onPressed: currentStatus == 'approved'
-                          ? null
-                          : () => _confirmAction(context, 'approved'),
+                      onPressed:
+                          currentStatus == 'approved'
+                              ? null
+                              : () => _confirmAction(context, 'approved'),
                       isDisabled: currentStatus == 'approved',
                     ),
                   ),
@@ -640,11 +691,13 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      label: currentStatus == 'rejected' ? 'Rejected' : 'Reject',
+                      label:
+                          currentStatus == 'rejected' ? 'Rejected' : 'Reject',
                       color: Colors.red,
-                      onPressed: currentStatus == 'rejected'
-                          ? null
-                          : () => _confirmAction(context, 'rejected'),
+                      onPressed:
+                          currentStatus == 'rejected'
+                              ? null
+                              : () => _confirmAction(context, 'rejected'),
                       isDisabled: currentStatus == 'rejected',
                     ),
                   ),
@@ -662,30 +715,31 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Request Additional Document'),
-        content: TextField(
-          controller: requestController,
-          decoration: const InputDecoration(
-            hintText: 'Describe what document is needed',
-            border: OutlineInputBorder(),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Request Additional Document'),
+            content: TextField(
+              controller: requestController,
+              decoration: const InputDecoration(
+                hintText: 'Describe what document is needed',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _sendDocumentRequest(context, requestController.text);
+                },
+                child: const Text('Send Request'),
+              ),
+            ],
           ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _sendDocumentRequest(context, requestController.text);
-            },
-            child: const Text('Send Request'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -705,8 +759,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         const SnackBar(content: Text('Document request sent to seller.')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send request: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send request: $e')));
     }
   }
 }
@@ -750,12 +805,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: Text('${_currentIndex + 1} of ${widget.images.length}'),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.share),
-          ),
-        ],
+        actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.share))],
       ),
       body: PageView.builder(
         controller: _pageController,
@@ -778,7 +828,10 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                       children: [
                         Icon(Icons.broken_image, size: 64, color: Colors.white),
                         SizedBox(height: 16),
-                        Text('Failed to load image', style: TextStyle(color: Colors.white)),
+                        Text(
+                          'Failed to load image',
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ],
                     ),
                   );
@@ -788,10 +841,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                   return Center(
                     child: CircularProgressIndicator(
                       color: Colors.white,
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
+                      value:
+                          loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
                     ),
                   );
                 },
@@ -800,29 +854,31 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           );
         },
       ),
-      bottomNavigationBar: widget.images.length > 1
-          ? Container(
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  widget.images.length,
-                  (index) => Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index == _currentIndex
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.4),
+      bottomNavigationBar:
+          widget.images.length > 1
+              ? Container(
+                color: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    widget.images.length,
+                    (index) => Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            index == _currentIndex
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.4),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            )
-          : null,
+              )
+              : null,
     );
   }
 }
@@ -852,10 +908,11 @@ class ImageGridViewer extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => FullScreenImageViewer(
-                      images: images,
-                      initialIndex: index,
-                    ),
+                    builder:
+                        (context) => FullScreenImageViewer(
+                          images: images,
+                          initialIndex: index,
+                        ),
                   ),
                 );
               },
@@ -887,7 +944,10 @@ class ImageGridViewer extends StatelessWidget {
                               SizedBox(height: 4),
                               Text(
                                 'Failed to load',
-                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
@@ -899,10 +959,11 @@ class ImageGridViewer extends StatelessWidget {
                           color: Colors.grey[100],
                           child: Center(
                             child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
+                              value:
+                                  loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
                             ),
                           ),
                         );
