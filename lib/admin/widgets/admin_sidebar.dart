@@ -63,7 +63,7 @@ class AdminSidebar extends StatelessWidget {
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(); // Close dialog
                 void _performLogout(BuildContext context) async {
                   // Show loading indicator
