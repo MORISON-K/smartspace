@@ -48,7 +48,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             "Settings",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1E3A8A),
+              color: const Color(0xFFFFD700),
             ),
           ),
           const SizedBox(height: 8),
@@ -68,22 +68,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: const Icon(
-                      Icons.settings_rounded,
-                      size: 60,
-                      color: Color(0xFF3B82F6),
-                    ),
-                  ),
+                  color: const Color(0xFFFFD700).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(60),
+                ),
+                child: const Icon(
+                  Icons.settings_rounded,
+                  size: 60,
+                  color: Color(0xFFFFD700),
+                ),
+              ),
                   const SizedBox(height: 24),
                   Text(
                     "Settings Coming Soon",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E3A8A),
-                    ),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFFFFD700),
+          ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -108,22 +108,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         final appBar = AppBar(
           elevation: 0,
           backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF1E3A8A),
+          foregroundColor: const Color(0xFFFFD700),
           title: Row(
             children: [
               Container(
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
-                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.admin_panel_settings_rounded,
-                  color: Colors.white,
-                  size: 20,
+                child: Image.asset(
+                  'assets/logo.png',
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(width: 12),
@@ -187,15 +183,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF3B82F6).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF3B82F6).withOpacity(0.3),
+                      border: Border.all(
+                        color: const Color(0xFFFFD700).withOpacity(0.3),
+                      ),
                     ),
-                  ),
-                  child: const Icon(
-                    Icons.more_vert_rounded,
-                    color: Color(0xFF3B82F6),
-                    size: 20,
-                  ),
+                    child: const Icon(
+                      Icons.more_vert_rounded,
+                      color: Color(0xFFFFD700),
+                      size: 20,
+                    ),
                 ),
                 tooltip: 'Quick Actions',
                 onSelected: (value) {
@@ -210,10 +206,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               ),
                               title: const Row(
                                 children: [
-                                  Icon(
-                                    Icons.help_rounded,
-                                    color: Color(0xFF3B82F6),
-                                  ),
+                              Icon(
+                                Icons.help_rounded,
+                                color: Color(0xFFFFD700),
+                              ),
                                   SizedBox(width: 8),
                                   Text('Help & Support'),
                                 ],
@@ -257,10 +253,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               ),
                               title: const Row(
                                 children: [
-                                  Icon(
-                                    Icons.info_rounded,
-                                    color: Color(0xFF3B82F6),
-                                  ),
+                              Icon(
+                                Icons.info_rounded,
+                                color: Color(0xFFFFD700),
+                              ),
                                   SizedBox(width: 8),
                                   Text('About SmartSpace'),
                                 ],
@@ -296,11 +292,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         value: 'help',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.help_rounded,
-                              size: 20,
-                              color: Color(0xFF3B82F6),
-                            ),
+                      Icon(
+                        Icons.help_rounded,
+                        size: 20,
+                        color: Color(0xFFFFD700),
+                      ),
                             SizedBox(width: 12),
                             Text('Help & Support'),
                           ],
@@ -310,11 +306,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         value: 'about',
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.info_rounded,
-                              size: 20,
-                              color: Color(0xFF3B82F6),
-                            ),
+                      Icon(
+                        Icons.info_rounded,
+                        size: 20,
+                        color: Color(0xFFFFD700),
+                      ),
                             SizedBox(width: 12),
                             Text('About'),
                           ],
