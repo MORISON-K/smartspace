@@ -4,7 +4,8 @@ class Property {
   final String description;
   final String location;
   final String category;
-  final String price;
+  final String sellerPrice;
+  final String predictedPrice;
   final List<String> images;
   final String pdfUrl;
   final String status;
@@ -15,7 +16,8 @@ class Property {
     required this.description,
     required this.location,
     required this.category,
-    required this.price,
+    required this.sellerPrice,
+    required this.predictedPrice,
     required this.images,
     required this.pdfUrl,
     required this.status,
@@ -28,7 +30,12 @@ class Property {
       description: data['description'] ?? '',
       location: data['location'] ?? '',
       category: data['category'] ?? '',
-      price: data['price'] ?? '0',
+      sellerPrice: data['price'] ?? '0',
+      predictedPrice:
+          data['prediction_data'] != null &&
+                  data['prediction_data']['predicted_value'] != null
+              ? data['prediction_data']['predicted_value'].toString()
+              : '0',
       images: List<String>.from(data['images'] ?? []),
       pdfUrl: data['pdf'] ?? '',
       status: data['status'] ?? 'Pending',
