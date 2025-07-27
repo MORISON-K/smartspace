@@ -661,7 +661,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      label: 'Request document',
+                      label: 'Request doc',
                       color: Colors.blue,
                       onPressed: () => _showDocumentRequestDialog(context),
                     ),
