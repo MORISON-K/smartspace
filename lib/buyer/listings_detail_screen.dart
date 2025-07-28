@@ -58,6 +58,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               .collection('listings')
               .where('location', isEqualTo: location)
               .where('category', isEqualTo: category)
+              .where('approved', isEqualTo: true)
               .get();
 
       final items =
