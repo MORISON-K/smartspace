@@ -18,7 +18,7 @@ class HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<HomeScreenContent> {
   late Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> listingsFuture;
   List<String> likedListings = [];
-  List<String> chosenListings = [];
+  List<String> savedListings = [];
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -30,7 +30,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     super.initState();
     listingsFuture = _getLandListings();
     _getUserLikedListings();
-    _getUserChosenListings();
+    _getUserSavedListings();
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
@@ -88,11 +88,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     });
   }
 
-  Future<void> _getUserChosenListings() async {
+  Future<void> _getUserSavedListings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final storedChosen = prefs.getStringList('chosenListings') ?? [];
+    final storedSaved = prefs.getStringList('savedListings') ?? [];
     setState(() {
-      chosenListings = storedChosen;
+      savedListings = storedSaved;
     });
   }
 
@@ -119,19 +119,19 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     });
   }
 
-  Future<void> _toggleChoose(String listingId) async {
+  Future<void> _toggleSave(String listingId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final isChosen = chosenListings.contains(listingId);
+    final isSaved = savedListings.contains(listingId);
 
     setState(() {
-      if (isChosen) {
-        chosenListings.remove(listingId);
+      if (isSaved) {
+        savedListings.remove(listingId);
       } else {
-        chosenListings.add(listingId);
+        savedListings.add(listingId);
       }
     });
 
-    await prefs.setStringList('chosenListings', chosenListings);
+    await prefs.setStringList('savedListings', savedListings);
   }
 
   void _onSortChanged(String? value) {
@@ -300,7 +300,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                             ? images[0] as String
                             : null;
                     final isLiked = likedListings.contains(listingId);
-                    final isChosen = chosenListings.contains(listingId);
+                    final isSaved = savedListings.contains(listingId);
+
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -433,20 +434,20 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                   ),
                                   const SizedBox(height: 8),
                                   ElevatedButton.icon(
-                                    onPressed: () => _toggleChoose(listingId),
+                                    onPressed: () => _toggleSave(listingId),
                                     icon: Icon(
-                                      isChosen
+                                      isSaved
                                           ? Icons.check_box
                                           : Icons.add_box_outlined,
                                       color:
-                                          isChosen
+                                          isSaved
                                               ? Colors.green
                                               : Colors.blueGrey,
                                     ),
-                                    label: Text(isChosen ? 'Chosen' : 'Choose'),
+                                    label: Text(isSaved ? 'Saved' : 'Save'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor:
-                                          isChosen
+                                          isSaved
                                               ? Colors.green[100]
                                               : Colors.blueGrey[100],
                                       foregroundColor: Colors.black87,
