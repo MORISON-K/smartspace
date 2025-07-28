@@ -6,7 +6,6 @@ import 'package:smartspace/notifications/notifications_screen.dart';
 import 'package:smartspace/buyer/buyer_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
 
@@ -28,15 +27,13 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     const SearchScreen(),
     const FavoriteScreen(),
     const NotificationsScreen(),
-     BuyerDashboardScreen(userId: FirebaseAuth.instance.currentUser!.uid),
-
+    BuyerDashboardScreen(userId: FirebaseAuth.instance.currentUser!.uid),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_selectedPage],
-      // Use SafeArea to avoid notch, and add margin to float
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
         child: Container(
@@ -60,25 +57,29 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
               currentIndex: _selectedPage,
               onTap: _navigationBottomBar,
               type: BottomNavigationBarType.fixed,
+              showSelectedLabels: false, // hides text labels when selected
+              showUnselectedLabels: false, // hides text labels when unselected
               items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.search),
-                  label: 'Search',
+                  icon: Icon(Icons.home, size: 30), // bigger icon size
+                  label: '',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.favorite),
-                  label: 'Saved',
+                  icon: Icon(Icons.search, size: 30),
+                  label: '',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications),
-                  label: 'Notifications',
+                  icon: Icon(Icons.favorite, size: 30),
+                  label: '',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.person),
-                  label: 'Dashboard',
+                  icon: Icon(Icons.notifications, size: 30),
+                  label: '',
                 ),
-
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person, size: 30),
+                  label: '',
+                ),
               ],
             ),
           ),
