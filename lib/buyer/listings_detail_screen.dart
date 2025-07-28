@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'fullscreen_imageview.dart';
+import 'package:smartspace/buyer/search_screen.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 
 class ListingDetailScreen extends StatefulWidget {
   final Map<String, dynamic> listing;
@@ -132,21 +135,27 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
 
-  void _launchMap() async {
+  void _launchMap() {
     final lat = widget.listing['latitude'];
     final lng = widget.listing['longitude'];
 
     if (lat != null && lng != null) {
-      final url = Uri.parse(
-        "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => SearchScreen(
+                initialLocation: LatLng(lat, lng),
+                initialMarkerTitle:
+                    widget.listing['location'] ?? 'Property Location',
+              ),
+        ),
       );
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url);
-      } else {
-        _showError("Could not open Google Maps.");
-      }
     } else {
-      _showError("Location coordinates not available.");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Invalid location coordinates')));
+      
     }
   }
 
