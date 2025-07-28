@@ -16,7 +16,7 @@ class NotificationsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 97, 113, 147),
+        backgroundColor: const Color(0xFFFFE066), // Yellow background
         title: Text("Notifications ${role != null ? '($role)' : ''}"),
         actions: [
           if (message == null && user != null) // Only show when viewing history
