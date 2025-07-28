@@ -309,10 +309,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                               label: const Text('Create Listing'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
-                                  255,
-                                  67,
-                                  160,
-                                  151,
+                                 255, 45, 48, 48
                                 ),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
@@ -355,7 +352,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("AI Land Valuation"),
-        backgroundColor: const Color.fromARGB(255, 67, 160, 151),
+        backgroundColor: Color.fromARGB(255, 45, 48, 48),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -383,7 +380,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                           context,
                         ).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 67, 160, 151),
+                          color: const Color.fromARGB(255, 45, 48, 48),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -405,7 +402,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 value: selectedTenure,
                 decoration: const InputDecoration(
                   labelText: "Land Tenure Type",
-                  prefixIcon: Icon(Icons.gavel),
+                  prefixIcon: Icon(Icons.gavel, color: Color.fromARGB(255, 188, 162, 16),),
                   border: OutlineInputBorder(),
                   helperText: "Select the type of land ownership",
                 ),
@@ -432,7 +429,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 value: selectedUse,
                 decoration: const InputDecoration(
                   labelText: "Land Use Type",
-                  prefixIcon: Icon(Icons.business),
+                  prefixIcon: Icon(Icons.business, color: Color.fromARGB(255, 188, 162, 16)),
                   border: OutlineInputBorder(),
                   helperText: "Select the intended use of the land",
                 ),
@@ -503,7 +500,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                       focusNode: focusNode,
                       decoration: const InputDecoration(
                         labelText: "Location",
-                        prefixIcon: Icon(Icons.location_city),
+                        prefixIcon: Icon(Icons.location_city, color: Color.fromARGB(255, 188, 162, 16),),
                         border: OutlineInputBorder(),
                         helperText: "Start typing to choose a valid location",
                       ),
@@ -548,7 +545,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 controller: _plotAcController,
                 decoration: const InputDecoration(
                   labelText: "Plot Size (acres)",
-                  prefixIcon: Icon(Icons.crop_free),
+                  prefixIcon: Icon(Icons.crop_free, color: Color.fromARGB(255, 188, 162, 16),),
                   border: OutlineInputBorder(),
                   helperText:
                       "Enter the size of the plot in acres (e.g., 0.25)",
