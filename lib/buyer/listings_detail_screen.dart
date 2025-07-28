@@ -162,7 +162,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFFFE066), // Yellow background
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
         title: Text(
