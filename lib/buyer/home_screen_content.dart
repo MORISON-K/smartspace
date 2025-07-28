@@ -131,7 +131,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xFFFFE066), // Yellow background
           elevation: 5,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
