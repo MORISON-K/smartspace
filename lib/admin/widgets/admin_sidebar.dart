@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:smartspace/auth/auth_service.dart';
+import 'package:smartspace/auth/login_screen.dart';
 
 class AdminSidebar extends StatelessWidget {
   final int selectedIndex;
@@ -21,147 +22,13 @@ class AdminSidebar extends StatelessWidget {
 
   // Logout method
   void _handleLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.logout_rounded,
-                  color: Colors.red,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Confirm Logout',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 181, 183, 74),
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Are you sure you want to logout from the admin panel?',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop(); // Close dialog
-                void _performLogout(BuildContext context) async {
-                  // Show loading indicator
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (BuildContext context) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Color.fromARGB(255, 181, 183, 74),
-            ),
-                        ),
-                      );
-                    },
-                  );
-                  // Sign out from Firebase Auth
-                  await FirebaseAuth.instance.signOut();
-
-                  // Simulate logout process
-                  Future.delayed(const Duration(seconds: 2), () {
-                    Navigator.of(context).pop(); // Close loading dialog
-
-                    // Show success message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text('Logged out successfully!'),
-                          ],
-                        ),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                    // Navigate to login screen
-                    Navigator.of(context).pushReplacementNamed('/login');
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
+    final AuthService _authService = AuthService();
+    _authService.signOut();
+    print("Logout successful");
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
-  }
-
-  void _performLogout(BuildContext context) {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
-          ),
-        );
-      },
-    );
-
-    // Simulate logout process
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pop(); // Close loading dialog
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Logged out successfully!'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-
-      // Navigate to login screen
-      // Replace this with your actual login route
-      Navigator.of(context).pushReplacementNamed('/login');
-    });
   }
 
   // Profile navigation method
@@ -180,7 +47,10 @@ class AdminSidebar extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color.fromARGB(255, 181, 183, 74), Color.fromARGB(255, 181, 183, 74)],
+                    colors: [
+                      Color.fromARGB(255, 181, 183, 74),
+                      Color.fromARGB(255, 181, 183, 74),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -216,7 +86,7 @@ class AdminSidebar extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text(
                 'Close',
-                style: TextStyle(color: Color.fromARGB(255, 181, 183, 74)),
+                style: TextStyle(color: Color.fromARGB(255, 250, 250, 249)),
               ),
             ),
           ],
@@ -323,10 +193,7 @@ class AdminSidebar extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                child: Image.asset(
-                  'assets/logo.png',
-                  fit: BoxFit.contain,
-                ),
+                  child: Image.asset('assets/logo.png', fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 12),
                 const Text(
