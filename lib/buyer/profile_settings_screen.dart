@@ -14,8 +14,8 @@ class ProfileSettingsScreen extends StatefulWidget {
 
 class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   final String userId = FirebaseAuth.instance.currentUser!.uid;
+  final _nameController = TextEditingController();
   String? profileImageUrl;
-  String? userName;
   String? email;
   bool isLoading = false;
 
@@ -32,8 +32,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     if (data != null) {
       setState(() {
         profileImageUrl = data['profileImageUrl'];
-        userName = data['name'];
-        email = data['email'];
+        _nameController.text = data['name'] ?? '';
+        email = data['email'] ?? '';
       });
     }
   }
@@ -52,7 +52,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           .ref()
           .child('profile_pictures')
           .child('$userId.jpg');
-
       await storageRef.putFile(File(pickedImage.path));
       final imageUrl = await storageRef.getDownloadURL();
 
@@ -71,6 +70,100 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     }
   }
 
+  Future<void> _saveChanges() async {
+    setState(() => isLoading = true);
+
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      'name': _nameController.text.trim(),
+    });
+
+    setState(() => isLoading = false);
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Changes saved')));
+  }
+
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Logout"),
+            content: const Text("Are you sure you want to log out?"),
+            actions: [
+              TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: const Text(
+                  "Logout",
+                  style: TextStyle(color: Colors.red),
+                ),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await FirebaseAuth.instance.signOut();
+                  if (!mounted) return;
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                },
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _confirmDeleteAccount() {
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Delete Account"),
+            content: const Text(
+              "This will permanently delete your account. Continue?",
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: const Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.red),
+                ),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  try {
+                    setState(() => isLoading = true);
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .delete();
+                    await FirebaseStorage.instance
+                        .ref()
+                        .child('profile_pictures/$userId.jpg')
+                        .delete();
+                    await FirebaseAuth.instance.currentUser?.delete();
+                    if (!mounted) return;
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/login', (route) => false);
+                  } catch (e) {
+                    setState(() => isLoading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Error deleting account: $e")),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color golden = const Color(0xFFFFE066);
@@ -81,54 +174,121 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         backgroundColor: golden,
         foregroundColor: Colors.black,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: Colors.grey[300],
-                  backgroundImage:
-                      profileImageUrl != null
-                          ? NetworkImage(profileImageUrl!)
-                          : null,
-                  child:
-                      profileImageUrl == null
-                          ? const Icon(
-                            Icons.person,
-                            size: 50,
-                            color: Colors.white,
-                          )
-                          : null,
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.black),
-                    onPressed: _pickAndUploadImage,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (userName != null)
-              Text(
-                userName!,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage:
+                              profileImageUrl != null
+                                  ? NetworkImage(profileImageUrl!)
+                                  : null,
+                          child:
+                              profileImageUrl == null
+                                  ? const Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.white,
+                                  )
+                                  : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.black),
+                            onPressed: _pickAndUploadImage,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Name field
+                    TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: "Name",
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Email field (read-only)
+                    TextField(
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "Email",
+                        prefixIcon: const Icon(Icons.email),
+                        border: const OutlineInputBorder(),
+                        hintText: email ?? 'Loading...',
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Save button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveChanges,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: golden,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          "Save Changes",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Logout button
+                    TextButton.icon(
+                      onPressed: _confirmLogout,
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                      label: const Text(
+                        "Logout",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Delete account
+                    TextButton.icon(
+                      onPressed: _confirmDeleteAccount,
+                      icon: const Icon(
+                        Icons.delete_forever,
+                        color: Colors.redAccent,
+                      ),
+                      label: const Text(
+                        "Delete Account",
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            if (email != null)
-              Text(email!, style: TextStyle(fontSize: 16, color: Colors.grey)),
-            const SizedBox(height: 20),
-            if (isLoading) const CircularProgressIndicator(),
-          ],
-        ),
-      ),
     );
   }
 }
