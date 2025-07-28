@@ -154,6 +154,18 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   'responseTimestamp': FieldValue.serverTimestamp(),
                 });
 
+                // Update users collection to flag new documents uploaded
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user!.uid)
+                    .update({
+                  'hasNewDocuments': true,
+                  'documentUploadTime': FieldValue.serverTimestamp(),
+                  'newDocumentUrls': FieldValue.arrayUnion(uploadedUrls),
+                  'pendingDocumentType': '', // Optionally set document type
+                  'lastDocumentMessage': 'Uploaded additional documents',
+                });
+
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Documents sent successfully')),
