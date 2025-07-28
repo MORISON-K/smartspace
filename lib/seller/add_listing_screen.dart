@@ -425,7 +425,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 keyboardType: TextInputType.phone,
                 decoration: _inputDecoration(
                   'Mobile Number',
-                  prefixIcon: Icons.phone,
+                  prefixIcon: Icons.phone, 
                 ).copyWith(
                   prefixText: '256 ',
                   prefixStyle: const TextStyle(
