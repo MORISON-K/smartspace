@@ -521,6 +521,91 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('listings')
+                      .doc(widget.property.id)
+                      .collection('documentRequests')
+                      .where('sellerDocuments', isGreaterThan: [])
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Text('No documents uploaded by seller.');
+                    }
+                    final docs = snapshot.data!.docs;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Seller Uploaded Documents:',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        ...docs.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final sellerDocs = data['sellerDocuments'] as List<dynamic>? ?? [];
+                          final message = data['message'] ?? 'Additional Document';
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                message,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 6),
+                              ...sellerDocs.asMap().entries.map<Widget>((entry) {
+                                final index = entry.key + 1;
+                                final url = entry.value.toString();
+                                String fileName = url.split('?').first.split('/').last;
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        Icons.picture_as_pdf,
+                                        size: 32,
+                                        color: Colors.red.shade600,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      'Document $index',
+                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                    ),
+                                    subtitle: const Text('Tap to view'),
+                                    trailing: const Icon(Icons.arrow_forward_ios),
+                                    onTap: () => _openPdf(context, url),
+                                  ),
+                                );
+                              }).toList(),
+                              const SizedBox(height: 12),
+                            ],
+                          );
+                        }).toList(),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
