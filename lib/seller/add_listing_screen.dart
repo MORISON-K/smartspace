@@ -99,20 +99,26 @@ class _AddListingScreenState extends State<AddListingScreen> {
           throw Exception("Unexpected response format: ${data.runtimeType}");
         }
 
-        setState(() {
-          allowedLocations = locations;
-          isLoadingLocations = false;
-        });
+        // Check if widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            allowedLocations = locations;
+            isLoadingLocations = false;
+          });
+        }
       } else {
         throw Exception(
           "Failed to load locations. Status: ${response.statusCode}",
         );
       }
     } catch (e) {
-      setState(() {
-        errorMessage = "Could not fetch locations: $e";
-        isLoadingLocations = false;
-      });
+      // Check if widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          errorMessage = "Could not fetch locations: $e";
+          isLoadingLocations = false;
+        });
+      }
     }
     return;
   }
@@ -158,9 +164,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
       return;
     }
 
-    setState(() {
-      _isAutoPredicating = true;
-    });
+    // Check if widget is still mounted before calling setState
+    if (mounted) {
+      setState(() {
+        _isAutoPredicating = true;
+      });
+    }
 
     try {
       final response = await http
@@ -180,19 +189,25 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          _predictedPrice = data["predicted_value"].toDouble();
-          _priceController.text = _predictedPrice!.toStringAsFixed(0);
-          _hasAutoPredicted = true;
-        });
+        // Check if widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            _predictedPrice = data["predicted_value"].toDouble();
+            _priceController.text = _predictedPrice!.toStringAsFixed(0);
+            _hasAutoPredicted = true;
+          });
+        }
       }
     } catch (e) {
       // Silent failure for auto-prediction
       print("Auto-prediction failed: $e");
     } finally {
-      setState(() {
-        _isAutoPredicating = false;
-      });
+      // Check if widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          _isAutoPredicating = false;
+        });
+      }
     }
   }
 
@@ -329,7 +344,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
         final docRef = await FirebaseFirestore.instance
             .collection('listings')
             .add(listingData);
-
 
         final ActivityService activityService = ActivityService();
         await activityService.createListingActivity(
