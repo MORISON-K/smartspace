@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'listings_detail_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 final CollectionReference<Map<String, dynamic>> landRef = FirebaseFirestore
     .instance
@@ -18,7 +17,6 @@ class HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<HomeScreenContent> {
   late Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> listingsFuture;
   List<String> likedListings = [];
-  List<String> chosenListings = [];
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -30,11 +28,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     super.initState();
     listingsFuture = _getLandListings();
     _getUserLikedListings();
-    _getUserChosenListings();
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _getLandListings() async {
+  _getLandListings() async {
     try {
       final snapshot =
           await landRef.where('status', isEqualTo: 'approved').get();
@@ -48,14 +45,17 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs = docs;
 
       if (_searchText.isNotEmpty) {
-        filteredDocs = filteredDocs.where((doc) {
-          final data = doc.data();
-          final location = (data['location'] ?? '').toString().toLowerCase();
-          final category = (data['category'] ?? '').toString().toLowerCase();
-          final searchLower = _searchText.toLowerCase();
-          return location.contains(searchLower) ||
-              category.contains(searchLower);
-        }).toList();
+        filteredDocs =
+            filteredDocs.where((doc) {
+              final data = doc.data();
+              final location =
+                  (data['location'] ?? '').toString().toLowerCase();
+              final category =
+                  (data['category'] ?? '').toString().toLowerCase();
+              final searchLower = _searchText.toLowerCase();
+              return location.contains(searchLower) ||
+                  category.contains(searchLower);
+            }).toList();
       }
 
       if (_sortOrder == 'lowest') {
@@ -75,25 +75,22 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     if (user == null) return;
 
     final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user!.uid)
+            .get();
     final data = userDoc.data();
     setState(() {
       likedListings = List<String>.from(data?['likedListings'] ?? []);
     });
   }
 
-  Future<void> _getUserChosenListings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final storedChosen = prefs.getStringList('chosenListings') ?? [];
-    setState(() {
-      chosenListings = storedChosen;
-    });
-  }
-
   Future<void> _toggleLike(String listingId) async {
     if (user == null) return;
 
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid);
     final isLiked = likedListings.contains(listingId);
 
     if (isLiked) {
@@ -109,21 +106,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     setState(() {
       isLiked ? likedListings.remove(listingId) : likedListings.add(listingId);
     });
-  }
-
-  Future<void> _toggleChoose(String listingId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final isChosen = chosenListings.contains(listingId);
-
-    setState(() {
-      if (isChosen) {
-        chosenListings.remove(listingId);
-      } else {
-        chosenListings.add(listingId);
-      }
-    });
-
-    await prefs.setStringList('chosenListings', chosenListings);
   }
 
   void _onSortChanged(String? value) {
@@ -149,7 +131,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xFFFFE066), // Yellow background
           elevation: 5,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -229,17 +211,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(value: 'none', child: Text('Default')),
-                      PopupMenuItem(
-                        value: 'lowest',
-                        child: Text('Lowest Price'),
-                      ),
-                      PopupMenuItem(
-                        value: 'highest',
-                        child: Text('Highest Price'),
-                      ),
-                    ],
+                    itemBuilder:
+                        (context) => const [
+                          PopupMenuItem(value: 'none', child: Text('Default')),
+                          PopupMenuItem(
+                            value: 'lowest',
+                            child: Text('Lowest Price'),
+                          ),
+                          PopupMenuItem(
+                            value: 'highest',
+                            child: Text('Highest Price'),
+                          ),
+                        ],
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
@@ -262,7 +245,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           const SizedBox(height: 12),
           Expanded(
             child: FutureBuilder<
-                List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+              List<QueryDocumentSnapshot<Map<String, dynamic>>>
+            >(
               future: listingsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -286,18 +270,20 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     final listingId = doc.id;
                     final images = item['images'] as List<dynamic>?;
                     final imageUrl =
-                        (images != null && images.isNotEmpty) ? images[0] as String : null;
+                        (images != null && images.isNotEmpty)
+                            ? images[0] as String
+                            : null;
                     final isLiked = likedListings.contains(listingId);
-                    final isChosen = chosenListings.contains(listingId);
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ListingDetailScreen(
-                              listing: item,
-                              listingId: listingId,
-                            ),
+                            builder:
+                                (_) => ListingDetailScreen(
+                                  listing: item,
+                                  listingId: listingId,
+                                ),
                           ),
                         );
                       },
@@ -319,18 +305,21 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                 child: Image.network(
                                   imageUrl,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (_, child, progress) =>
-                                      progress == null
-                                          ? child
-                                          : const Center(
-                                              child: CircularProgressIndicator(),
-                                            ),
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(
-                                      Icons.broken_image,
-                                      size: 50,
-                                    ),
-                                  ),
+                                  loadingBuilder:
+                                      (_, child, progress) =>
+                                          progress == null
+                                              ? child
+                                              : const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                  errorBuilder:
+                                      (_, __, ___) => const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                        ),
+                                      ),
                                 ),
                               )
                             else
@@ -356,7 +345,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                     children: [
                                       Flexible(
                                         child: Text(
-                                          item['location'] ?? 'Unknown location',
+                                          item['location'] ??
+                                              'Unknown location',
                                           style: const TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -373,7 +363,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                               ? Icons.favorite
                                               : Icons.favorite_border,
                                           color:
-                                              isLiked ? Colors.redAccent : Colors.grey,
+                                              isLiked
+                                                  ? Colors.redAccent
+                                                  : Colors.grey,
                                         ),
                                         onPressed: () => _toggleLike(listingId),
                                       ),
@@ -389,7 +381,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Size: ${item['description'] ?? '-'}',
+                                    'Size: ${item['acreage'] ?? '-'}',
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: Colors.grey[700],
@@ -410,23 +402,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: () => _toggleChoose(listingId),
-                                    icon: Icon(
-                                      isChosen ? Icons.check_box : Icons.add_box_outlined,
-                                      color: isChosen ? Colors.green : Colors.blueGrey,
-                                    ),
-                                    label: Text(isChosen ? 'Chosen' : 'Choose'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          isChosen ? Colors.green[100] : Colors.blueGrey[100],
-                                      foregroundColor: Colors.black87,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
                                     ),
                                   ),
                                 ],
