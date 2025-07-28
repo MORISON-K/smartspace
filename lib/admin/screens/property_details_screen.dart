@@ -435,7 +435,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.property.landUse, overflow: TextOverflow.ellipsis),
+        title: Text(widget.property.category, overflow: TextOverflow.ellipsis),
         actions: [
           if (widget.property.images.length > 1)
             IconButton(
@@ -462,7 +462,51 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   children: [
                     _buildDetailRow(Icons.location_on, 'Location:', widget.property.location),
                     const SizedBox(height: 12),
-                    _buildDetailRow(Icons.currency_exchange, 'Price:', widget.property.price),
+
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(width: 4),
+                        Text(
+                          'UGX Seller Price',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            widget.property.sellerPrice,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(width: 4),
+                        Text(
+                          'UGX predicted Price',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            widget.property.predictedPrice,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 12),
                     _buildDetailRow(Icons.description, 'Description:', widget.property.description),
                   ],
@@ -587,7 +631,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   Expanded(
                     child: _buildActionButton(
                       context: context,
-                      label: 'Request document',
+                      label: 'Request doc',
                       color: Colors.blue,
                       onPressed: () => _showDocumentRequestDialog(context),
                     ),
