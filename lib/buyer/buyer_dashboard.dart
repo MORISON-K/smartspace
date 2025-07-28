@@ -1,8 +1,8 @@
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'buyer_home_screen.dart';
+import 'favorite_screen.dart';
 import 'package:smartspace/buyer/listings_detail_screen.dart';
 import 'profile_settings_screen.dart';
 
@@ -18,9 +18,6 @@ class BuyerDashboardScreen extends StatefulWidget {
 class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   String? email;
   String? userName;
-  String? userProfileImageUrl;
-  bool _loadingUser = true;
-
   List<String> savedPropertyIds = [];
   List<String> recentViewedIds = [];
 
@@ -38,31 +35,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   }
 
   Future<void> _fetchUserInfo() async {
-    try {
-      final userDoc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(widget.userId)
-              .get();
-
-      final data = userDoc.data();
-      print('User data from Firestore: $data');
-
-      setState(() {
-        email = data?['email'] ?? '';
-        userName = data?['name'] ?? 'User';
-        userProfileImageUrl = data?['profileImageUrl'];
-        _loadingUser = false;
-      });
-    } catch (e) {
-      print('Error fetching user info: $e');
-      setState(() {
-        email = '';
-        userName = 'User';
-        userProfileImageUrl = null;
-        _loadingUser = false;
-      });
-    }
+    final userDoc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .get();
+    setState(() {
+      email = userDoc.data()?['email'];
+      userName =
+          userDoc.data()?['name'] ?? userDoc.data()?['fullName'] ?? 'User';
+    });
   }
 
   Future<void> _loadSavedListings() async {
@@ -90,11 +72,6 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   }
 
   Widget _buildHeader() {
-    String initials = '';
-    if (userName != null && userName!.isNotEmpty) {
-      initials = userName!.trim().split(' ').map((e) => e[0]).take(2).join();
-    }
-
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
@@ -110,23 +87,10 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
       ),
       child: Row(
         children: [
-          userProfileImageUrl != null && userProfileImageUrl!.isNotEmpty
-              ? CircleAvatar(
-                radius: 30,
-                backgroundImage: NetworkImage(userProfileImageUrl!),
-              )
-              : CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.black,
-                child: Text(
-                  initials.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+          const CircleAvatar(
+            radius: 30,
+            backgroundImage: AssetImage('assets/user_placeholder.png'),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -257,7 +221,10 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Navigate to all listings page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BuyerHomeScreen()),
+                  );
                 },
                 icon: Icon(Icons.explore, color: textColor),
                 label: Text(
@@ -282,7 +249,10 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Navigate to liked listings page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FavoriteScreen()),
+                  );
                 },
                 icon: Icon(Icons.favorite, color: textColor),
                 label: Text(
@@ -311,11 +281,6 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingUser) {
-      // Show loading spinner while fetching user data
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return SafeArea(
       child: FutureBuilder(
         future: Future.wait([
@@ -330,17 +295,15 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
           final saved = snap.data![0];
           final recent = snap.data![1];
 
-          return Scaffold(
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  _buildListingsSection("Saved Listings", saved),
-                  _buildListingsSection("Recently Viewed", recent),
-                  _buildActionButtons(),
-                ],
-              ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildListingsSection("Saved Listings", saved),
+                _buildListingsSection("Recently Viewed", recent),
+                _buildActionButtons(),
+              ],
             ),
           );
         },
