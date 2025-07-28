@@ -344,7 +344,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                                 : null,
                                       ),
                                     );
-                                  }).toList(),
+                                  }),
                                 ],
                               );
                             },

@@ -54,6 +54,8 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   }
 
   Future<void> _predictLandValue() async {
+    if (!mounted) return;
+
     setState(() {
       isLoading = true;
       predictedValue = null;
@@ -76,6 +78,8 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
           )
           .timeout(const Duration(seconds: 30));
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -89,13 +93,17 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
         });
       }
     } catch (e) {
-      setState(() {
-        errorMessage = "Request failed: $e";
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = "Request failed: $e";
+        });
+      }
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -147,20 +155,24 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
           throw Exception("Unexpected response format: ${data.runtimeType}");
         }
 
-        setState(() {
-          allowedLocations = locations;
-          isLoadingLocations = false;
-        });
+        if (mounted) {
+          setState(() {
+            allowedLocations = locations;
+            isLoadingLocations = false;
+          });
+        }
       } else {
         throw Exception(
           "Failed to load locations. Status: ${response.statusCode}",
         );
       }
     } catch (e) {
-      setState(() {
-        errorMessage = "Could not fetch locations: $e";
-        isLoadingLocations = false;
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = "Could not fetch locations: $e";
+          isLoadingLocations = false;
+        });
+      }
     }
     return;
   }
@@ -310,9 +322,9 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
                                   255,
-                                  67,
-                                  160,
-                                  151,
+                                  45,
+                                  48,
+                                  48,
                                 ),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
@@ -355,7 +367,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("AI Land Valuation"),
-        backgroundColor: const Color.fromARGB(255, 67, 160, 151),
+        backgroundColor: Color.fromARGB(255, 45, 48, 48),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -383,7 +395,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                           context,
                         ).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 67, 160, 151),
+                          color: const Color.fromARGB(255, 45, 48, 48),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -405,7 +417,10 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 value: selectedTenure,
                 decoration: const InputDecoration(
                   labelText: "Land Tenure Type",
-                  prefixIcon: Icon(Icons.gavel),
+                  prefixIcon: Icon(
+                    Icons.gavel,
+                    color: Color.fromARGB(255, 188, 162, 16),
+                  ),
                   border: OutlineInputBorder(),
                   helperText: "Select the type of land ownership",
                 ),
@@ -432,7 +447,10 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 value: selectedUse,
                 decoration: const InputDecoration(
                   labelText: "Land Use Type",
-                  prefixIcon: Icon(Icons.business),
+                  prefixIcon: Icon(
+                    Icons.business,
+                    color: Color.fromARGB(255, 188, 162, 16),
+                  ),
                   border: OutlineInputBorder(),
                   helperText: "Select the intended use of the land",
                 ),
@@ -503,7 +521,10 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                       focusNode: focusNode,
                       decoration: const InputDecoration(
                         labelText: "Location",
-                        prefixIcon: Icon(Icons.location_city),
+                        prefixIcon: Icon(
+                          Icons.location_city,
+                          color: Color.fromARGB(255, 188, 162, 16),
+                        ),
                         border: OutlineInputBorder(),
                         helperText: "Start typing to choose a valid location",
                       ),
@@ -548,7 +569,10 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                 controller: _plotAcController,
                 decoration: const InputDecoration(
                   labelText: "Plot Size (acres)",
-                  prefixIcon: Icon(Icons.crop_free),
+                  prefixIcon: Icon(
+                    Icons.crop_free,
+                    color: Color.fromARGB(255, 188, 162, 16),
+                  ),
                   border: OutlineInputBorder(),
                   helperText:
                       "Enter the size of the plot in acres (e.g., 0.25)",
@@ -599,7 +623,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 149, 183, 62),
+                  backgroundColor: const Color.fromARGB(164, 5, 32, 34),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

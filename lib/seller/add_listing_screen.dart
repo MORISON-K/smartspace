@@ -99,20 +99,26 @@ class _AddListingScreenState extends State<AddListingScreen> {
           throw Exception("Unexpected response format: ${data.runtimeType}");
         }
 
-        setState(() {
-          allowedLocations = locations;
-          isLoadingLocations = false;
-        });
+        // Check if widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            allowedLocations = locations;
+            isLoadingLocations = false;
+          });
+        }
       } else {
         throw Exception(
           "Failed to load locations. Status: ${response.statusCode}",
         );
       }
     } catch (e) {
-      setState(() {
-        errorMessage = "Could not fetch locations: $e";
-        isLoadingLocations = false;
-      });
+      // Check if widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          errorMessage = "Could not fetch locations: $e";
+          isLoadingLocations = false;
+        });
+      }
     }
     return;
   }
@@ -158,9 +164,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
       return;
     }
 
-    setState(() {
-      _isAutoPredicating = true;
-    });
+    // Check if widget is still mounted before calling setState
+    if (mounted) {
+      setState(() {
+        _isAutoPredicating = true;
+      });
+    }
 
     try {
       final response = await http
@@ -180,19 +189,25 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          _predictedPrice = data["predicted_value"].toDouble();
-          _priceController.text = _predictedPrice!.toStringAsFixed(0);
-          _hasAutoPredicted = true;
-        });
+        // Check if widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            _predictedPrice = data["predicted_value"].toDouble();
+            _priceController.text = _predictedPrice!.toStringAsFixed(0);
+            _hasAutoPredicted = true;
+          });
+        }
       }
     } catch (e) {
       // Silent failure for auto-prediction
       print("Auto-prediction failed: $e");
     } finally {
-      setState(() {
-        _isAutoPredicating = false;
-      });
+      // Check if widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          _isAutoPredicating = false;
+        });
+      }
     }
   }
 
@@ -330,7 +345,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
             .collection('listings')
             .add(listingData);
 
-
         final ActivityService activityService = ActivityService();
         await activityService.createListingActivity(
           _locationController.text.trim(), // propertyTitle
@@ -387,14 +401,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
         title: const Text(
           "Add New Property",
           style: TextStyle(
-            color: Color.fromARGB(255, 22, 24, 25),
+            color: Color(0xFFFFD700),
             fontWeight: FontWeight.bold,
-            fontSize: 22,
+            fontSize: 21,
             letterSpacing: 1.2,
             fontFamily: 'Roboto',
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Color.fromARGB(255, 45, 48, 48),
         foregroundColor: Colors.black,
         elevation: 1,
       ),
@@ -621,7 +635,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   backgroundColor:
                       _isSubmitting
                           ? Colors.grey
-                          : const Color.fromARGB(255, 23, 149, 99),
+                          : const Color.fromARGB(164, 5, 32, 34),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

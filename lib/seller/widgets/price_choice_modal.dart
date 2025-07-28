@@ -234,7 +234,7 @@ class _PriceChoiceModalState extends State<PriceChoiceModal> {
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 23, 149, 99),
+                        backgroundColor: const Color.fromARGB(164, 5, 32, 34),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
