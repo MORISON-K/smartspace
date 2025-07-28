@@ -35,7 +35,10 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
   Future<void> _fetchProperties() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('listings').orderBy('createdAt', descending: true).get();
+          await FirebaseFirestore.instance
+              .collection('listings')
+              .orderBy('createdAt', descending: true)
+              .get();
       final list =
           snapshot.docs
               .map((doc) => Property.fromFirestore(doc.data(), doc.id))
@@ -93,6 +96,29 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
 
       if (!mounted) return;
 
+      setState(() {
+        final index = properties.indexOf(property);
+        properties[index] = Property(
+          id: property.id,
+          userId: property.userId,
+          createdAt: property.createdAt,
+          usedPredictedPrice: property.usedPredictedPrice,
+          title: property.title,
+          description: property.description,
+          location: property.location,
+          category: property.category,
+          latitude: property.latitude,
+          longitude: property.longitude,
+          tenure: property.tenure,
+          mobileNumber: property.mobileNumber,
+          sellerName: property.sellerName,
+          sellerPrice: property.sellerPrice,
+          predictedPrice: property.predictedPrice,
+          images: property.images,
+          pdfUrl: property.pdfUrl,
+          status: newStatus.toLowerCase(),
+        );
+      });
         setState(() {
           final index = properties.indexOf(property);
           properties[index] = Property(
@@ -364,7 +390,8 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Seller Price: UGX ${property.sellerPrice}',
