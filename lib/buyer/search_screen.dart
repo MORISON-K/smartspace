@@ -21,7 +21,11 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Search Location"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("Search Location"),
+        centerTitle: true,
+        backgroundColor: Color(0xFFFFE066),
+      ),
       body: Stack(
         children: [
           GoogleMap(
