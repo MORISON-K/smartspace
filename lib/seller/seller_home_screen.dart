@@ -106,10 +106,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
           Container(
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: activity.color.withValues(alpha: 0.1),
+              color: AppColors.primaryBlue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(activity.icon, color: activity.color, size: 20),
+            child: Icon(activity.icon, color: AppColors.primaryBlue, size: 20),
           ),
           SizedBox(width: 12),
           Expanded(
@@ -219,12 +219,12 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 234, 236, 240),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 167, 184, 198),
+        backgroundColor: AppColors.surface,
         title: Text(
           "Dashboard",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 25),
         ),
         elevation: 0,
       ),
@@ -257,7 +257,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                   child: _buildActionButton(
                     "Add Listing",
                     Icons.add_home,
-                    const Color.fromARGB(255, 45, 72, 94),
+                     Color.fromARGB(255, 208, 180, 20),
                     () => Navigator.pushNamed(context, "/add_listing_screen"),
                   ),
                 ),
@@ -266,7 +266,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                   child: _buildActionButton(
                     "Manage Listings ",
                     Icons.manage_history,
-                    const Color.fromARGB(255, 76, 87, 115),
+                    Color.fromARGB(255, 208, 180, 20),
                     () => Navigator.pushNamed(context, '/mylistings_screen'),
                   ),
                 ),
@@ -310,12 +310,12 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 ),
               ),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 167, 184, 198),
+                color: const Color.fromARGB(206, 46, 43, 13),
               ),
             ),
 
             ListTile(
-              leading: Icon(Icons.dashboard),
+              leading: Icon(Icons.dashboard, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("Dashboard"),
               onTap: () {
                 Navigator.pop(context);
@@ -323,7 +323,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ),
 
             ListTile(
-              leading: Icon(Icons.apartment),
+              leading: Icon(Icons.apartment, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("My Listings"),
               onTap: () {
                 Navigator.pop(context);
@@ -332,7 +332,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ),
 
             ListTile(
-              leading: Icon(Icons.show_chart),
+              leading: Icon(Icons.show_chart, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("AI Valuation"),
               onTap: () {
                 Navigator.pop(context);
@@ -341,7 +341,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ),
 
             ListTile(
-              leading: Icon(Icons.analytics),
+              leading: Icon(Icons.analytics, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("View Analytics"),
               onTap: () {
                 Navigator.pop(context);
@@ -350,7 +350,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ),
 
             ListTile(
-              leading: Icon(Icons.addchart),
+              leading: Icon(Icons.addchart, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("Add New Listing"),
               onTap: () {
                 Navigator.pop(context);
@@ -359,7 +359,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             ),
 
             ListTile(
-              leading: Icon(Icons.notification_important),
+              leading: Icon(Icons.notification_important, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("Notifications"),
               onTap: () {
                 Navigator.pop(context);
@@ -383,7 +383,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             // ),
 
             ListTile(
-              leading: Icon(Icons.logout_outlined),
+              leading: Icon(Icons.logout_outlined, color: Color.fromARGB(255, 188, 162, 16),),
               title: Text("Logout"),
               onTap: () {
                 _authService.signOut();
@@ -399,4 +399,29 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       ),
     );
   }
+}
+
+class AppColors {
+  // Primary palette
+  static const Color primaryBlue = Color.fromARGB(255, 188, 162, 16);
+  static const Color lightBlue = Color(0xFF4A90C2);
+  static const Color cream = Color(0xFFF8F6F3);
+  static const Color gold = Color(0xFFD4A574);
+  static const Color darkGray = Color(0xFF2C2C2C);
+  
+  // Semantic colors
+  static const Color success = Color(0xFF4CAF50);
+  static const Color warning = Color(0xFFFF9800);
+  static const Color error = Color(0xFFE53E3E);
+  static const Color info = Color(0xFF2196F3);
+  
+  // Background & surface
+  static const Color background = cream;
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceVariant = Color(0xFFF0F0F0);
+  
+  // Text colors
+  static const Color textPrimary = darkGray;
+  static const Color textSecondary = Color(0xFF666666);
+  static const Color textHint = Color(0xFF999999);
 }
