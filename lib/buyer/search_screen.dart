@@ -7,7 +7,13 @@ import 'listings_detail_screen.dart';
 const LatLng currentLocation = LatLng(0.3152, 32.5816); // Kampala
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final LatLng?  initialLocation;
+  final String? initialMarkerTitle;
+  const SearchScreen({
+    super.key,
+    this.initialLocation,
+    this.initialMarkerTitle,
+    });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -17,6 +23,36 @@ class _SearchScreenState extends State<SearchScreen> {
   late GoogleMapController mapController;
   Map<String, Marker> markers = {};
   final TextEditingController searchController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    // Nothing here; we'll handle map init in onMapCreated
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+
+    // Add initial marker & move camera if provided
+    if (widget.initialLocation != null) {
+      mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(widget.initialLocation!, 15),
+      );
+
+      addMarker(
+        widget.initialMarkerTitle ?? 'Property',
+        widget.initialLocation!,
+      );
+    } else {
+      // Default marker (e.g. Kampala)
+      addMarker('Kampala', currentLocation);
+    }
+
+    // Load Firestore markers
+    _loadPropertyMarkers();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +146,7 @@ class _SearchScreenState extends State<SearchScreen> {
       infoWindow: InfoWindow(
         title: markerId,
         snippet: '${location.latitude}, ${location.longitude}',
+        onTap: (){},
       ),
     );
     markers[markerId] = marker;
