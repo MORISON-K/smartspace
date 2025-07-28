@@ -221,7 +221,7 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Color.fromARGB(255, 45, 48, 48),
         title: Text(
           "Dashboard",
           style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 25),
@@ -306,11 +306,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 backgroundColor: const Color.fromARGB(255, 247, 240, 240),
                 child: Text(
                   _getInitials(_userName),
-                  style: TextStyle(fontSize: 24, color: Colors.black),
+                  style: TextStyle(fontSize: 24, color: Color.fromARGB(255, 45, 48, 48)),
                 ),
               ),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(206, 46, 43, 13),
+                color:Color.fromARGB(255, 45, 48, 48),
               ),
             ),
 

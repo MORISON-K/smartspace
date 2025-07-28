@@ -401,14 +401,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
         title: const Text(
           "Add New Property",
           style: TextStyle(
-            color: Color.fromARGB(255, 22, 24, 25),
+            color: Color(0xFFFFD700),
             fontWeight: FontWeight.bold,
-            fontSize: 22,
+            fontSize: 21,
             letterSpacing: 1.2,
             fontFamily: 'Roboto',
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Color.fromARGB(255, 45, 48, 48),
         foregroundColor: Colors.black,
         elevation: 1,
       ),
@@ -635,7 +635,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   backgroundColor:
                       _isSubmitting
                           ? Colors.grey
-                          : const Color.fromARGB(255, 23, 149, 99),
+                          : const Color.fromARGB(164, 5, 32, 34),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

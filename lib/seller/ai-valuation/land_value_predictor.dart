@@ -623,7 +623,7 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 149, 183, 62),
+                  backgroundColor: const Color.fromARGB(164, 5, 32, 34),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
