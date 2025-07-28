@@ -18,6 +18,7 @@ class BuyerDashboardScreen extends StatefulWidget {
 class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   String? email;
   String? userName;
+  String? profileImageUrl; // Added profile image URL
   List<String> savedPropertyIds = [];
   List<String> recentViewedIds = [];
 
@@ -44,6 +45,8 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
       email = userDoc.data()?['email'];
       userName =
           userDoc.data()?['name'] ?? userDoc.data()?['fullName'] ?? 'User';
+      profileImageUrl =
+          userDoc.data()?['profileImageUrl']; // Fetch profile image URL
     });
   }
 
@@ -87,9 +90,14 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 30,
-            backgroundImage: AssetImage('assets/user_placeholder.png'),
+            backgroundImage:
+                profileImageUrl != null && profileImageUrl!.isNotEmpty
+                    ? NetworkImage(profileImageUrl!)
+                    : const AssetImage('assets/user_placeholder.png')
+                        as ImageProvider,
+            backgroundColor: Colors.grey[200],
           ),
           const SizedBox(width: 16),
           Expanded(
