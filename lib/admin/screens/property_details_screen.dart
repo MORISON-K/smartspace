@@ -559,7 +559,6 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                               ...sellerDocs.asMap().entries.map<Widget>((entry) {
                                 final index = entry.key + 1;
                                 final url = entry.value.toString();
-                                String fileName = url.split('?').first.split('/').last;
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 12),
                                   decoration: BoxDecoration(
