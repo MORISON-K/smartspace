@@ -109,7 +109,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ElevatedButton.icon(
-                icon: const Icon(Icons.upload_file),
+                icon: const Icon(Icons.upload_file, color: Colors.white),
                 label: const Text('Select PDF Files'),
                 onPressed: pickFiles,
               ),
@@ -200,8 +200,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Listings"),
-        backgroundColor: const Color.fromARGB(255, 164, 192, 221),
+        title: const Text("My Listings", style: TextStyle(color: Colors.amber)),
+        backgroundColor: const Color(0xFF1A1A1A),
+        iconTheme: const IconThemeData(color: Colors.amber),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('listings').where('user_id', isEqualTo: user?.uid).snapshots(),
@@ -229,7 +230,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 child: Material(
                   borderRadius: BorderRadius.circular(20),
                   elevation: 8,
-                  color: Colors.white,
+                  color: const Color(0xFFFFF8DC),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () {
@@ -258,17 +259,14 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     : const Icon(Icons.home, color: Colors.grey, size: 40),
                               ),
                             ),
-                            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87)),
                             subtitle: Text(
                               '$description\n📍 $location',
                               style: const TextStyle(height: 1.4),
                             ),
-                            trailing: Text('\$$price', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            trailing: Text('\$$price', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
                           ),
-
                           const SizedBox(height: 12),
-
-                          // Requests Section: show all document requests with status badges and actions
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('listings')
@@ -285,7 +283,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Admin Requests:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.blue.shade700)),
+                                  Text('Admin Requests:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.amber[800])),
                                   const SizedBox(height: 8),
                                   ...requests.map((reqDoc) {
                                     final reqData = reqDoc.data() as Map<String, dynamic>;
@@ -326,10 +324,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                         leading: badgeIcon,
                                         trailing: status == 'pending'
                                             ? ElevatedButton.icon(
-                                                icon: const Icon(Icons.upload_file),
+                                                icon: const Icon(Icons.upload_file, color: Colors.white),
                                                 label: const Text('Respond'),
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.orange.shade700,
+                                                  backgroundColor: Colors.amber.shade700,
                                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                                 ),
@@ -349,18 +347,16 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               );
                             },
                           ),
-
                           const SizedBox(height: 16),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                icon: const Icon(Icons.edit, color: Colors.amber),
                                 onPressed: () => showEditDialog(doc.id, data),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(Icons.delete, color: Colors.redAccent),
                                 onPressed: () => confirmDelete(doc.id),
                               ),
                             ],
