@@ -60,6 +60,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
   bool isLoadingLocations = true;
   String? errorMessage;
 
+  // Variables to track changes for re-prediction
+  String? _lastPredictedLocation;
+  String? _lastPredictedTenure;
+  String? _lastPredictedLandUse;
+  double? _lastPredictedAcreage;
+
   @override
   void initState() {
     super.initState();
@@ -138,6 +144,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
         _predictedPrice = data.predictedValue!;
         _priceController.text = data.predictedValue!.toStringAsFixed(0);
         _hasAutoPredicted = true;
+
+        // Store tracking values for the prediction data
+        _lastPredictedLocation = data.location;
+        _lastPredictedTenure = data.tenure;
+        _lastPredictedLandUse = data.use;
+        _lastPredictedAcreage = data.plotSize;
       }
 
       setState(() {});
@@ -164,8 +176,23 @@ class _AddListingScreenState extends State<AddListingScreen> {
       return;
     }
 
-    // Don't predict if we already have a prediction or user is using custom price
-    if (_hasAutoPredicted || _useCustomPrice) {
+    // Don't predict if user is using custom price (but allow re-prediction if they're using AI price)
+    if (_useCustomPrice) {
+      return;
+    }
+
+    // Check if parameters have changed since last prediction
+    final currentLocation = _locationController.text.trim();
+    final currentTenure = _selectedTenure!;
+    final currentLandUse = _selectedLandUse!;
+    final currentAcreage = double.parse(_acreageController.text.trim());
+
+    // If we have a previous prediction and parameters haven't changed, don't predict again
+    if (_hasAutoPredicted &&
+        _lastPredictedLocation == currentLocation &&
+        _lastPredictedTenure == currentTenure &&
+        _lastPredictedLandUse == currentLandUse &&
+        _lastPredictedAcreage == currentAcreage) {
       return;
     }
 
@@ -206,6 +233,15 @@ class _AddListingScreenState extends State<AddListingScreen> {
           setState(() {
             _predictedPrice = predictedValue;
             _hasAutoPredicted = true;
+
+            // Store current values for tracking changes
+            _lastPredictedLocation = _locationController.text.trim();
+            _lastPredictedTenure = _selectedTenure!;
+            _lastPredictedLandUse = _selectedLandUse!;
+            _lastPredictedAcreage = double.parse(
+              _acreageController.text.trim(),
+            );
+
             // Only update price if user hasn't chosen custom price
             if (!_useCustomPrice) {
               _priceController.text = predictedValue.toStringAsFixed(0);
@@ -596,6 +632,16 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       _priceController.clear();
                     }
                   });
+
+                  // If switching back to AI price, trigger re-prediction to get latest value
+                  if (!value) {
+                    // Clear tracking variables to force re-prediction
+                    _lastPredictedLocation = null;
+                    _lastPredictedTenure = null;
+                    _lastPredictedLandUse = null;
+                    _lastPredictedAcreage = null;
+                    _autoPredicteValue();
+                  }
                 },
                 inputDecoration: _inputDecoration,
                 predictionData: widget.predictionData,
