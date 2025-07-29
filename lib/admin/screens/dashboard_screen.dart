@@ -151,20 +151,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // Get the most recent timestamp between lastRequestTime and documentUploadTime
       final aRequestTime =
-          (aData['lastRequestTime'] as Timestamp?)?.toDate() ?? DateTime(2000);
+          (aData['lastRequestTime'] as Timestamp?)?.toDate();
       final aDocumentTime =
-          (aData['documentUploadTime'] as Timestamp?)?.toDate() ??
-          DateTime(2000);
-      final aTime =
-          aRequestTime.isAfter(aDocumentTime) ? aRequestTime : aDocumentTime;
+          (aData['documentUploadTime'] as Timestamp?)?.toDate();
+
+      DateTime aTime;
+      if (aRequestTime == null && aDocumentTime == null) {
+        aTime = DateTime(2000);
+      } else if (aRequestTime == null) {
+        aTime = aDocumentTime!;
+      } else if (aDocumentTime == null) {
+        aTime = aRequestTime;
+      } else {
+        aTime = aRequestTime.isAfter(aDocumentTime) ? aRequestTime : aDocumentTime;
+      }
 
       final bRequestTime =
-          (bData['lastRequestTime'] as Timestamp?)?.toDate() ?? DateTime(2000);
+          (bData['lastRequestTime'] as Timestamp?)?.toDate();
       final bDocumentTime =
-          (bData['documentUploadTime'] as Timestamp?)?.toDate() ??
-          DateTime(2000);
-      final bTime =
-          bRequestTime.isAfter(bDocumentTime) ? bRequestTime : bDocumentTime;
+          (bData['documentUploadTime'] as Timestamp?)?.toDate();
+
+      DateTime bTime;
+      if (bRequestTime == null && bDocumentTime == null) {
+        bTime = DateTime(2000);
+      } else if (bRequestTime == null) {
+        bTime = bDocumentTime!;
+      } else if (bDocumentTime == null) {
+        bTime = bRequestTime;
+      } else {
+        bTime = bRequestTime.isAfter(bDocumentTime) ? bRequestTime : bDocumentTime;
+      }
 
       return _sortBy == 'newest'
           ? bTime.compareTo(aTime)
@@ -417,7 +433,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Build additional documents tab
   Widget _buildUserRequestsTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: usersCollection.snapshots(),
+      stream: FirebaseFirestore.instance.collectionGroup('documentRequests').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -444,14 +460,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return const Center(child: Text("No data available"));
         }
 
-        // Filter documents that have hasNewDocuments = true
         final allDocs = snapshot.data!.docs;
-        final requestDocs =
-            allDocs.where((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final hasNewDocuments = data['hasNewDocuments'] == true;
-              return hasNewDocuments;
-            }).toList();
+
+        // Filter documents that have sellerDocuments not empty
+        final requestDocs = allDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final sellerDocs = data['sellerDocuments'] as List<dynamic>? ?? [];
+          return sellerDocs.isNotEmpty;
+        }).toList();
 
         final filteredRequests = _filterAndSortRequests(requestDocs);
 
@@ -501,23 +517,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 itemCount: filteredRequests.length,
                 itemBuilder: (context, index) {
-                  final user = filteredRequests[index];
-                  final data = user.data() as Map<String, dynamic>;
+                  final doc = filteredRequests[index];
+                  final data = doc.data() as Map<String, dynamic>;
 
                   return _RequestItem(
-                    id: user.id,
-                    user: data['name'] ?? 'Unknown User',
-                    message:
-                        data['lastDocumentMessage'] ??
-                        'Uploaded additional documents',
-                    createdAt:
-                        data['documentUploadTime'] as Timestamp? ??
-                        Timestamp.now(),
+                    id: doc.id,
+                    user: data['userName'] ?? 'Unknown User',
+                    message: data['message'] ?? 'Uploaded additional documents',
+                    createdAt: data['timestamp'] as Timestamp? ?? Timestamp.now(),
                     isDocumentUpload: true,
-                    documentType: data['pendingDocumentType'] ?? '',
-                    documentUrls: List<String>.from(
-                      data['newDocumentUrls'] ?? [],
-                    ),
+                    documentType: data['documentType'] ?? '',
+                    documentUrls: List<String>.from(data['sellerDocuments'] ?? []),
                     hasRequests: false,
                   );
                 },
@@ -907,7 +917,7 @@ class _ListingItem extends StatelessWidget {
   }
 }
 
-class _RequestItem extends StatelessWidget {
+  class _RequestItem extends StatelessWidget {
   final String id;
   final String user;
   final String message;
@@ -955,7 +965,7 @@ class _RequestItem extends StatelessWidget {
                   documentUrls.asMap().entries.map((entry) {
                     final index = entry.key;
                     final url = entry.value;
-                    final fileName = url.split('/').last;
+                    final fileName = 'Document ${index + 1}';
 
                     return ListTile(
                       leading: Icon(
@@ -963,7 +973,7 @@ class _RequestItem extends StatelessWidget {
                         color: Colors.red[600],
                       ),
                       title: Text(fileName),
-                      subtitle: Text('Document ${index + 1}'),
+                      subtitle: Text('Tap to view'),
                       onTap: () {
                         Navigator.pop(context); // Close selection dialog
                         _openDocument(context, url, fileName);

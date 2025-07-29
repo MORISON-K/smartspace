@@ -162,9 +162,9 @@ class AdminSidebar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color.fromARGB(255, 181, 183, 74), // Gold from login button
-            Color(0xFF9DA04A), // Slightly darker shade
-            Color(0xFF7F8438), // Even darker shade
+            Color.fromARGB(255, 181, 183, 74),
+            Color(0xFF9DA04A),
+            Color(0xFF7F8438),
           ],
         ),
         boxShadow: [
@@ -176,160 +176,160 @@ class AdminSidebar extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Header Section
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 2,
-                    ),
-                  ),
-                  child: Image.asset('assets/logo.png', fit: BoxFit.contain),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  "SmartSpace",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Admin Panel",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Divider
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  Colors.white.withOpacity(0.3),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Menu Items
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                final item = menuItems[index];
-                final isSelected = selectedIndex == index;
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => onSectionSelected(index),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color:
-                              isSelected
-                                  ? Colors.white.withOpacity(0.2)
-                                  : Colors.transparent,
-                          border:
-                              isSelected
-                                  ? Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 1,
-                                  )
-                                  : null,
-                          boxShadow:
-                              isSelected
-                                  ? [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                  : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              item['icon'],
-                              color:
-                                  isSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item['label'],
-                                style: TextStyle(
-                                  color:
-                                      isSelected
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.8),
-                                  fontSize: 14,
-                                  fontWeight:
-                                      isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (isSelected)
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
+          Column(
+            children: [
+              // Header Section
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 2,
                         ),
                       ),
+                      child: Image.asset('assets/logo.png', fit: BoxFit.contain),
                     ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "SmartSpace",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Admin Panel",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Divider
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Menu Items wrapped in SizedBox with height
+              SizedBox(
+                height: 300,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  itemCount: menuItems.length,
+                  itemBuilder: (context, index) {
+                    final item = menuItems[index];
+                    final isSelected = selectedIndex == index;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => onSectionSelected(index),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: isSelected
+                                  ? Colors.white.withOpacity(0.2)
+                                  : Colors.transparent,
+                              border: isSelected
+                                  ? Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                      width: 1,
+                                    )
+                                  : null,
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  item['icon'],
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.white.withOpacity(0.7),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    item['label'],
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.white.withOpacity(0.8),
+                                      fontSize: 14,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
 
-          // Profile and Logout Section
+          // Profile and Logout Section remains unchanged
           Container(
             padding: const EdgeInsets.all(16),
             child: Column(
