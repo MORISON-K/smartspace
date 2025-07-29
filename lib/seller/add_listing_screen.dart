@@ -452,21 +452,15 @@ class _AddListingScreenState extends State<AddListingScreen> {
       // App bar with back button and title
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: const Color.fromARGB(255, 164, 192, 221),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.amber,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           "Add New Property",
-          style: TextStyle(
-            color: Color(0xFFFFD700),
-            fontWeight: FontWeight.bold,
-            fontSize: 21,
-            letterSpacing: 1.2,
-            fontFamily: 'Roboto',
-          ),
+          style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 25)
         ),
         backgroundColor: Color.fromARGB(255, 45, 48, 48),
         foregroundColor: Colors.black,
@@ -489,8 +483,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 ).copyWith(
                   prefixText: '256 ',
                   prefixStyle: const TextStyle(
-                    color: Color(0xFFFFD700),
                     fontWeight: FontWeight.w500,
+                    fontSize: 16,
                   ),
                   hintText: '700123456',
                 ),

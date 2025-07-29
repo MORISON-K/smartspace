@@ -389,7 +389,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Listings", style: TextStyle(color: Colors.amber)),
+        title: const Text("My Listings", style: TextStyle(
+          color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 25)),
         backgroundColor: const Color(0xFF1A1A1A),
         iconTheme: const IconThemeData(color: Colors.amber),
       ),

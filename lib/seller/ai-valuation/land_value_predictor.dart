@@ -366,9 +366,18 @@ class LandValuePredictorWidgetState extends State<LandValuePredictorWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("AI Land Valuation"),
+        title: const Text("AI Land Valuation", style: TextStyle(
+          color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 25),),
         backgroundColor: Color.fromARGB(255, 45, 48, 48),
         foregroundColor: Colors.white,
+         leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.amber,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
