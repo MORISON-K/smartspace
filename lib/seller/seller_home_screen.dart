@@ -340,14 +340,14 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               },
             ),
 
-            ListTile(
-              leading: Icon(Icons.analytics, color: Color.fromARGB(255, 188, 162, 16),),
-              title: Text("View Analytics"),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/analytics_screen');
-              },
-            ),
+            // ListTile(
+            //   leading: Icon(Icons.analytics, color: Color.fromARGB(255, 188, 162, 16),),
+            //   title: Text("View Analytics"),
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //     Navigator.pushNamed(context, '/analytics_screen');
+            //   },
+            // ),
 
             ListTile(
               leading: Icon(Icons.addchart, color: Color.fromARGB(255, 188, 162, 16),),
