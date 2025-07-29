@@ -8,6 +8,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+
+// Load local.properties for API keys
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
 android {
     
     namespace = "com.example.smartspace"
@@ -32,6 +41,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode =31
         versionName = flutter.versionName
+        
+        // Add manifest placeholders for API keys
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = localProperties.getProperty("GOOGLE_MAPS_API_KEY") 
+            ?: project.findProperty("GOOGLE_MAPS_API_KEY") 
+            ?: System.getenv("GOOGLE_MAPS_API_KEY") 
+            ?: ""
     }
 
     buildTypes {
