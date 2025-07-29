@@ -429,7 +429,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 ).copyWith(
                   prefixText: '256 ',
                   prefixStyle: const TextStyle(
-                    color: Colors.black87,
+                    color:Color(0xFFFFD700),
                     fontWeight: FontWeight.w500,
                   ),
                   hintText: '700123456',
@@ -635,7 +635,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   backgroundColor:
                       _isSubmitting
                           ? Colors.grey
-                          : const Color.fromARGB(164, 5, 32, 34),
+                          : const Color(0xFFFFD700),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
