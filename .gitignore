@@ -44,6 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# API Keys and sensitive configuration
+android/local.properties
+android/key.properties
+.env
+.env.local
+
 linux/flutter/generated_*
 windows/flutter/generated_*
 macos/Flutter/GeneratedPluginRegistrant.swift
