@@ -150,8 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final bData = b.data() as Map<String, dynamic>;
 
       // Get the most recent timestamp between lastRequestTime and documentUploadTime
-      final aRequestTime =
-          (aData['lastRequestTime'] as Timestamp?)?.toDate();
+      final aRequestTime = (aData['lastRequestTime'] as Timestamp?)?.toDate();
       final aDocumentTime =
           (aData['documentUploadTime'] as Timestamp?)?.toDate();
 
@@ -163,11 +162,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } else if (aDocumentTime == null) {
         aTime = aRequestTime;
       } else {
-        aTime = aRequestTime.isAfter(aDocumentTime) ? aRequestTime : aDocumentTime;
+        aTime =
+            aRequestTime.isAfter(aDocumentTime) ? aRequestTime : aDocumentTime;
       }
 
-      final bRequestTime =
-          (bData['lastRequestTime'] as Timestamp?)?.toDate();
+      final bRequestTime = (bData['lastRequestTime'] as Timestamp?)?.toDate();
       final bDocumentTime =
           (bData['documentUploadTime'] as Timestamp?)?.toDate();
 
@@ -179,7 +178,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } else if (bDocumentTime == null) {
         bTime = bRequestTime;
       } else {
-        bTime = bRequestTime.isAfter(bDocumentTime) ? bRequestTime : bDocumentTime;
+        bTime =
+            bRequestTime.isAfter(bDocumentTime) ? bRequestTime : bDocumentTime;
       }
 
       return _sortBy == 'newest'
@@ -433,7 +433,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Build additional documents tab
   Widget _buildUserRequestsTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collectionGroup('documentRequests').snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collectionGroup('documentRequests')
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -463,11 +466,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final allDocs = snapshot.data!.docs;
 
         // Filter documents that have sellerDocuments not empty
-        final requestDocs = allDocs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          final sellerDocs = data['sellerDocuments'] as List<dynamic>? ?? [];
-          return sellerDocs.isNotEmpty;
-        }).toList();
+        final requestDocs =
+            allDocs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final sellerDocs =
+                  data['sellerDocuments'] as List<dynamic>? ?? [];
+              return sellerDocs.isNotEmpty;
+            }).toList();
 
         final filteredRequests = _filterAndSortRequests(requestDocs);
 
@@ -520,15 +525,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   final doc = filteredRequests[index];
                   final data = doc.data() as Map<String, dynamic>;
 
-                  return _RequestItem(
-                    id: doc.id,
-                    user: data['userName'] ?? 'Unknown User',
-                    message: data['message'] ?? 'Uploaded additional documents',
-                    createdAt: data['timestamp'] as Timestamp? ?? Timestamp.now(),
-                    isDocumentUpload: true,
-                    documentType: data['documentType'] ?? '',
-                    documentUrls: List<String>.from(data['sellerDocuments'] ?? []),
-                    hasRequests: false,
+                  // Get parent listing document ID
+                  final listingId = doc.reference.parent.parent?.id;
+
+                  if (listingId == null) {
+                    return _RequestItem(
+                      id: doc.id,
+                      user: 'Unknown User',
+                      message:
+                          data['message'] ?? 'Uploaded additional documents',
+                      createdAt:
+                          data['timestamp'] as Timestamp? ?? Timestamp.now(),
+                      isDocumentUpload: true,
+                      documentType: data['documentType'] ?? '',
+                      documentUrls: List<String>.from(
+                        data['sellerDocuments'] ?? [],
+                      ),
+                      hasRequests: false,
+                    );
+                  }
+
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: listingsCollection.doc(listingId).get(),
+                    builder: (context, listingSnapshot) {
+                      if (listingSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!listingSnapshot.hasData ||
+                          !listingSnapshot.data!.exists) {
+                        return _RequestItem(
+                          id: doc.id,
+                          user: 'Unknown User',
+                          message:
+                              data['message'] ??
+                              'Uploaded additional documents',
+                          createdAt:
+                              data['timestamp'] as Timestamp? ??
+                              Timestamp.now(),
+                          isDocumentUpload: true,
+                          documentType: data['documentType'] ?? '',
+                          documentUrls: List<String>.from(
+                            data['sellerDocuments'] ?? [],
+                          ),
+                          hasRequests: false,
+                        );
+                      }
+
+                      final listingData =
+                          listingSnapshot.data!.data() as Map<String, dynamic>?;
+
+                      final userId =
+                          listingData?['userId'] ??
+                          listingData?['user_id'] ??
+                          null;
+
+                      if (userId == null) {
+                        return _RequestItem(
+                          id: doc.id,
+                          user: 'Unknown User',
+                          message:
+                              data['message'] ??
+                              'Uploaded additional documents',
+                          createdAt:
+                              data['timestamp'] as Timestamp? ??
+                              Timestamp.now(),
+                          isDocumentUpload: true,
+                          documentType: data['documentType'] ?? '',
+                          documentUrls: List<String>.from(
+                            data['sellerDocuments'] ?? [],
+                          ),
+                          hasRequests: false,
+                        );
+                      }
+
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: usersCollection.doc(userId).get(),
+                        builder: (context, userSnapshot) {
+                          String userName = 'Unknown User';
+                          if (userSnapshot.connectionState ==
+                                  ConnectionState.done &&
+                              userSnapshot.hasData &&
+                              userSnapshot.data != null &&
+                              userSnapshot.data!.exists) {
+                            final userData =
+                                userSnapshot.data!.data()
+                                    as Map<String, dynamic>?;
+                            if (userData != null && userData['name'] != null) {
+                              userName = userData['name'];
+                            }
+                          }
+
+                          return _RequestItem(
+                            id: doc.id,
+                            user: userName,
+                            message:
+                                data['message'] ??
+                                'Uploaded additional documents',
+                            createdAt:
+                                data['timestamp'] as Timestamp? ??
+                                Timestamp.now(),
+                            isDocumentUpload: true,
+                            documentType: data['documentType'] ?? '',
+                            documentUrls: List<String>.from(
+                              data['sellerDocuments'] ?? [],
+                            ),
+                            hasRequests: false,
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               ),
@@ -560,7 +666,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Welcome to the SmartSpace Admin Dashboard. Here you can manage property listings, review user requests, and monitor system activity efficiently.',
+                    'Welcome to the SmartSpace Admin Dashboard. Here you can manage property listings, review additional documents,and monitor system activity efficiently.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[700],
                       height: 1.4,
@@ -917,7 +1023,7 @@ class _ListingItem extends StatelessWidget {
   }
 }
 
-  class _RequestItem extends StatelessWidget {
+class _RequestItem extends StatelessWidget {
   final String id;
   final String user;
   final String message;
@@ -1005,11 +1111,11 @@ class _ListingItem extends StatelessWidget {
             '');
 
     return Card(
-      elevation: 0,
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.blue[300]!, width: 2),
+        side: BorderSide(color: Colors.grey[300]!),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
