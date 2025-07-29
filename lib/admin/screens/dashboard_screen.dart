@@ -197,31 +197,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         children: [
           // Search bar
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText:
-                  _currentIndex == 0
-                      ? "Search listings by description, location, or price..."
-                      : "Search documents by user name or document type...",
-              prefixIcon: const Icon(Icons.search, size: 22),
-              suffixIcon:
-                  _searchQuery.isNotEmpty
-                      ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                      : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              filled: true,
-              fillColor: Colors.grey[200],
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 20,
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText:
+                    _currentIndex == 0
+                        ? "Search listings by description, location, or price..."
+                        : "Search documents by user name or document type...",
+                prefixIcon: const Icon(Icons.search, size: 22),
+                suffixIcon:
+                    _searchQuery.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                        : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 20,
+                ),
               ),
             ),
           ),
