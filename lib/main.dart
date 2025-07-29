@@ -46,7 +46,8 @@ class SmartSpace extends StatelessWidget {
         '/add_listing_screen': (context) => AddListingScreen(),
         '/seller_home_screen': (context) => SellerHomeScreen(),
         '/profile_screen': (context) => ProfileScreen(),
-        '/land_valuation': (context) => LandValuePredictorWidget()
+        '/land_valuation': (context) => LandValuePredictorWidget(),
+        '/login': (context) => LoginScreen(),
       },
     );
   }

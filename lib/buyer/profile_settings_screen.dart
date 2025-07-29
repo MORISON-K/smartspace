@@ -102,11 +102,15 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   style: TextStyle(color: Colors.red),
                 ),
                 onPressed: () async {
-                  Navigator.pop(context);
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pop(); // Close dialog
                   await FirebaseAuth.instance.signOut();
                   if (!mounted) return;
                   Navigator.of(
                     context,
+                    rootNavigator: true,
                   ).pushNamedAndRemoveUntil('/login', (route) => false);
                 },
               ),
