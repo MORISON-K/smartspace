@@ -154,6 +154,16 @@ class _AddListingScreenState extends State<AddListingScreen> {
       return; // Not enough data for prediction
     }
 
+    // Validate that the location is in the allowed locations list
+    if (allowedLocations.isNotEmpty &&
+        !allowedLocations.contains(_locationController.text.trim())) {
+      // Location is not in the allowed list, don't predict
+      print(
+        "Location '${_locationController.text.trim()}' not in allowed locations list",
+      );
+      return;
+    }
+
     // Don't predict if we already have a prediction or user is using custom price
     if (_hasAutoPredicted || _useCustomPrice) {
       return;
@@ -189,12 +199,17 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final predictedValue = data["predicted_value"]?.toDouble();
+
         // Check if widget is still mounted before calling setState
-        if (mounted) {
+        if (mounted && predictedValue != null) {
           setState(() {
-            _predictedPrice = data["predicted_value"].toDouble();
-            _priceController.text = _predictedPrice!.toStringAsFixed(0);
+            _predictedPrice = predictedValue;
             _hasAutoPredicted = true;
+            // Only update price if user hasn't chosen custom price
+            if (!_useCustomPrice) {
+              _priceController.text = predictedValue.toStringAsFixed(0);
+            }
           });
         }
       }
@@ -247,6 +262,15 @@ class _AddListingScreenState extends State<AddListingScreen> {
   /// 4. Saves listing data to Firestore database
   Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
+      // Additional validation for location against allowed locations
+      if (allowedLocations.isNotEmpty &&
+          !allowedLocations.contains(_locationController.text.trim())) {
+        _showSnack(
+          "Please select a valid location from the dropdown for accurate processing.",
+        );
+        return;
+      }
+
       // Check if required files are selected
       if (_images.isEmpty) {
         _showSnack("Please upload at least one image.");
@@ -425,11 +449,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 keyboardType: TextInputType.phone,
                 decoration: _inputDecoration(
                   'Mobile Number',
-                  prefixIcon: Icons.phone, 
+                  prefixIcon: Icons.phone,
                 ).copyWith(
                   prefixText: '256 ',
                   prefixStyle: const TextStyle(
-                    color:Color(0xFFFFD700),
+                    color: Color(0xFFFFD700),
                     fontWeight: FontWeight.w500,
                   ),
                   hintText: '700123456',
@@ -633,9 +657,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 onPressed: _isSubmitting ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                      _isSubmitting
-                          ? Colors.grey
-                          : const Color(0xFFFFD700),
+                      _isSubmitting ? Colors.grey : const Color(0xFFFFD700),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
