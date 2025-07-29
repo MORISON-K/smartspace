@@ -394,7 +394,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            color: const Color.fromARGB(255, 164, 192, 221),
+            color: const Color(0xFFFFD700),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
