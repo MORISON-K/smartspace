@@ -75,76 +75,95 @@ class LocationInputWidget extends StatelessWidget {
                   'Location',
                   prefixIcon: Icons.location_city,
                 ).copyWith(
-                  helperText: "Start typing to choose a valid location",
+                  helperText:
+                      "Select a location from the dropdown for AI prediction",
+                  suffixIcon:
+                      allowedLocations.contains(controller.text)
+                          ? Icon(Icons.check_circle, color: Colors.green)
+                          : controller.text.isNotEmpty
+                          ? Icon(Icons.error, color: Colors.red)
+                          : null,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Location is required';
                   }
                   if (!allowedLocations.contains(value)) {
-                    return "Invalid location. Please select from the suggestions.";
+                    return "Please select a valid location from the dropdown for AI prediction.";
                   }
                   return null;
                 },
-                onChanged: onLocationChanged,
+                onChanged: (value) {
+                  // Only call onLocationChanged if the location is valid
+                  if (allowedLocations.contains(value)) {
+                    onLocationChanged(value);
+                  }
+                },
               );
             },
-            onSelected: onLocationSelected,
+            onSelected: (selection) {
+              locationController.text = selection;
+              onLocationSelected(selection);
+            },
           )
-        // Fallback field
+        // Fallback field when locations cannot be loaded
         else
-          TextFormField(
-            controller: locationController,
-            decoration: inputDecoration(
-              'Location',
-              prefixIcon: Icons.location_city,
-            ).copyWith(
-              helperText: "Enter the location (auto-suggestions unavailable)",
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Location is required';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              // Trigger auto-prediction after user stops typing for 1 second
-              Future.delayed(const Duration(seconds: 1), () {
-                if (locationController.text == value) {
-                  onLocationChanged(value);
-                }
-              });
-            },
-          ),
-        const SizedBox(height: 12),
-
-        // Error message
-        if (errorMessage != null && !isLoadingLocations) ...[
-          Card(
-            elevation: 2,
-            color: Colors.orange[50],
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.orange[700], size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Location suggestions unavailable. You can still enter location manually.',
-                      style: TextStyle(
-                        color: Colors.orange[700],
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+          Column(
+            children: [
+              TextFormField(
+                controller: locationController,
+                decoration: inputDecoration(
+                  'Location',
+                  prefixIcon: Icons.location_city,
+                ).copyWith(
+                  helperText:
+                      "Location entered manually (AI prediction unavailable)",
+                  suffixIcon: Icon(Icons.warning, color: Colors.orange),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Location is required';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  // Don't trigger auto-prediction for manual entry
+                  // as we can't validate against the allowed locations
+                  locationController.text = value;
+                },
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.orange[700],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'AI valuation is not available for manually entered locations.',
+                        style: TextStyle(
+                          color: Colors.orange[700],
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 12),
-        ],
+        const SizedBox(height: 12),
       ],
     );
   }
