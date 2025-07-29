@@ -157,16 +157,8 @@ class AdminSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 260,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.fromARGB(255, 181, 183, 74),
-            Color(0xFF9DA04A),
-            Color(0xFF7F8438),
-          ],
-        ),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 45, 48, 48),
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
@@ -202,7 +194,7 @@ class AdminSidebar extends StatelessWidget {
                     const Text(
                       "SmartSpace",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Color.fromARGB(255, 208, 180, 20),
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2,
@@ -212,7 +204,7 @@ class AdminSidebar extends StatelessWidget {
                     Text(
                       "Admin Panel",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Color.fromARGB(255, 208, 180, 20).withOpacity(0.8),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
@@ -220,7 +212,6 @@ class AdminSidebar extends StatelessWidget {
                   ],
                 ),
               ),
-
               // Divider
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -235,9 +226,7 @@ class AdminSidebar extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // Menu Items wrapped in SizedBox with height
               SizedBox(
                 height: 300,
@@ -247,7 +236,6 @@ class AdminSidebar extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = menuItems[index];
                     final isSelected = selectedIndex == index;
-
                     return Container(
                       margin: const EdgeInsets.only(bottom: 6),
                       child: Material(

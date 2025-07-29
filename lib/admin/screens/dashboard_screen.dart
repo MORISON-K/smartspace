@@ -197,31 +197,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         children: [
           // Search bar
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText:
-                  _currentIndex == 0
-                      ? "Search listings by description, location, or price..."
-                      : "Search documents by user name or document type...",
-              prefixIcon: const Icon(Icons.search, size: 22),
-              suffixIcon:
-                  _searchQuery.isNotEmpty
-                      ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                      : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              filled: true,
-              fillColor: Colors.grey[200],
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 20,
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText:
+                    _currentIndex == 0
+                        ? "Search listings by description, location, or price..."
+                        : "Search documents by user name or document type...",
+                prefixIcon: const Icon(Icons.search, size: 22),
+                suffixIcon:
+                    _searchQuery.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                        : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 20,
+                ),
               ),
             ),
           ),
@@ -237,6 +246,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     value: _selectedStatus,
                     decoration: InputDecoration(
                       labelText: 'Status',
+                      labelStyle: const TextStyle(
+                        color: Color(0xFFD4AF37), // Gold color
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -244,6 +256,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         horizontal: 16,
                         vertical: 12,
                       ),
+                    ),
+                    dropdownColor: Colors.black87,
+                    style: const TextStyle(
+                      color: Color(0xFFD4AF37), // Gold color
                     ),
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('All Status')),
@@ -271,36 +287,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
 
               // Sort options
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _sortBy,
-                  decoration: InputDecoration(
-                    labelText: 'Sort by',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _sortBy,
+                    decoration: InputDecoration(
+                      labelText: 'Sort by',
+                      labelStyle: const TextStyle(
+                        color: Color(0xFFD4AF37), // Gold color
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                    dropdownColor: Colors.black87,
+                    style: const TextStyle(
+                      color: Color(0xFFD4AF37), // Gold color
                     ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'newest',
+                        child: Text('Newest First'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'oldest',
+                        child: Text('Oldest First'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _sortBy = value!;
+                      });
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'newest',
-                      child: Text('Newest First'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'oldest',
-                      child: Text('Oldest First'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _sortBy = value!;
-                    });
-                  },
                 ),
-              ),
             ],
           ),
         ],
@@ -383,12 +406,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SectionHeader(
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: filteredListings.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return SectionHeader(
                 title:
                     _selectedStatus == 'all'
                         ? "📋 All Listings"
@@ -398,33 +423,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? "✅ Approved Listings"
                         : "❌ Rejected Listings",
                 count: filteredListings.length,
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: filteredListings.length,
-                itemBuilder: (context, index) {
-                  final listing = filteredListings[index];
-                  final data = listing.data() as Map<String, dynamic>;
+              );
+            }
+            final listing = filteredListings[index - 1];
+            final data = listing.data() as Map<String, dynamic>;
 
-                  return _ListingItem(
-                    id: listing.id,
-                    title: data['description'] ?? 'No Description',
-                    location: data['location'] ?? 'Unknown Location',
-                    price:
-                        data['price'] != null
-                            ? _formatPrice(data['price'])
-                            : 'Price not set',
-                    status: data['status'] ?? 'pending',
-                    createdAt:
-                        data['createdAt'] as Timestamp? ?? Timestamp.now(),
-                    onViewDetails: () => _navigateToPropertyDetails(listing),
-                  );
-                },
-              ),
-            ),
-          ],
+            return _ListingItem(
+              id: listing.id,
+              title: data['description'] ?? 'No Description',
+              location: data['location'] ?? 'Unknown Location',
+              price:
+                  data['price'] != null
+                      ? _formatPrice(data['price'])
+                      : 'Price not set',
+              status: data['status'] ?? 'pending',
+              createdAt:
+                  data['createdAt'] as Timestamp? ?? Timestamp.now(),
+              onViewDetails: () => _navigateToPropertyDetails(listing),
+            );
+          },
         );
       },
     );
@@ -465,7 +482,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final allDocs = snapshot.data!.docs;
 
-        // Filter documents that have sellerDocuments not empty
+        // DEBUG: Log total documents fetched
+        print('Total documentRequests fetched: \${allDocs.length}');
+
+        // Temporarily remove filter on sellerDocuments to troubleshoot
+        // final requestDocs =
+        //     allDocs.where((doc) {
+        //       final data = doc.data() as Map<String, dynamic>;
+        //       final sellerDocs =
+        //           data['sellerDocuments'] as List<dynamic>? ?? [];
+        //       return sellerDocs.isNotEmpty;
+        //     }).toList();
+
         final requestDocs =
             allDocs.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
@@ -473,6 +501,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   data['sellerDocuments'] as List<dynamic>? ?? [];
               return sellerDocs.isNotEmpty;
             }).toList();
+
+        // DEBUG: Log documents after filtering
+        print('DocumentRequests after filtering: \${requestDocs.length}');
 
         final filteredRequests = _filterAndSortRequests(requestDocs);
 
@@ -517,7 +548,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 count: filteredRequests.length,
               ),
             ),
-            Expanded(
+            SizedBox(
+              height: 400,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 itemCount: filteredRequests.length,
@@ -649,44 +681,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 16.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Dashboard Overview',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Welcome to the SmartSpace Admin Dashboard. Here you can manage property listings, review additional documents,and monitor system activity efficiently.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[700],
-                      height: 1.4,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 16.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dashboard Overview',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFFD4AF37), // Gold color
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Welcome to the SmartSpace Admin Dashboard. Here you can manage property listings, review additional documents,and monitor system activity efficiently.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[700],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            // Search and filter bar
-            _buildSearchAndFilterBar(),
+              // Search and filter bar
+              _buildSearchAndFilterBar(),
 
-            // Content based on selected tab
-            Expanded(
-              child:
-                  _currentIndex == 0
-                      ? _buildListingsTab()
-                      : _buildUserRequestsTab(),
-            ),
-          ],
+              // Content based on selected tab
+              _currentIndex == 0
+                  ? _buildListingsTab()
+                  : _buildUserRequestsTab(),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
