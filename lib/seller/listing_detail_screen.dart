@@ -38,26 +38,48 @@ class ListingDetailScreen extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                   )
-                : Icon(Icons.image_not_supported, size: 100),
+                : Icon(
+                    Icons.image_not_supported,
+                    size: 100,
+                    color: Color.fromARGB(255, 164, 192, 221),
+                  ),
             const SizedBox(height: 16),
             Text(
               title,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Text(
-              '💰 Price: \$$price',
-              style: const TextStyle(fontSize: 18),
+            Row(
+              children: [
+                Icon(Icons.attach_money, color: Color.fromARGB(255, 164, 192, 221)),
+                const SizedBox(width: 6),
+                Text(
+                  'Price: \$$price',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
-            Text(
-              '📍 Location: $location',
-              style: const TextStyle(fontSize: 18),
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Color.fromARGB(255, 164, 192, 221)),
+                const SizedBox(width: 6),
+                Text(
+                  'Location: $location',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            Text(
-              '📝 Description:',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                Icon(Icons.description, color: Color.fromARGB(255, 164, 192, 221)),
+                const SizedBox(width: 6),
+                Text(
+                  'Description:',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
