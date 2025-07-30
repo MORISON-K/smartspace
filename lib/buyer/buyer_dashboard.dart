@@ -53,7 +53,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   Future<void> _loadSavedListings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      savedPropertyIds = prefs.getStringList('chosenListings') ?? [];
+      savedPropertyIds = prefs.getStringList('savedListings') ?? [];
     });
   }
 

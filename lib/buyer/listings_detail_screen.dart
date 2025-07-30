@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'fullscreen_imageview.dart';
 import 'search_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -37,6 +38,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             .toList();
 
     _fetchRelatedListings();
+    _addToRecentlyViewed();
 
     _pageController.addListener(() {
       final newPage = _pageController.page?.round() ?? 0;
@@ -48,30 +50,71 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     });
   }
 
+  Future<void> _addToRecentlyViewed() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String> recentlyViewed = prefs.getStringList('recentlyViewed') ?? [];
+
+      // Remove the listing if it already exists to avoid duplicates
+      recentlyViewed.remove(widget.listingId);
+
+      // Add to the beginning of the list
+      recentlyViewed.insert(0, widget.listingId);
+
+      // Keep only the last 10 recently viewed items
+      if (recentlyViewed.length > 10) {
+        recentlyViewed = recentlyViewed.take(10).toList();
+      }
+
+      // Save back to SharedPreferences
+      await prefs.setStringList('recentlyViewed', recentlyViewed);
+    } catch (e) {
+      debugPrint('Error saving to recently viewed: $e');
+    }
+  }
+
   Future<void> _fetchRelatedListings() async {
     try {
       final location = widget.listing['location'];
       final category = widget.listing['tenure'];
 
+      debugPrint(
+        'Fetching related listings for location: $location, category: $category',
+      );
+
       final snapshot =
           await FirebaseFirestore.instance
               .collection('listings')
-              .where('location', isEqualTo: location)
-              .where('tenure', isEqualTo: category)
-              .where('approved', isEqualTo: true)
+              .where('status', isEqualTo: 'approved')
               .get();
+
+      debugPrint('Found ${snapshot.docs.length} approved listings total');
 
       final items =
           snapshot.docs
-              .where((doc) => doc.id != widget.listingId)
+              .where((doc) {
+                final data = doc.data();
+                // Filter out current listing
+                if (doc.id == widget.listingId) return false;
+
+                // Match by location OR category (more flexible than requiring both)
+                final matchesLocation = data['location'] == location;
+                final matchesCategory = data['tenure'] == category;
+
+                return matchesLocation || matchesCategory;
+              })
               .map((doc) => {'id': doc.id, ...doc.data()})
+              .take(10) // Limit to 10 related listings
               .toList();
+
+      debugPrint('Found ${items.length} related listings');
 
       setState(() {
         relatedListings = items;
         loadingRelated = false;
       });
     } catch (e) {
+      debugPrint('Error loading related listings: $e');
       _showError('Error loading related listings.');
       setState(() {
         loadingRelated = false;
