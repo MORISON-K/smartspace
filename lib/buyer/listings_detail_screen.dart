@@ -51,13 +51,13 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   Future<void> _fetchRelatedListings() async {
     try {
       final location = widget.listing['location'];
-      final category = widget.listing['category'];
+      final category = widget.listing['tenure'];
 
       final snapshot =
           await FirebaseFirestore.instance
               .collection('listings')
               .where('location', isEqualTo: location)
-              .where('category', isEqualTo: category)
+              .where('tenure', isEqualTo: category)
               .where('approved', isEqualTo: true)
               .get();
 
@@ -271,7 +271,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     const SizedBox(height: 12),
                     _buildDetailRow(
                       Icons.category,
-                      "Category: ${widget.listing['category'] ?? '-'}",
+                      "Category: ${widget.listing['tenure'] ?? '-'}",
                     ),
                     _buildDetailRow(
                       Icons.info_outline,
