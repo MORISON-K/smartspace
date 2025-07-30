@@ -343,7 +343,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     content: Text(
                                       'Failed to upload documents: $e',
                                     ),
-                                    
+
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -358,7 +358,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
-   
+
   void _showUploadedDocs(List<dynamic> urls) {
     showDialog(
       context: context,
@@ -392,7 +392,6 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
   
-    
   @override
   Widget build(BuildContext context) {
     return Scaffold(
