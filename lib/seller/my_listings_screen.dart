@@ -170,7 +170,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 'Some files were too large (>10MB): ${oversizedFiles.join(', ')}',
               ),
               backgroundColor: Colors.orange,
-            ),
+            ), 
           );
         }
       }
@@ -211,7 +211,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                             color: Colors.red,
                                             size: 20,
                                           ), 
-                                          
+
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
@@ -273,7 +273,6 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                 );
                                 return;
                               }
-
                               setDialogState(() {
                                 isUploading = true;
                                 uploadProgress = 0.0;
