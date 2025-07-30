@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
 
@@ -31,7 +32,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       ).showSnackBar(const SnackBar(content: Text("Failed to delete listing")));
     }
   }  
- 
+   
+
   void confirmDelete(String docId) {
     showDialog(
       context: context,
@@ -157,6 +159,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             }
           }
         }
+
 
         setState(() {
           selectedFiles.addAll(validFiles);
