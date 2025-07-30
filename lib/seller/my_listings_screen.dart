@@ -11,7 +11,7 @@ class MyListingsScreen extends StatefulWidget {
   @override
   State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
-
+  
 class _MyListingsScreenState extends State<MyListingsScreen> {
   final user = FirebaseAuth.instance.currentUser;
   final Set<String> _processingRequests = {}; // Track requests being processed
@@ -30,8 +30,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text("Failed to delete listing")));
     }
-  }
-
+  }  
+ 
   void confirmDelete(String docId) {
     showDialog(
       context: context,
