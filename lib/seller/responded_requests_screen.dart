@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class RespondedRequestsScreen extends StatelessWidget {
   const RespondedRequestsScreen({super.key});
  
- 
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -87,7 +87,6 @@ class RespondedRequestsScreen extends StatelessWidget {
                               break;
                           }
  
-
                           return Card(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,

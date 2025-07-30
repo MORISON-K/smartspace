@@ -210,7 +210,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                             Icons.picture_as_pdf,
                                             color: Colors.red,
                                             size: 20,
-                                          ),
+                                          ), 
+                                          
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
