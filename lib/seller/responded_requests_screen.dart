@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class RespondedRequestsScreen extends StatelessWidget {
   const RespondedRequestsScreen({super.key});
-
+ 
+ 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -25,7 +26,6 @@ class RespondedRequestsScreen extends StatelessWidget {
               listingsSnapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No listings available"));
           }
-
           final listings = listingsSnapshot.data!.docs;
 
           return ListView.builder(
@@ -180,8 +180,9 @@ class RespondedRequestsScreen extends StatelessWidget {
                                                         ),
                                                       ),
                                                     ),
-                                                    
-                                                    Icon(
+
+                                                    Icon( 
+
                                                       Icons.check_circle,
                                                       color:
                                                           Colors.green.shade600,
