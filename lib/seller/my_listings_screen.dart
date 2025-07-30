@@ -122,7 +122,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
   
-  
+
   void _showReplyDialog(
     String listingId,
     String requestId,
@@ -139,6 +139,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         allowedExtensions: ['pdf'],
       );
       if (result != null) {
+        
         // Validate file sizes (limit to 10MB per file)
         List<File> validFiles = [];
         List<String> oversizedFiles = [];
@@ -176,7 +177,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismissing during upload
+      barrierDismissible: false,   // Prevent dismissing during upload
       builder:
           (_) => StatefulBuilder(
             builder: (context, setDialogState) {
