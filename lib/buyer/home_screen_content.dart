@@ -54,7 +54,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               final location =
                   (data['location'] ?? '').toString().toLowerCase();
               final category =
-                  (data['category'] ?? '').toString().toLowerCase();
+                  (data['tenure'] ?? '').toString().toLowerCase();
               final searchLower = _searchText.toLowerCase();
               return location.contains(searchLower) ||
                   category.contains(searchLower);
@@ -401,7 +401,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Category: ${item['category'] ?? '-'}',
+                                    'Category: ${item['tenure'] ?? '-'}',
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: Colors.grey[700],

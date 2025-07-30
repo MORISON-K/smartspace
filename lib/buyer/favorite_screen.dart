@@ -157,7 +157,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text('Category: ${item['category'] ?? '-'}'),
+                                Text('Category: ${item['tenure'] ?? '-'}'),
                                 Text('Size: ${item['description'] ?? '-'}'),
                                 Text('Price: UGX ${item['price'] ?? '0'}'),
                                 Text(
