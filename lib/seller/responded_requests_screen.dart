@@ -87,15 +87,17 @@ class RespondedRequestsScreen extends StatelessWidget {
                               break;
                           }
  
- 
+
                           return Card(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
                             ),
+
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                            ),
+                            ), 
+                            
                             elevation: 4,
                             child: Padding(
                               padding: const EdgeInsets.all(16),
