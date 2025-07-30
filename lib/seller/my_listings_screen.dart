@@ -5,13 +5,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
 
   @override
   State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
-
+  
 class _MyListingsScreenState extends State<MyListingsScreen> {
   final user = FirebaseAuth.instance.currentUser;
   final Set<String> _processingRequests = {}; // Track requests being processed
@@ -30,7 +31,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text("Failed to delete listing")));
     }
-  }
+  }  
+   
 
   void confirmDelete(String docId) {
     showDialog(
@@ -45,7 +47,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text("Cancel"),
-              ),
+              ), 
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -57,7 +59,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
     );
   }
-
+ 
   void showEditDialog(String docId, Map<String, dynamic> data) {
     final titleController = TextEditingController(text: data['title']);
     final priceController = TextEditingController(text: data['price']);
@@ -65,6 +67,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     final descriptionController = TextEditingController(
       text: data['description'],
     );
+   
 
     showDialog(
       context: context,
@@ -120,7 +123,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
     );
   }
-
+  
   void _showReplyDialog(
     String listingId,
     String requestId,
@@ -137,6 +140,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         allowedExtensions: ['pdf'],
       );
       if (result != null) {
+        
         // Validate file sizes (limit to 10MB per file)
         List<File> validFiles = [];
         List<String> oversizedFiles = [];
@@ -166,7 +170,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 'Some files were too large (>10MB): ${oversizedFiles.join(', ')}',
               ),
               backgroundColor: Colors.orange,
-            ),
+            ), 
           );
         }
       }
@@ -174,7 +178,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismissing during upload
+      barrierDismissible: false,   // Prevent dismissing during upload
       builder:
           (_) => StatefulBuilder(
             builder: (context, setDialogState) {
@@ -206,7 +210,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                             Icons.picture_as_pdf,
                                             color: Colors.red,
                                             size: 20,
-                                          ),
+                                          ), 
+
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
@@ -252,7 +257,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               });
                             },
                     child: const Text('Cancel'),
-                  ),
+                  ), 
                   ElevatedButton(
                     onPressed:
                         isUploading
@@ -262,13 +267,12 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
-                                      'Please select at least one document',
+                                      'Please select at least one document' ,
                                     ),
                                   ),
                                 );
                                 return;
                               }
-
                               setDialogState(() {
                                 isUploading = true;
                                 uploadProgress = 0.0;
@@ -295,7 +299,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     uploadProgress =
                                         (i + 1) / selectedFiles.length;
                                   });
-                                }
+                               }
 
                                 await FirebaseFirestore.instance
                                     .collection('listings')
@@ -319,7 +323,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                   const SnackBar(
                                     content: Text(
                                       'Documents uploaded successfully',
-                                    ),
+                                    ), 
+
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -338,6 +343,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     content: Text(
                                       'Failed to upload documents: $e',
                                     ),
+
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -351,6 +357,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
     );
   }
+
 
   void _showUploadedDocs(List<dynamic> urls) {
     showDialog(
@@ -384,7 +391,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -556,7 +563,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                         );
                                         break;
                                     }
-
+ 
                                     return Container(
                                       margin: const EdgeInsets.symmetric(
                                         vertical: 6,

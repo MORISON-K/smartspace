@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class RespondedRequestsScreen extends StatelessWidget {
   const RespondedRequestsScreen({super.key});
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,6 @@ class RespondedRequestsScreen extends StatelessWidget {
               listingsSnapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No listings available"));
           }
-
           final listings = listingsSnapshot.data!.docs;
 
           return ListView.builder(
@@ -58,7 +58,7 @@ class RespondedRequestsScreen extends StatelessWidget {
                           final message = reqData['message'] ?? '';
                           final status =
                               reqData['adminStatus'] ??
-                              'pending'; // default to pending
+                              'pending';  // default to pending
                           final sellerDocs =
                               reqData['sellerDocuments'] as List<dynamic>? ??
                               [];
@@ -66,6 +66,8 @@ class RespondedRequestsScreen extends StatelessWidget {
                           Color statusColor;
                           String statusText;
                           IconData statusIcon;
+ 
+
 
                           switch (status) {
                             case 'approved':
@@ -84,15 +86,17 @@ class RespondedRequestsScreen extends StatelessWidget {
                               statusIcon = Icons.hourglass_empty;
                               break;
                           }
-
+ 
                           return Card(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
                             ),
+
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                            ),
+                            ), 
+
                             elevation: 4,
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -175,7 +179,9 @@ class RespondedRequestsScreen extends StatelessWidget {
                                                         ),
                                                       ),
                                                     ),
-                                                    Icon(
+
+                                                    Icon( 
+
                                                       Icons.check_circle,
                                                       color:
                                                           Colors.green.shade600,
