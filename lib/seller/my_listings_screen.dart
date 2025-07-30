@@ -45,7 +45,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text("Cancel"),
-              ),
+              ), 
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -57,7 +57,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
     );
   }
-
+ 
   void showEditDialog(String docId, Map<String, dynamic> data) {
     final titleController = TextEditingController(text: data['title']);
     final priceController = TextEditingController(text: data['price']);
@@ -295,7 +295,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     uploadProgress =
                                         (i + 1) / selectedFiles.length;
                                   });
-                                }
+                               }
 
                                 await FirebaseFirestore.instance
                                     .collection('listings')
