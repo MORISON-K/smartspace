@@ -256,7 +256,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               });
                             },
                     child: const Text('Cancel'),
-                  ),
+                  ), 
                   ElevatedButton(
                     onPressed:
                         isUploading
@@ -266,7 +266,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
-                                      'Please select at least one document',
+                                      'Please select at least one document' ,
                                     ),
                                   ),
                                 );
