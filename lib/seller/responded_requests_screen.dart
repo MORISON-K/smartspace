@@ -58,7 +58,7 @@ class RespondedRequestsScreen extends StatelessWidget {
                           final message = reqData['message'] ?? '';
                           final status =
                               reqData['adminStatus'] ??
-                              'pending'; // default to pending
+                              'pending';  // default to pending
                           final sellerDocs =
                               reqData['sellerDocuments'] as List<dynamic>? ??
                               [];
@@ -66,6 +66,8 @@ class RespondedRequestsScreen extends StatelessWidget {
                           Color statusColor;
                           String statusText;
                           IconData statusIcon;
+ 
+
 
                           switch (status) {
                             case 'approved':
@@ -84,7 +86,8 @@ class RespondedRequestsScreen extends StatelessWidget {
                               statusIcon = Icons.hourglass_empty;
                               break;
                           }
-
+ 
+ 
                           return Card(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
