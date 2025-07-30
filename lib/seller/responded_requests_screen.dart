@@ -97,7 +97,7 @@ class RespondedRequestsScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ), 
-                            
+
                             elevation: 4,
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -180,6 +180,7 @@ class RespondedRequestsScreen extends StatelessWidget {
                                                         ),
                                                       ),
                                                     ),
+                                                    
                                                     Icon(
                                                       Icons.check_circle,
                                                       color:
