@@ -122,7 +122,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
   
-
+ 
   void _showReplyDialog(
     String listingId,
     String requestId,
@@ -355,6 +355,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
+   
   void _showUploadedDocs(List<dynamic> urls) {
     showDialog(
       context: context,
@@ -387,7 +388,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
     );
   }
-
+  
+    
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -558,7 +560,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                         );
                                         break;
                                     }
-
+ 
                                     return Container(
                                       margin: const EdgeInsets.symmetric(
                                         vertical: 6,
