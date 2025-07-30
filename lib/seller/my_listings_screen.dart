@@ -323,7 +323,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                   const SnackBar(
                                     content: Text(
                                       'Documents uploaded successfully',
-                                    ),
+                                    ), 
+
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -342,6 +343,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     content: Text(
                                       'Failed to upload documents: $e',
                                     ),
+                                    
                                     backgroundColor: Colors.red,
                                   ),
                                 );
