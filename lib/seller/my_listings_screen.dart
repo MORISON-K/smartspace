@@ -124,7 +124,6 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
   
- 
   void _showReplyDialog(
     String listingId,
     String requestId,
@@ -159,7 +158,6 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             }
           }
         }
-
 
         setState(() {
           selectedFiles.addAll(validFiles);
