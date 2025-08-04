@@ -2,6 +2,17 @@
 
 A comprehensive Flutter-based real estate application with AI-powered land valuation, multi-role user management, and Firebase backend integration.
 
+## Contributors
+
+| Name                  | RegNo          | StudentNo  |  Github Username     |
+| --------------------- | -------------- | ---------- | -------------------- |
+| Abinsinguza Morison K | 24/U/02594/PS  | 2400702594 | MORISON-K            |
+| Serena Robinah        | 24/U/22603/PS  | 2400703053 | Serena-Robinah       |
+| Akadwanaho Jonan      | 24/U/03053/PS  | 2400711034 | RWANGOGA             |
+| Lunkuse Dorcus        | 24/U/06515/PS  | 2400706515 | Dorcus-jane          |      
+| Elijah Biar Mabior    | 24/E/21430/PS  | 2400721430 | biar211              |
+
+
 ## 🏠 Overview
 
 SmartSpace is a modern real estate platform that connects buyers, sellers, and administrators through an intuitive mobile interface. The application features AI-powered land valuation using machine learning, real-time notifications, and comprehensive property management capabilities.
@@ -304,6 +315,3 @@ For support and questions, please contact:
 
 - Repository: [MORISON-K/smartspace](https://github.com/MORISON-K/smartspace)
 - Issues: [GitHub Issues](https://github.com/MORISON-K/smartspace/issues)
-
-## 🙏 Acknowledgments
-- Flutter team for the amazing framework
